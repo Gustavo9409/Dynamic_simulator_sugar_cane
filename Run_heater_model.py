@@ -71,11 +71,12 @@ def Thread_time(output_time,output_model_value):
 				time_exec=data[-1].strip()
 				infile.close()
 				print ("HILO:"+str(time_exec))
-				info=time_exec.split("\t")
-				yb=float(info[2])
 				if time_exec=="stop":
 					texc=0.0
 					break
+				else:
+					info=time_exec.split("\t")
+					yb_l=[float(info[2])]
 					
 					
 				
