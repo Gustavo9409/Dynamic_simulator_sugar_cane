@@ -24,6 +24,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from physicochemical_properties import liquor_properties
+from physicochemical_properties import vapor_properties
 from heat_transfer import htc_shell_tube
 
 import random
@@ -38,6 +39,7 @@ global time_exec
 global model_value
 global Heater_type
 global liquor
+global vapor
 global Ht
 global SnT
 Heater_type="Carcaza y tubos"
@@ -48,6 +50,7 @@ time_1=0.0
 outout_1=0.0
 SnT=1.0
 
+vapor=vapor_properties()
 liquor=liquor_properties()
 Ht=htc_shell_tube()
 
@@ -70,7 +73,6 @@ class Validator(object):
 		LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
 class calculated_properties():
-
 	def Juice_velocity(self,Fj,Tj,Bj,Zj):
 		pjin=liquor.density(Tj,Bj,Zj)
 		Np=float(Pipe_x_Step.text())
@@ -97,6 +99,8 @@ class calculated_properties():
 global heat_properties
 heat_properties=calculated_properties()
 
+
+##Function for update data when inputs change
 def Update_data():
 	input_heat = open('Blocks_data.txt', 'r+')
 	data=input_heat.readlines()
@@ -115,64 +119,88 @@ def Update_data():
 					juice_data.append(float(info[k]))
 	input_heat.close()
 	
-	## Calculated heater properties
-	Dosp=float(Ext_Pipe_Diameter.text())
-	Disp=float(Ext_Pipe_Diameter.text())-(2*(float(Pipe_Thickness.text())/25.4))
-	Np=float(Pipe_x_Step.text())
-	Ep=float(Pipe_Rough.text())
-	Lp=float(Lenght_Pipe.text())
-	Nst=float(N_steps.text())
-	Hrop=float(Time_Op.text())
-	B=float(Scalling_Coeff.text())
-	Aosc=heat_properties.Heat_area()
-	Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
-	Tjc=(float(juice_data[3])+round(float(split_model_data_n1[1]),3))/2.0;
-	Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
+	if confirm==True:
+		## Calculated heater properties
+		Dosp=float(Ext_Pipe_Diameter.text())
+		Disp=float(Ext_Pipe_Diameter.text())-(2*(float(Pipe_Thickness.text())/25.4))
+		Np=float(Pipe_x_Step.text())
+		Ep=float(Pipe_Rough.text())
+		Er=Ep/Dosp
+		Lp=float(Lenght_Pipe.text())
+		Nst=float(N_steps.text())
+		Hrop=float(Time_Op.text())
+		B=float(Scalling_Coeff.text())
+		Aosc=heat_properties.Heat_area()
+		Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
+		Tjc=(float(juice_data[3])+round(float(split_model_data_n1[1]),3))/2.0;
+		Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
 
-	a=round(heat_properties.Juice_velocity(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2])),3)
-	Juice_Velocity.setText(str(a))
-	b=round(heat_properties.Heat_area(),3)
-	Heat_Area.setText(str(b))
-	f="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
-	Scalling_Resist.setText(str(f))
-	c="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
-		Tjc,float(vapor_data[3]),float(vapor_data[0]),Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
-	Overall_U.setText(str(c))
-	d="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
-	Inside_U.setText(str(d))
-	e="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[3]),float(vapor_data[0]))))
-	Outside_U.setText(str(e))
-
+		a=round(heat_properties.Juice_velocity(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2])),3)
+		Juice_Velocity.setText(str(a))
+		b=round(heat_properties.Heat_area(),3)
+		Heat_Area.setText(str(b))
+		f="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		Scalling_Resist.setText(str(f))
+		c="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
+			Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0,Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
+		Overall_U.setText(str(c))
+		d="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		Inside_U.setText(str(d))
+		e="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0)))
+		Outside_U.setText(str(e))
+		#Moody Friction factor
+		f1=(1.4+2*math.log(Er))**-2
+		f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
+		#Viscosity of pipe fluid
+		up=liquor.viscosity(juice_data[3],juice_data[1],juice_data[2])
+		#Viscosity of pipe fluid at wall temperature
+		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])),juice_data[1],juice_data[2])
+		##f?? , u_tube_wall??
+		Drop_pressure_pipe_side=((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(a**2.0))/2.0) ##Rein
+		##
+		Sn=##pitch (center-to-center distance) of the tube assembly
+		Cp=##1 for a square pitch, and 0.86 for a triangular pitch
+		Lb=##is the baffle spacing
+		Ds=##inside diameter of the shell
+		Nb=##number of baffles
+		Sm=Ds*Lb*(clearance/pitch)## the clearance and pitch are defined in the notes on shell-andtube heat exchangers
+		Gs=float(juice_data[0])/Sm
+		De=(4*(Cp*(Sn**2)-(math.pi*(Dosp**2))/4.0))/math.pi*Dosp
+		#Viscosity of shell fluid
+		us=vapor.viscosity(vapor_data[2])
+		#Viscosity of shell fluid at wall temperature
+		us_tube_wall=vapor.viscosity((Tjc+vapor_data[2]))
+		Drop_pressure_shell_side=(2*f*(Gs**2)*Ds*(Nb+1))/()*De*((us/us_tube_wall)**0.14)#(Subramanian) Shell Side Pressure Drop in a Shell-and-Tube Heat Exchanger
 
 	##Process values 
 	#Vapor
 		#input
-	InStm_Press.setText(str(round(vapor_data[0],1)))
-	InStm_Flow.setText(str(vapor_data[1]))
-	InStm_Temp.setText(str(round(vapor_data[3],2)))
+		InStm_Press.setText(str(round(float(vapor_data[0])/1000.0,2)))
+		InStm_Flow.setText(str(vapor_data[1]))
+		InStm_Temp.setText(str(round(vapor_data[2],2)))
 		#output
-	CondStm_Flow.setText(str(vapor_data[1]))
-	CondStm_Temp.setText(str(round(vapor_data[3],2)))
-	CondStm_Press.setText(str(round(vapor_data[0],1)))
+		CondStm_Flow.setText(str(vapor_data[1]))
+		CondStm_Temp.setText(str(round(vapor_data[2],2)))
+		#CondStm_Press.setText(str(round(float(vapor_data[0])/1000.0,1)))
 	#Juice
 		#input
-	InFluid_Temp.setText(str(juice_data[3]))
-	InFluid_Flow.setText(str(juice_data[0]))
-	InFluid_pH.setText(str(juice_data[5]))
-	InFluid_pressure.setText(str(round(juice_data[6],1)))
-	InFluid_InsolubleSolids.setText(str(juice_data[4]))
-	InFluid_Purity.setText(str(juice_data[2]))
-	InFluid_Brix.setText(str(juice_data[1]))
+		InFluid_Temp.setText(str(juice_data[3]))
+		InFluid_Flow.setText(str(juice_data[0]))
+		InFluid_pH.setText(str(juice_data[5]))
+		InFluid_pressure.setText(str(round(float(juice_data[6])/1000.0,1)))
+		InFluid_InsolubleSolids.setText(str(juice_data[4]))
+		InFluid_Purity.setText(str(juice_data[2]))
+		InFluid_Brix.setText(str(juice_data[1]))
 		#output
-	OutFluid_Temp.setText(str(round(float(split_model_data_n1[1]),3)))
-	OutFluid_Brix.setText(str(juice_data[1]))
-	OutFluid_Flow.setText(str(juice_data[0]))
-	OutFluid_pH.setText(str(juice_data[5]))
-	#OutFluid_pressure.setText(round(,1))
-	OutFluid_InsolubleSolids.setText(str(juice_data[4]))
-	OutFluid_Purity.setText(str(juice_data[2]))
+		OutFluid_Temp.setText(str(round(float(split_model_data_n1[1]),3)))
+		OutFluid_Brix.setText(str(juice_data[1]))
+		OutFluid_Flow.setText(str(juice_data[0]))
+		OutFluid_pH.setText(str(juice_data[5]))
+		#OutFluid_pressure.setText(round(,1))
+		OutFluid_InsolubleSolids.setText(str(juice_data[4]))
+		OutFluid_Purity.setText(str(juice_data[2]))
 
-
+##Function for update window when closing
 def Update_window():
 	global num_window
 	global heater_data
@@ -211,6 +239,35 @@ def Update_window():
 		print "no datos"
 	input_heat.close()
 
+##Function for replace a line in a text file
+def replace(path, pattern, subst):
+	flags=0
+	with open(path, "r+" ) as filex:
+		fileContents = filex.read()
+		textPattern = re.compile( re.escape( pattern ), flags )
+		fileContents = textPattern.sub( subst, fileContents )
+		filex.seek( 0 )
+		filex.truncate()
+		filex.write(fileContents) 
+
+##Function for update Blocks_data.txt for new parameters confirmation 
+def update_data_txt(dato):
+	flg=0
+	dats=""
+	input_heat = open('Blocks_data.txt', 'r+')
+	data=input_heat.readlines()
+	for i in data:
+		info=(i.strip()).split("\t")
+		if info[0]==dato:
+			flg=1
+			dats=(i.strip())
+		else:
+			flg=0
+			dats=""
+	return flg, dats	
+
+
+##-- Class for graphic instantiation--## 
 class MyMplCanvas(FigureCanvas):
 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
@@ -229,18 +286,17 @@ class MyMplCanvas(FigureCanvas):
 	def compute_initial_figure(self):
 		pass
 
-
 class MyDynamicMplCanvas(MyMplCanvas):
 	"""A canvas that updates itself every second with a new plot."""
 	def __init__(self, *args, **kwargs):
 		MyMplCanvas.__init__(self, *args, **kwargs)
-		self.axes.set_xlabel('Time (min)',fontsize=11)
-		self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
 		#self.axes.yaxis.set_label_coords(0.0, 1.03)
 		#self.axes.xaxis.set_label_coords(1.03, 0.0)
+		
 		timer = QtCore.QTimer(self)
 		timer.timeout.connect(self.update_figure)
 		timer.start(Ts*1000)
+
 
 	def compute_initial_figure(self):
 		pass
@@ -273,9 +329,8 @@ class MyDynamicMplCanvas(MyMplCanvas):
 				#print(str(plot_time)+" -*- "+str(plot_model))
 
 				infile.close()
-				l = [random.randint(0, 10) for i in range(4)]
-				#self.axes.cla()
-				#self.axes.plot([0, 1, 2, 3], l, 'r')
+				self.axes.set_xlabel('Time (min)',fontsize=11)
+				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
 				self.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 				self.axes.plot(plot_time,plot_model,'b-')
 				Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
@@ -299,16 +354,7 @@ class MyDynamicMplCanvas(MyMplCanvas):
 		# else:
 		# 	print "No hay datos para leer"
 
-		
-
-	# Time_exec =threading.Thread(target = Thread_time, args=(time_1,outout_1))
-	# #Time_exec.setDaemon(True)
-	# Time_exec.start()
-
-	
-	# Time_exec =threading.Thread(target = Thread_time)
-	# #Time_exec.setDaemon(True)
-	# Time_exec.start()
+##-- Class for confirm parameters --## 
 class window_confirm_param(QDialog):
 		def __init__(self, parent=None):
 			super(window_confirm_param, self).__init__(parent)
@@ -336,14 +382,21 @@ class window_confirm_param(QDialog):
 			Hrop=Time_Op.text()
 			Tjout_ini=Initial_Out_Temp.text()
 
-
-
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
-			outfile = open('Blocks_data.txt', 'a')
-			outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Lp+"\t"+dp+"\t"+Dosp+"\t"+Ep+"\t"+B+"\t"+Hrop+"\t"+Tjout_ini+"\t"+str(SnT))
-			outfile.close()
+
+			upd, chang=update_data_txt("Ht"+flag)
+			if upd==0:
+				outfile = open('Blocks_data.txt', 'a')
+				outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Lp+"\t"+dp+"\t"+Dosp+"\t"+Ep+"\t"+B+"\t"+Hrop+"\t"+Tjout_ini+"\t"+str(SnT))
+				outfile.close()
+			else:
+				replace("Blocks_data.txt",chang,"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Lp+"\t"+dp+"\t"+Dosp+"\t"+Ep+"\t"+B+"\t"+Hrop+"\t"+Tjout_ini+"\t"+str(SnT))
 			print "OK PARAMETERS"
 			self.close()
+			Resultado=QtGui.QDialog()
+			QtGui.QMessageBox.information(Resultado, 
+			'Ok',
+			_translate("Dialog","Instanciación correcta de datos.",None),QtGui.QMessageBox.Ok)
 		def NO(self):
 			self.close()
 
@@ -369,6 +422,7 @@ class Ui_Dialog(object):
 
 	def setupUi(self,name,ts,Dialog):
 		##Heater properties
+		#Physical properties
 		global Pipe_x_Step
 		global N_steps
 		global Lenght_Pipe
@@ -382,7 +436,7 @@ class Ui_Dialog(object):
 		global Ts
 		global Temp_Output_variable
 		global Selector_Heater_type
-
+		#Calculated parameters
 		global Scalling_Resist
 		global Juice_Velocity
 		global Inside_U
@@ -391,6 +445,7 @@ class Ui_Dialog(object):
 		global Heat_Area
 
 		##Process values
+		#Input fluid data
 		global InFluid_Temp
 		global InFluid_Flow
 		global InFluid_pH
@@ -398,7 +453,7 @@ class Ui_Dialog(object):
 		global InFluid_InsolubleSolids
 		global InFluid_Purity
 		global InFluid_Brix
-
+		#Output fluid data
 		global OutFluid_Temp
 		global OutFluid_Brix
 		global OutFluid_Flow
@@ -406,11 +461,11 @@ class Ui_Dialog(object):
 		global OutFluid_pressure
 		global OutFluid_InsolubleSolids
 		global OutFluid_Purity
-
+		#Input steam data
 		global InStm_Press
 		global InStm_Flow
 		global InStm_Temp
-
+		#Condensed Steam data
 		global CondStm_Flow
 		global CondStm_Temp
 		global CondStm_Press
@@ -418,359 +473,385 @@ class Ui_Dialog(object):
 		nameDialog=name
 		Ts=ts
 		Vali = Validator()
-		#print(dat)
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(432, 355)
+
+	##--Tab widget--##
 		self.tabWidget_Heater = QtGui.QTabWidget(Dialog)
 		self.tabWidget_Heater.setGeometry(QtCore.QRect(0, 30, 431, 360))
 		self.tabWidget_Heater.setObjectName(_fromUtf8("tabWidget_Heater"))
 		self.Heat_tab1 = QtGui.QWidget()
 		self.Heat_tab1.setObjectName(_fromUtf8("Heat_tab1"))
-		self.Initial_conditions_GrBx = QtGui.QGroupBox(self.Heat_tab1)
-		self.Initial_conditions_GrBx.setGeometry(QtCore.QRect(213, 191, 201, 61))
-		self.Initial_conditions_GrBx.setObjectName(_fromUtf8("Initial_conditions_GrBx"))
-		Initial_Out_Temp = QtGui.QLineEdit(self.Initial_conditions_GrBx)
-		Initial_Out_Temp.setGeometry(QtCore.QRect(138, 27, 41, 20))
-		Initial_Out_Temp.setReadOnly(False)
-		Initial_Out_Temp.setObjectName(_fromUtf8("Initial_Out_Temp"))
-		Initial_Out_Temp.setText("78.0")
-		Vali.NumValidator(Initial_Out_Temp)
 
-		self.label_Initial_Out_Temp = QtGui.QLabel(self.Initial_conditions_GrBx)
-		self.label_Initial_Out_Temp.setGeometry(QtCore.QRect(7, 21, 131, 31))
-		self.label_Initial_Out_Temp.setObjectName(_fromUtf8("label_Initial_Out_Temp"))
-		self.ComBox_Type_Material = QtGui.QComboBox(self.Heat_tab1)
-		self.ComBox_Type_Material.setGeometry(QtCore.QRect(102, 228, 91, 22))
-		self.ComBox_Type_Material.setObjectName(_fromUtf8("ComBox_Type_Material"))
-		self.ComBox_Type_Material.addItem("Inoxidable")
-		self.ComBox_Type_Material.addItem("Aluminio")
+		self.tabWidget_Heater.addTab(self.Heat_tab1, _fromUtf8(""))
+		self.Heat_tab_2 = QtGui.QWidget()
+		self.Heat_tab_2.setObjectName(_fromUtf8("Heat_tab_2"))
 
-		self.label_Type_Material = QtGui.QLabel(self.Heat_tab1)
-		self.label_Type_Material.setGeometry(QtCore.QRect(14, 230, 81, 16))
-		self.label_Type_Material.setObjectName(_fromUtf8("label_Type_Material"))
+		self.tabWidget_Heater.addTab(self.Heat_tab_2, _fromUtf8(""))
+		self.Heat_tab_3 = QtGui.QWidget()
+		self.Heat_tab_3.setObjectName(_fromUtf8("Heat_tab_3"))
+
+	##--Instance button--##
 		self.OKButton_Heat = QtGui.QPushButton(self.Heat_tab1)
 		self.OKButton_Heat.setGeometry(QtCore.QRect(280, 258, 131, 23))
 		self.OKButton_Heat.setObjectName(_fromUtf8("OKButton_Heat"))
 		self.OKButton_Heat.clicked.connect(self.confirm_param)
 
 
+	##----Instantiation of elements for the initial condition----##
+		#Group box
+		self.Initial_conditions_GrBx = QtGui.QGroupBox(self.Heat_tab1)
+		self.Initial_conditions_GrBx.setGeometry(QtCore.QRect(213, 191, 201, 61))
+		self.Initial_conditions_GrBx.setObjectName(_fromUtf8("Initial_conditions_GrBx"))
+		#Line edit
+		Initial_Out_Temp = QtGui.QLineEdit(self.Initial_conditions_GrBx)
+		Initial_Out_Temp.setGeometry(QtCore.QRect(138, 27, 41, 20))
+		Initial_Out_Temp.setReadOnly(False)
+		Initial_Out_Temp.setObjectName(_fromUtf8("Initial_Out_Temp"))
+		Initial_Out_Temp.setText("78.0")
+		Vali.NumValidator(Initial_Out_Temp)
+		#Label
+		self.label_Initial_Out_Temp = QtGui.QLabel(self.Initial_conditions_GrBx)
+		self.label_Initial_Out_Temp.setGeometry(QtCore.QRect(7, 21, 131, 31))
+		self.label_Initial_Out_Temp.setObjectName(_fromUtf8("label_Initial_Out_Temp"))
 
+
+	##----Selector of material type----##
+		#Selectable list
+		self.ComBox_Type_Material = QtGui.QComboBox(self.Heat_tab1)
+		self.ComBox_Type_Material.setGeometry(QtCore.QRect(102, 228, 91, 22))
+		self.ComBox_Type_Material.setObjectName(_fromUtf8("ComBox_Type_Material"))
+		self.ComBox_Type_Material.addItem("Inoxidable")
+		self.ComBox_Type_Material.addItem("Aluminio")
+		#Label
+		self.label_Type_Material = QtGui.QLabel(self.Heat_tab1)
+		self.label_Type_Material.setGeometry(QtCore.QRect(14, 230, 81, 16))
+		self.label_Type_Material.setObjectName(_fromUtf8("label_Type_Material"))
+
+		##----Instantiation of elements for calculated properties----##
+		#Group box
 		self.Calculated_properties_GrBx = QtGui.QGroupBox(self.Heat_tab1)
 		self.Calculated_properties_GrBx.setGeometry(QtCore.QRect(213, 6, 205, 181))
 		self.Calculated_properties_GrBx.setObjectName(_fromUtf8("Calculated_properties_GrBx"))
+		#Juice velocity
 		self.label_Juice_Velocity = QtGui.QLabel(self.Calculated_properties_GrBx)
 		self.label_Juice_Velocity.setGeometry(QtCore.QRect(10, 21, 131, 16))
 		self.label_Juice_Velocity.setObjectName(_fromUtf8("label_Juice_Velocity"))
-		self.label_Scalling_Resist = QtGui.QLabel(self.Calculated_properties_GrBx)
-		self.label_Scalling_Resist.setGeometry(QtCore.QRect(10, 43, 151, 31))
-		self.label_Scalling_Resist.setObjectName(_fromUtf8("label_Scalling_Resist"))
-		self.label_Outside_U = QtGui.QLabel(self.Calculated_properties_GrBx)
-		self.label_Outside_U.setGeometry(QtCore.QRect(10, 108, 121, 16))
-		self.label_Outside_U.setObjectName(_fromUtf8("label_Outside_U"))
-		self.label_Inside_U = QtGui.QLabel(self.Calculated_properties_GrBx)
-		self.label_Inside_U.setGeometry(QtCore.QRect(11, 130, 121, 16))
-		self.label_Inside_U.setObjectName(_fromUtf8("label_Inside_U"))
-		self.label_Overall_U = QtGui.QLabel(self.Calculated_properties_GrBx)
-		self.label_Overall_U.setGeometry(QtCore.QRect(11, 153, 121, 16))
-		self.label_Overall_U.setObjectName(_fromUtf8("label_Overall_U"))
-		self.label_Heat_Area = QtGui.QLabel(self.Calculated_properties_GrBx)
-		self.label_Heat_Area.setGeometry(QtCore.QRect(10, 76, 121, 31))
-		self.label_Heat_Area.setObjectName(_fromUtf8("label_Heat_Area"))
-
-		Scalling_Resist = QtGui.QLineEdit(self.Calculated_properties_GrBx)
-		Scalling_Resist.setGeometry(QtCore.QRect(145, 53, 55, 20))
-		Scalling_Resist.setReadOnly(True)
-		Scalling_Resist.setObjectName(_fromUtf8("Scalling_Resist"))
-
 		Juice_Velocity = QtGui.QLineEdit(self.Calculated_properties_GrBx)
 		Juice_Velocity.setGeometry(QtCore.QRect(145, 20, 55, 20))
 		Juice_Velocity.setReadOnly(True)
 		Juice_Velocity.setObjectName(_fromUtf8("Juice_Velocity"))
-
-		Inside_U = QtGui.QLineEdit(self.Calculated_properties_GrBx)
-		Inside_U.setGeometry(QtCore.QRect(145, 130, 55, 20))
-		Inside_U.setReadOnly(True)
-		Inside_U.setObjectName(_fromUtf8("Inside_U"))
-
+		#Scalling resistance
+		self.label_Scalling_Resist = QtGui.QLabel(self.Calculated_properties_GrBx)
+		self.label_Scalling_Resist.setGeometry(QtCore.QRect(10, 43, 151, 31))
+		self.label_Scalling_Resist.setObjectName(_fromUtf8("label_Scalling_Resist"))
+		Scalling_Resist = QtGui.QLineEdit(self.Calculated_properties_GrBx)
+		Scalling_Resist.setGeometry(QtCore.QRect(145, 53, 55, 20))
+		Scalling_Resist.setReadOnly(True)
+		Scalling_Resist.setObjectName(_fromUtf8("Scalling_Resist"))
+		#Outside heat transfer coeficcient
+		self.label_Outside_U = QtGui.QLabel(self.Calculated_properties_GrBx)
+		self.label_Outside_U.setGeometry(QtCore.QRect(10, 108, 121, 16))
+		self.label_Outside_U.setObjectName(_fromUtf8("label_Outside_U"))
 		Outside_U = QtGui.QLineEdit(self.Calculated_properties_GrBx)
 		Outside_U.setGeometry(QtCore.QRect(145, 107, 55, 20))
 		Outside_U.setReadOnly(True)
 		Outside_U.setObjectName(_fromUtf8("Outside_U"))
-
+		#Inside heat transfer coeficcient
+		self.label_Inside_U = QtGui.QLabel(self.Calculated_properties_GrBx)
+		self.label_Inside_U.setGeometry(QtCore.QRect(11, 130, 121, 16))
+		self.label_Inside_U.setObjectName(_fromUtf8("label_Inside_U"))
+		Inside_U = QtGui.QLineEdit(self.Calculated_properties_GrBx)
+		Inside_U.setGeometry(QtCore.QRect(145, 130, 55, 20))
+		Inside_U.setReadOnly(True)
+		Inside_U.setObjectName(_fromUtf8("Inside_U"))
+		#Overall heat transfer coeficcient
+		self.label_Overall_U = QtGui.QLabel(self.Calculated_properties_GrBx)
+		self.label_Overall_U.setGeometry(QtCore.QRect(11, 153, 121, 16))
+		self.label_Overall_U.setObjectName(_fromUtf8("label_Overall_U"))
 		Overall_U = QtGui.QLineEdit(self.Calculated_properties_GrBx)
 		Overall_U.setGeometry(QtCore.QRect(145, 153, 55, 20))
 		Overall_U.setReadOnly(True)
 		Overall_U.setObjectName(_fromUtf8("Overall_U"))
-
+		#Heat area
+		self.label_Heat_Area = QtGui.QLabel(self.Calculated_properties_GrBx)
+		self.label_Heat_Area.setGeometry(QtCore.QRect(10, 76, 121, 31))
+		self.label_Heat_Area.setObjectName(_fromUtf8("label_Heat_Area"))
 		Heat_Area = QtGui.QLineEdit(self.Calculated_properties_GrBx)
 		Heat_Area.setGeometry(QtCore.QRect(145, 79, 55, 20))
 		Heat_Area.setReadOnly(True)
 		Heat_Area.setObjectName(_fromUtf8("Heat_Area"))
 
+
+	##----Instantiation of elements for physical properties----##
+		#Group box
 		self.Physical_properties_GrBx = QtGui.QGroupBox(self.Heat_tab1)
 		self.Physical_properties_GrBx.setGeometry(QtCore.QRect(10, 6, 191, 201))
 		self.Physical_properties_GrBx.setObjectName(_fromUtf8("Physical_properties_GrBx"))
+		#External pipe diameter
 		self.label_Ext_Pipe_Diameter = QtGui.QLabel(self.Physical_properties_GrBx)
 		self.label_Ext_Pipe_Diameter.setGeometry(QtCore.QRect(7, 20, 131, 16))
 		self.label_Ext_Pipe_Diameter.setObjectName(_fromUtf8("label_Ext_Pipe_Diameter"))
-		self.label_Lenght_Pipe = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Lenght_Pipe.setGeometry(QtCore.QRect(7, 41, 121, 16))
-		self.label_Lenght_Pipe.setObjectName(_fromUtf8("label_Lenght_Pipe"))
-		self.label_Pipe_x_Step = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Pipe_x_Step.setGeometry(QtCore.QRect(7, 108, 121, 16))
-		self.label_Pipe_x_Step.setObjectName(_fromUtf8("label_Pipe_x_Step"))
-		self.label_N_steps = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_N_steps.setGeometry(QtCore.QRect(7, 130, 121, 16))
-		self.label_N_steps.setObjectName(_fromUtf8("label_N_steps"))
-		self.label_Time_Op = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Time_Op.setGeometry(QtCore.QRect(7, 151, 121, 16))
-		self.label_Time_Op.setObjectName(_fromUtf8("label_Time_Op"))
-		self.label_Pipe_Rough = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Pipe_Rough.setGeometry(QtCore.QRect(7, 85, 121, 16))
-		self.label_Pipe_Rough.setObjectName(_fromUtf8("label_Pipe_Rough"))
-		self.label_Scalling_Coeff = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Scalling_Coeff.setGeometry(QtCore.QRect(7, 166, 141, 31))
-		self.label_Scalling_Coeff.setOpenExternalLinks(False)
-		self.label_Scalling_Coeff.setObjectName(_fromUtf8("label_Scalling_Coeff"))
-		self.label_Pipe_Thickness = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Pipe_Thickness.setGeometry(QtCore.QRect(7, 64, 121, 16))
-		self.label_Pipe_Thickness.setObjectName(_fromUtf8("label_Pipe_Thickness"))
 		Ext_Pipe_Diameter = QtGui.QLineEdit(self.Physical_properties_GrBx)
 		Ext_Pipe_Diameter.setGeometry(QtCore.QRect(143, 18, 41, 20))
 		Ext_Pipe_Diameter.setObjectName(_fromUtf8("Ext_Pipe_Diameter"))
 		Ext_Pipe_Diameter.setText("2.0")
 		Vali.NumValidator(Ext_Pipe_Diameter)
-
-
+		#Lenght of pipes
+		self.label_Lenght_Pipe = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Lenght_Pipe.setGeometry(QtCore.QRect(7, 41, 121, 16))
+		self.label_Lenght_Pipe.setObjectName(_fromUtf8("label_Lenght_Pipe"))
 		Lenght_Pipe = QtGui.QLineEdit(self.Physical_properties_GrBx)
 		Lenght_Pipe.setGeometry(QtCore.QRect(143, 40, 41, 20))
 		Lenght_Pipe.setObjectName(_fromUtf8("Lenght_Pipe"))
 		Lenght_Pipe.setText("6.57")
 		Vali.NumValidator(Lenght_Pipe)
-
+		#Pipes for steps
+		self.label_Pipe_x_Step = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Pipe_x_Step.setGeometry(QtCore.QRect(7, 108, 121, 16))
+		self.label_Pipe_x_Step.setObjectName(_fromUtf8("label_Pipe_x_Step"))
+		Pipe_x_Step = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		Pipe_x_Step.setGeometry(QtCore.QRect(143, 106, 41, 20))
+		Pipe_x_Step.setObjectName(_fromUtf8("self.Pipe_x_Step"))
+		Pipe_x_Step.setText("6.0")
+		Vali.NumValidator(Pipe_x_Step)
+		#Number of steps
+		self.label_N_steps = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_N_steps.setGeometry(QtCore.QRect(7, 130, 121, 16))
+		self.label_N_steps.setObjectName(_fromUtf8("label_N_steps"))
+		N_steps = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		N_steps.setGeometry(QtCore.QRect(143, 128, 41, 20))
+		N_steps.setObjectName(_fromUtf8("N_steps"))
+		N_steps.setText("2.0")
+		Vali.NumValidator(N_steps)
+		#Operation time
+		self.label_Time_Op = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Time_Op.setGeometry(QtCore.QRect(7, 151, 121, 16))
+		self.label_Time_Op.setObjectName(_fromUtf8("label_Time_Op"))
+		Time_Op = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		Time_Op.setGeometry(QtCore.QRect(143, 150, 41, 20))
+		Time_Op.setObjectName(_fromUtf8("Time_Op"))
+		Time_Op.setText("100.0")
+		Vali.NumValidator(Time_Op)
+		#Rough of pipes
+		self.label_Pipe_Rough = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Pipe_Rough.setGeometry(QtCore.QRect(7, 85, 121, 16))
+		self.label_Pipe_Rough.setObjectName(_fromUtf8("label_Pipe_Rough"))
+		Pipe_Rough = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		Pipe_Rough.setGeometry(QtCore.QRect(143, 84, 41, 20))
+		Pipe_Rough.setObjectName(_fromUtf8("Pipe_Rough"))
+		Pipe_Rough.setText("0.090")
+		Vali.NumValidator(Pipe_Rough)
+		#Scalling coefficient
+		self.label_Scalling_Coeff = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Scalling_Coeff.setGeometry(QtCore.QRect(7, 166, 141, 31))
+		self.label_Scalling_Coeff.setOpenExternalLinks(False)
+		self.label_Scalling_Coeff.setObjectName(_fromUtf8("label_Scalling_Coeff"))
+		Scalling_Coeff = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		Scalling_Coeff.setGeometry(QtCore.QRect(143, 172, 41, 20))
+		Scalling_Coeff.setObjectName(_fromUtf8("Scalling_Coeff"))
+		Scalling_Coeff.setText("0.8")
+		Vali.NumValidator(Scalling_Coeff)
+		#Pipe thickness
+		self.label_Pipe_Thickness = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Pipe_Thickness.setGeometry(QtCore.QRect(7, 64, 121, 16))
+		self.label_Pipe_Thickness.setObjectName(_fromUtf8("label_Pipe_Thickness"))
 		Pipe_Thickness = QtGui.QLineEdit(self.Physical_properties_GrBx)
 		Pipe_Thickness.setGeometry(QtCore.QRect(143, 62, 41, 20))
 		Pipe_Thickness.setObjectName(_fromUtf8("Pipe_Thickness"))
 		Pipe_Thickness.setText("1.2")
 		Vali.NumValidator(Pipe_Thickness)
 
-		Pipe_Rough = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		Pipe_Rough.setGeometry(QtCore.QRect(143, 84, 41, 20))
-		Pipe_Rough.setObjectName(_fromUtf8("Pipe_Rough"))
-		Pipe_Rough.setText("0.090")
-		Vali.NumValidator(Pipe_Rough)
 
-		Time_Op = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		Time_Op.setGeometry(QtCore.QRect(143, 150, 41, 20))
-		Time_Op.setObjectName(_fromUtf8("Time_Op"))
-		Time_Op.setText("100.0")
-		Vali.NumValidator(Time_Op)
-
-		N_steps = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		N_steps.setGeometry(QtCore.QRect(143, 128, 41, 20))
-		N_steps.setObjectName(_fromUtf8("N_steps"))
-		N_steps.setText("2.0")
-		Vali.NumValidator(N_steps)
-
-		Pipe_x_Step = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		Pipe_x_Step.setGeometry(QtCore.QRect(143, 106, 41, 20))
-		Pipe_x_Step.setObjectName(_fromUtf8("self.Pipe_x_Step"))
-		Pipe_x_Step.setText("6.0")
-		Vali.NumValidator(Pipe_x_Step)
-
-		Scalling_Coeff = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		Scalling_Coeff.setGeometry(QtCore.QRect(143, 172, 41, 20))
-		Scalling_Coeff.setObjectName(_fromUtf8("Scalling_Coeff"))
-		Scalling_Coeff.setText("0.8")
-		Vali.NumValidator(Scalling_Coeff)
-
-		self.tabWidget_Heater.addTab(self.Heat_tab1, _fromUtf8(""))
-		self.Heat_tab_2 = QtGui.QWidget()
-		self.Heat_tab_2.setObjectName(_fromUtf8("Heat_tab_2"))
+	##----Instantiation of elements for output fluid----##	
+		#Group box		
 		self.Output_fluid_GrBx = QtGui.QGroupBox(self.Heat_tab_2)
 		self.Output_fluid_GrBx.setGeometry(QtCore.QRect(225, 10, 196, 176))
 		self.Output_fluid_GrBx.setObjectName(_fromUtf8("Output_fluid_GrBx"))
+		#Flow
 		self.label_OutFluid_Flow = QtGui.QLabel(self.Output_fluid_GrBx)
 		self.label_OutFluid_Flow.setGeometry(QtCore.QRect(10, 21, 131, 16))
 		self.label_OutFluid_Flow.setObjectName(_fromUtf8("label_OutFluid_Flow"))
-		self.label_OutFluid_Temp = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_Temp.setGeometry(QtCore.QRect(10, 43, 121, 16))
-		self.label_OutFluid_Temp.setObjectName(_fromUtf8("label_OutFluid_Temp"))
-		self.label_OutFluid_Brix = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_Brix.setGeometry(QtCore.QRect(10, 66, 121, 16))
-		self.label_OutFluid_Brix.setObjectName(_fromUtf8("label_OutFluid_Brix"))
-		self.label_OutFluid_Purity = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_Purity.setGeometry(QtCore.QRect(10, 109, 121, 16))
-		self.label_OutFluid_Purity.setObjectName(_fromUtf8("label_OutFluid_Purity"))
-		self.label_OutFluid_pressure = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_pressure.setGeometry(QtCore.QRect(10, 131, 121, 16))
-		self.label_OutFluid_pressure.setObjectName(_fromUtf8("label_OutFluid_pressure"))
-		self.label_OutFluid_InsolubleSolids = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_InsolubleSolids.setGeometry(QtCore.QRect(10, 87, 121, 16))
-		self.label_OutFluid_InsolubleSolids.setObjectName(_fromUtf8("label_OutFluid_InsolubleSolids"))
-		self.label_OutFluid_pH = QtGui.QLabel(self.Output_fluid_GrBx)
-		self.label_OutFluid_pH.setGeometry(QtCore.QRect(10, 153, 121, 16))
-		self.label_OutFluid_pH.setObjectName(_fromUtf8("label_OutFluid_pH"))
-	
-
-		OutFluid_Temp = QtGui.QLineEdit(self.Output_fluid_GrBx)
-		OutFluid_Temp.setGeometry(QtCore.QRect(139, 42, 52, 20))
-		OutFluid_Temp.setReadOnly(True)
-		OutFluid_Temp.setObjectName(_fromUtf8("OutFluid_Temp"))
-
 		OutFluid_Flow = QtGui.QLineEdit(self.Output_fluid_GrBx)
 		OutFluid_Flow.setGeometry(QtCore.QRect(139, 20, 52, 20))
 		OutFluid_Flow.setReadOnly(True)
 		OutFluid_Flow.setObjectName(_fromUtf8("OutFluid_Flow"))
-
+		#Temperature
+		self.label_OutFluid_Temp = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_Temp.setGeometry(QtCore.QRect(10, 43, 121, 16))
+		self.label_OutFluid_Temp.setObjectName(_fromUtf8("label_OutFluid_Temp"))
+		OutFluid_Temp = QtGui.QLineEdit(self.Output_fluid_GrBx)
+		OutFluid_Temp.setGeometry(QtCore.QRect(139, 42, 52, 20))
+		OutFluid_Temp.setReadOnly(True)
+		OutFluid_Temp.setObjectName(_fromUtf8("OutFluid_Temp"))
+		#Brix
+		self.label_OutFluid_Brix = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_Brix.setGeometry(QtCore.QRect(10, 66, 121, 16))
+		self.label_OutFluid_Brix.setObjectName(_fromUtf8("label_OutFluid_Brix"))
 		OutFluid_Brix = QtGui.QLineEdit(self.Output_fluid_GrBx)
 		OutFluid_Brix.setGeometry(QtCore.QRect(139, 64, 52, 20))
 		OutFluid_Brix.setReadOnly(True)
 		OutFluid_Brix.setObjectName(_fromUtf8("OutFluid_Brix"))
-
-		OutFluid_pH = QtGui.QLineEdit(self.Output_fluid_GrBx)
-		OutFluid_pH.setGeometry(QtCore.QRect(139, 151, 52, 20))
-		OutFluid_pH.setReadOnly(True)
-		OutFluid_pH.setObjectName(_fromUtf8("OutFluid_pH"))
-
-		OutFluid_pressure = QtGui.QLineEdit(self.Output_fluid_GrBx)
-		OutFluid_pressure.setGeometry(QtCore.QRect(139, 129, 52, 20))
-		OutFluid_pressure.setReadOnly(True)
-		OutFluid_pressure.setObjectName(_fromUtf8("OutFluid_pressure"))
-
-		OutFluid_InsolubleSolids = QtGui.QLineEdit(self.Output_fluid_GrBx)
-		OutFluid_InsolubleSolids.setGeometry(QtCore.QRect(139, 85, 52, 20))
-		OutFluid_InsolubleSolids.setReadOnly(True)
-		OutFluid_InsolubleSolids.setObjectName(_fromUtf8("OutFluid_InsolubleSolids"))
-
+		#Purity
+		self.label_OutFluid_Purity = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_Purity.setGeometry(QtCore.QRect(10, 109, 121, 16))
+		self.label_OutFluid_Purity.setObjectName(_fromUtf8("label_OutFluid_Purity"))
 		OutFluid_Purity = QtGui.QLineEdit(self.Output_fluid_GrBx)
 		OutFluid_Purity.setGeometry(QtCore.QRect(139, 107, 52, 20))
 		OutFluid_Purity.setReadOnly(True)
 		OutFluid_Purity.setObjectName(_fromUtf8("OutFluid_Purity"))
-
+		#Pressure
+		self.label_OutFluid_pressure = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_pressure.setGeometry(QtCore.QRect(10, 131, 121, 16))
+		self.label_OutFluid_pressure.setObjectName(_fromUtf8("label_OutFluid_pressure"))
+		OutFluid_pressure = QtGui.QLineEdit(self.Output_fluid_GrBx)
+		OutFluid_pressure.setGeometry(QtCore.QRect(139, 129, 52, 20))
+		OutFluid_pressure.setReadOnly(True)
+		OutFluid_pressure.setObjectName(_fromUtf8("OutFluid_pressure"))
+		#Insoluble solids
+		self.label_OutFluid_InsolubleSolids = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_InsolubleSolids.setGeometry(QtCore.QRect(10, 87, 121, 16))
+		self.label_OutFluid_InsolubleSolids.setObjectName(_fromUtf8("label_OutFluid_InsolubleSolids"))
+		OutFluid_InsolubleSolids = QtGui.QLineEdit(self.Output_fluid_GrBx)
+		OutFluid_InsolubleSolids.setGeometry(QtCore.QRect(139, 85, 52, 20))
+		OutFluid_InsolubleSolids.setReadOnly(True)
+		OutFluid_InsolubleSolids.setObjectName(_fromUtf8("OutFluid_InsolubleSolids"))
+		#pH
+		self.label_OutFluid_pH = QtGui.QLabel(self.Output_fluid_GrBx)
+		self.label_OutFluid_pH.setGeometry(QtCore.QRect(10, 153, 121, 16))
+		self.label_OutFluid_pH.setObjectName(_fromUtf8("label_OutFluid_pH"))
+		OutFluid_pH = QtGui.QLineEdit(self.Output_fluid_GrBx)
+		OutFluid_pH.setGeometry(QtCore.QRect(139, 151, 52, 20))
+		OutFluid_pH.setReadOnly(True)
+		OutFluid_pH.setObjectName(_fromUtf8("OutFluid_pH"))
+	
+	
+	##----Instantiation of elements for input fluid----##	
+		#Group box	
 		self.Input_fluid_GrBx = QtGui.QGroupBox(self.Heat_tab_2)
 		self.Input_fluid_GrBx.setGeometry(QtCore.QRect(12, 10, 196, 176))
 		self.Input_fluid_GrBx.setObjectName(_fromUtf8("Input_fluid_GrBx"))
+		#Flow
 		self.label_InFluid_Flow = QtGui.QLabel(self.Input_fluid_GrBx)
 		self.label_InFluid_Flow.setGeometry(QtCore.QRect(10, 21, 131, 16))
 		self.label_InFluid_Flow.setObjectName(_fromUtf8("label_InFluid_Flow"))
-		self.label_InFluid_Temp = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_Temp.setGeometry(QtCore.QRect(10, 43, 121, 16))
-		self.label_InFluid_Temp.setObjectName(_fromUtf8("label_InFluid_Temp"))
-		self.label_InFluid_Brix = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_Brix.setGeometry(QtCore.QRect(10, 66, 121, 16))
-		self.label_InFluid_Brix.setObjectName(_fromUtf8("label_InFluid_Brix"))
-		self.label_InFluid_Purity = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_Purity.setGeometry(QtCore.QRect(10, 110, 121, 16))
-		self.label_InFluid_Purity.setObjectName(_fromUtf8("label_InFluid_Purity"))
-		self.label_InFluid_InsolubleSolids = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_InsolubleSolids.setGeometry(QtCore.QRect(10, 88, 121, 16))
-		self.label_InFluid_InsolubleSolids.setObjectName(_fromUtf8("label_InFluid_InsolubleSolids"))
-		self.label_InFluid_pH = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_pH.setGeometry(QtCore.QRect(10, 153, 121, 16))
-		self.label_InFluid_pH.setObjectName(_fromUtf8("label_InFluid_pH"))
-		self.label_InFluid_pressure = QtGui.QLabel(self.Input_fluid_GrBx)
-		self.label_InFluid_pressure.setGeometry(QtCore.QRect(10, 132, 121, 16))
-		self.label_InFluid_pressure.setObjectName(_fromUtf8("label_InFluid_pressure"))
-
-		InFluid_Temp = QtGui.QLineEdit(self.Input_fluid_GrBx)
-		InFluid_Temp.setGeometry(QtCore.QRect(139, 42, 52, 20))
-		InFluid_Temp.setReadOnly(True)
-		InFluid_Temp.setObjectName(_fromUtf8("InFluid_Temp"))
-
 		InFluid_Flow = QtGui.QLineEdit(self.Input_fluid_GrBx)
 		InFluid_Flow.setGeometry(QtCore.QRect(139, 20, 52, 20))
 		InFluid_Flow.setReadOnly(True)
 		InFluid_Flow.setObjectName(_fromUtf8("InFluid_Flow"))
-
+		#Temperature
+		self.label_InFluid_Temp = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_Temp.setGeometry(QtCore.QRect(10, 43, 121, 16))
+		self.label_InFluid_Temp.setObjectName(_fromUtf8("label_InFluid_Temp"))
+		InFluid_Temp = QtGui.QLineEdit(self.Input_fluid_GrBx)
+		InFluid_Temp.setGeometry(QtCore.QRect(139, 42, 52, 20))
+		InFluid_Temp.setReadOnly(True)
+		InFluid_Temp.setObjectName(_fromUtf8("InFluid_Temp"))
+		#Brix
+		self.label_InFluid_Brix = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_Brix.setGeometry(QtCore.QRect(10, 66, 121, 16))
+		self.label_InFluid_Brix.setObjectName(_fromUtf8("label_InFluid_Brix"))
+		InFluid_Brix = QtGui.QLineEdit(self.Input_fluid_GrBx)
+		InFluid_Brix.setGeometry(QtCore.QRect(139, 64, 52, 20))
+		InFluid_Brix.setReadOnly(True)
+		InFluid_Brix.setObjectName(_fromUtf8("InFluid_Brix"))
+		#Purity
+		self.label_InFluid_Purity = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_Purity.setGeometry(QtCore.QRect(10, 110, 121, 16))
+		self.label_InFluid_Purity.setObjectName(_fromUtf8("label_InFluid_Purity"))
+		InFluid_Purity = QtGui.QLineEdit(self.Input_fluid_GrBx)
+		InFluid_Purity.setGeometry(QtCore.QRect(139, 108, 52, 20))
+		InFluid_Purity.setReadOnly(True)
+		InFluid_Purity.setObjectName(_fromUtf8("InFluid_Purity"))
+		#Pressure
+		self.label_InFluid_pressure = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_pressure.setGeometry(QtCore.QRect(10, 132, 121, 16))
+		self.label_InFluid_pressure.setObjectName(_fromUtf8("label_InFluid_pressure"))
+		InFluid_pressure = QtGui.QLineEdit(self.Input_fluid_GrBx)
+		InFluid_pressure.setGeometry(QtCore.QRect(139, 130, 52, 20))
+		InFluid_pressure.setReadOnly(True)
+		InFluid_pressure.setObjectName(_fromUtf8("InFluid_pressure"))
+		#Insoluble solids
+		self.label_InFluid_InsolubleSolids = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_InsolubleSolids.setGeometry(QtCore.QRect(10, 88, 121, 16))
+		self.label_InFluid_InsolubleSolids.setObjectName(_fromUtf8("label_InFluid_InsolubleSolids"))
+		InFluid_InsolubleSolids = QtGui.QLineEdit(self.Input_fluid_GrBx)
+		InFluid_InsolubleSolids.setGeometry(QtCore.QRect(139, 86, 52, 20))
+		InFluid_InsolubleSolids.setReadOnly(True)
+		InFluid_InsolubleSolids.setObjectName(_fromUtf8("InFluid_InsolubleSolids_2"))
+		#pH
+		self.label_InFluid_pH = QtGui.QLabel(self.Input_fluid_GrBx)
+		self.label_InFluid_pH.setGeometry(QtCore.QRect(10, 153, 121, 16))
+		self.label_InFluid_pH.setObjectName(_fromUtf8("label_InFluid_pH"))
 		InFluid_pH = QtGui.QLineEdit(self.Input_fluid_GrBx)
 		InFluid_pH.setGeometry(QtCore.QRect(139, 152, 52, 20))
 		InFluid_pH.setReadOnly(True)
 		InFluid_pH.setObjectName(_fromUtf8("InFluid_pH"))
 
-		InFluid_pressure = QtGui.QLineEdit(self.Input_fluid_GrBx)
-		InFluid_pressure.setGeometry(QtCore.QRect(139, 130, 52, 20))
-		InFluid_pressure.setReadOnly(True)
-		InFluid_pressure.setObjectName(_fromUtf8("InFluid_pressure"))
-
-		InFluid_InsolubleSolids = QtGui.QLineEdit(self.Input_fluid_GrBx)
-		InFluid_InsolubleSolids.setGeometry(QtCore.QRect(139, 86, 52, 20))
-		InFluid_InsolubleSolids.setReadOnly(True)
-		InFluid_InsolubleSolids.setObjectName(_fromUtf8("InFluid_InsolubleSolids_2"))			
-
-		InFluid_Purity = QtGui.QLineEdit(self.Input_fluid_GrBx)
-		InFluid_Purity.setGeometry(QtCore.QRect(139, 108, 52, 20))
-		InFluid_Purity.setReadOnly(True)
-		InFluid_Purity.setObjectName(_fromUtf8("InFluid_Purity"))
-
-		InFluid_Brix = QtGui.QLineEdit(self.Input_fluid_GrBx)
-		InFluid_Brix.setGeometry(QtCore.QRect(139, 64, 52, 20))
-		InFluid_Brix.setReadOnly(True)
-		InFluid_Brix.setObjectName(_fromUtf8("InFluid_Brix"))
-
-
+		
+	##----Instantiation of elements for input steam----##	
+		#Group box
 		self.Input_Steam_GrBx = QtGui.QGroupBox(self.Heat_tab_2)
 		self.Input_Steam_GrBx.setGeometry(QtCore.QRect(12, 198, 196, 81))
 		self.Input_Steam_GrBx.setObjectName(_fromUtf8("Input_Steam_GrBx"))
+		#Flow
 		self.label_InStm_Flow = QtGui.QLabel(self.Input_Steam_GrBx)
 		self.label_InStm_Flow.setGeometry(QtCore.QRect(10, 18, 131, 16))
 		self.label_InStm_Flow.setObjectName(_fromUtf8("label_InStm_Flow"))
-		self.label_InStm_Press = QtGui.QLabel(self.Input_Steam_GrBx)
-		self.label_InStm_Press.setGeometry(QtCore.QRect(10, 38, 121, 16))
-		self.label_InStm_Press.setObjectName(_fromUtf8("label_InStm_Press"))
-		self.label_InStm_Temp = QtGui.QLabel(self.Input_Steam_GrBx)
-		self.label_InStm_Temp.setGeometry(QtCore.QRect(10, 60, 131, 16))
-		self.label_InStm_Temp.setObjectName(_fromUtf8("label_InStm_Temp"))
-
-		InStm_Press = QtGui.QLineEdit(self.Input_Steam_GrBx)
-		InStm_Press.setGeometry(QtCore.QRect(139, 36, 52, 20))
-		InStm_Press.setReadOnly(True)
-		InStm_Press.setObjectName(_fromUtf8("InStm_Press"))
-
 		InStm_Flow = QtGui.QLineEdit(self.Input_Steam_GrBx)
 		InStm_Flow.setGeometry(QtCore.QRect(139, 14, 52, 20))
 		InStm_Flow.setReadOnly(True)
 		InStm_Flow.setObjectName(_fromUtf8("InStm_Flow"))
-
+		#Pressure
+		self.label_InStm_Press = QtGui.QLabel(self.Input_Steam_GrBx)
+		self.label_InStm_Press.setGeometry(QtCore.QRect(10, 38, 121, 16))
+		self.label_InStm_Press.setObjectName(_fromUtf8("label_InStm_Press"))
+		InStm_Press = QtGui.QLineEdit(self.Input_Steam_GrBx)
+		InStm_Press.setGeometry(QtCore.QRect(139, 36, 52, 20))
+		InStm_Press.setReadOnly(True)
+		InStm_Press.setObjectName(_fromUtf8("InStm_Press"))
+		#Temperature
+		self.label_InStm_Temp = QtGui.QLabel(self.Input_Steam_GrBx)
+		self.label_InStm_Temp.setGeometry(QtCore.QRect(10, 60, 131, 16))
+		self.label_InStm_Temp.setObjectName(_fromUtf8("label_InStm_Temp"))
 		InStm_Temp = QtGui.QLineEdit(self.Input_Steam_GrBx)
 		InStm_Temp.setGeometry(QtCore.QRect(139, 58, 52, 20))
 		InStm_Temp.setReadOnly(True)
 		InStm_Temp.setObjectName(_fromUtf8("InStm_Temp"))
 
+		
+	##----Instantiation of elements for condensed steam----##
+		#Group box
 		self.Condensed_steam_GrBx = QtGui.QGroupBox(self.Heat_tab_2)
 		self.Condensed_steam_GrBx.setGeometry(QtCore.QRect(225, 198, 196, 81))
 		self.Condensed_steam_GrBx.setObjectName(_fromUtf8("Condensed_steam_GrBx"))
-
-
+		#Flow
 		self.label_CondStm_Flow = QtGui.QLabel(self.Condensed_steam_GrBx)
 		self.label_CondStm_Flow.setGeometry(QtCore.QRect(16, 18, 121, 16))
 		self.label_CondStm_Flow.setObjectName(_fromUtf8("label_CondStm_Flow"))
-		self.label_CondStm_Press = QtGui.QLabel(self.Condensed_steam_GrBx)
-		self.label_CondStm_Press.setGeometry(QtCore.QRect(16, 40, 131, 16))
-		self.label_CondStm_Press.setObjectName(_fromUtf8("label_CondStm_Press"))
-		
-		self.label_CondStm_Temp = QtGui.QLabel(self.Condensed_steam_GrBx)
-		self.label_CondStm_Temp.setGeometry(QtCore.QRect(16, 61, 121, 16))
-		self.label_CondStm_Temp.setObjectName(_fromUtf8("label_CondStm_Temp"))
-
 		CondStm_Flow = QtGui.QLineEdit(self.Condensed_steam_GrBx)
 		CondStm_Flow.setGeometry(QtCore.QRect(139, 16, 52, 20))
 		CondStm_Flow.setReadOnly(True)
 		CondStm_Flow.setObjectName(_fromUtf8("CondStm_Flow"))
-
-		CondStm_Temp = QtGui.QLineEdit(self.Condensed_steam_GrBx)
-		CondStm_Temp.setGeometry(QtCore.QRect(139, 60, 52, 20))
-		CondStm_Temp.setReadOnly(True)
-		CondStm_Temp.setObjectName(_fromUtf8("CondStm_Temp"))
-
+		#Pressure
+		self.label_CondStm_Press = QtGui.QLabel(self.Condensed_steam_GrBx)
+		self.label_CondStm_Press.setGeometry(QtCore.QRect(16, 40, 131, 16))
+		self.label_CondStm_Press.setObjectName(_fromUtf8("label_CondStm_Press"))
 		CondStm_Press = QtGui.QLineEdit(self.Condensed_steam_GrBx)
 		CondStm_Press.setGeometry(QtCore.QRect(139, 38, 52, 20))
 		CondStm_Press.setReadOnly(True)
 		CondStm_Press.setObjectName(_fromUtf8("CondStm_Press"))
+		#Temperature	
+		self.label_CondStm_Temp = QtGui.QLabel(self.Condensed_steam_GrBx)
+		self.label_CondStm_Temp.setGeometry(QtCore.QRect(16, 61, 121, 16))
+		self.label_CondStm_Temp.setObjectName(_fromUtf8("label_CondStm_Temp"))
+		CondStm_Temp = QtGui.QLineEdit(self.Condensed_steam_GrBx)
+		CondStm_Temp.setGeometry(QtCore.QRect(139, 60, 52, 20))
+		CondStm_Temp.setReadOnly(True)
+		CondStm_Temp.setObjectName(_fromUtf8("CondStm_Temp"))
+				
 
-		self.tabWidget_Heater.addTab(self.Heat_tab_2, _fromUtf8(""))
-		self.Heat_tab_3 = QtGui.QWidget()
-		self.Heat_tab_3.setObjectName(_fromUtf8("Heat_tab_3"))
+	##----Instantiation of elements for variable output---#
 		self.label = QtGui.QLabel(self.Heat_tab_3)
 		self.label.setGeometry(QtCore.QRect(10, 10, 161, 16))
 		self.label.setObjectName(_fromUtf8("label"))
@@ -784,11 +865,12 @@ class Ui_Dialog(object):
 		self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
 		self.verticalLayout.setGeometry(QtCore.QRect(15, 0, 400, 300))
 		self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
-
+		#Addition of grafics in window
 		dc = MyDynamicMplCanvas(Dialog, width=4, height=3, dpi=85)
 		self.verticalLayout.addWidget(dc)
 
-
+	##----Selector of Heat type----##
+		#Selectable list
 		self.tabWidget_Heater.addTab(self.Heat_tab_3, _fromUtf8(""))
 		Selector_Heater_type = QtGui.QComboBox(Dialog)
 		Selector_Heater_type.setGeometry(QtCore.QRect(7, 6, 411, 22))
@@ -824,7 +906,7 @@ class Ui_Dialog(object):
 "de salida [°C]", None))
 		self.label_Type_Material.setText(_translate("Dialog", "Tipo de material", None))
 		self.OKButton_Heat.setText(_translate("Dialog", "Aceptar", None))
-		self.Calculated_properties_GrBx.setTitle(_translate("Dialog", "Propiedades físicas calculadas", None))
+		self.Calculated_properties_GrBx.setTitle(_translate("Dialog", "Parametros calculados", None))
 		self.label_Juice_Velocity.setText(_translate("Dialog", "Velocidad del jugo [m/s]", None))
 		self.label_Scalling_Resist.setText(_translate("Dialog", "Resistencia incrustaciones \n"
 "[m2.°K/W]", None))
@@ -850,8 +932,8 @@ class Ui_Dialog(object):
 		self.label_OutFluid_Purity.setText(_translate("Dialog", "Pureza [kg/kg]", None))
 		self.label_OutFluid_InsolubleSolids.setText(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))
 		self.label_OutFluid_pH.setText(_translate("Dialog", "pH ", None))
-		self.label_OutFluid_pressure.setText(_translate("Dialog", "Presión[Pa] ", None))
-		self.label_InFluid_pressure.setText(_translate("Dialog", "Presión[Pa] ", None))
+		self.label_OutFluid_pressure.setText(_translate("Dialog", "Presión[kPa] ", None))
+		self.label_InFluid_pressure.setText(_translate("Dialog", "Presión[kPa] ", None))
 
 		self.Input_fluid_GrBx.setTitle(_translate("Dialog", "Fluido de entrada", None))
 		self.label_InFluid_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
@@ -862,11 +944,11 @@ class Ui_Dialog(object):
 		self.label_InFluid_pH.setText(_translate("Dialog", "pH ", None))
 		self.Input_Steam_GrBx.setTitle(_translate("Dialog", "Vapor de entrada", None))
 		self.label_InStm_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
-		self.label_InStm_Press.setText(_translate("Dialog", "Presión [Pa]", None))
+		self.label_InStm_Press.setText(_translate("Dialog", "Presión [kPa]", None))
 		self.label_InStm_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
 		self.Condensed_steam_GrBx.setTitle(_translate("Dialog", "Vapor condensado ", None))
 		self.label_CondStm_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
-		self.label_CondStm_Press.setText(_translate("Dialog", "Presión [Pa]", None))
+		self.label_CondStm_Press.setText(_translate("Dialog", "Presión [kPa]", None))
 		self.label_CondStm_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
 		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(self.Heat_tab_2), _translate("Dialog", "Variables de proceso", None))
 		self.label.setText(_translate("Dialog", "Temperatura de jugo de salida:", None))

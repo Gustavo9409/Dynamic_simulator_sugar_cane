@@ -93,34 +93,32 @@ def Update_window():
 					Purity.setDisabled(1)
 					Insoluble_Solids.setDisabled(1)
 					Temp.setDisabled(1)
+					pH.setDisabled(1)
 					checkBox_Saturated_vapor.setChecked(True)
 					label_vapor_type.show()
 					checkBox_Saturated_vapor.show()
 					checkBox_Overheated_vapor.show()
 					if str(vapor_data[len(vapor_data)-1])=="1.0": ##Que es un vapor saturado
 						saturado=1
-						Pressure.setText(str(vapor_data[0]))
+						Pressure.setText(str(float(vapor_data[0])/1000.0))
 						Flow.setText(str(vapor_data[1]))
-						pH.setText(str(vapor_data[2]))
-						Temp.setText(str(round(vapor_data[3],3)))
-						Specific_Heat.setText(str("{:.3E}".format(Decimal(vapor_data[4]))))
-						Density.setText(str(round(vapor_data[5],3)))
-						Viscosity.setText(str("{:.3E}".format(Decimal(vapor_data[6]))))
-						Enthalpy.setText(str("{:.3E}".format(vapor_data[7])))
-						Conductivity.setText(str(round(vapor_data[8],3)))
+						Temp.setText(str(round(vapor_data[2],3)))
+						Specific_Heat.setText(str("{:.3E}".format(Decimal(vapor_data[3]))))
+						Density.setText(str(round(vapor_data[4],3)))
+						Viscosity.setText(str("{:.3E}".format(Decimal(vapor_data[5]))))
+						Enthalpy.setText(str("{:.3E}".format(vapor_data[6])))
+						Conductivity.setText(str(round(vapor_data[7],3)))
 						checkBox_Saturated_vapor.setChecked(True)
 						##
 						comBox_VariableInput.clear()
 						comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-						comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))						
-						comBox_VariableInput.addItem("pH")
+						comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))						
 					else:
 						saturado=0
 						comBox_VariableInput.clear()
 						comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-						comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
-						comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))	
-						comBox_VariableInput.addItem("pH")
+						comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
+						comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))
 						pass
 				elif flag==("Fj"+str(num_window)):
 					update=1
@@ -131,6 +129,7 @@ def Update_window():
 					Purity.setEnabled(1)
 					Insoluble_Solids.setEnabled(1)
 					Temp.setEnabled(1)
+					pH.setEnabled(1)
 					Pressure.setEnabled(1)
 					label_vapor_type.hide()
 					checkBox_Saturated_vapor.hide()
@@ -141,7 +140,7 @@ def Update_window():
 					Temp.setText(str(round(juice_data[3],3)))
 					Insoluble_Solids.setText(str(juice_data[4]))
 					pH.setText(str(juice_data[5]))
-					Pressure.setText(str(juice_data[6]))
+					Pressure.setText(str(juice_data[6]/1000.0))
 					Specific_Heat.setText(str("{:.3E}".format(Decimal(juice_data[7]))))
 					Density.setText(str(round(juice_data[8],3)))
 					Viscosity.setText(str("{:.3E}".format(Decimal(juice_data[9]))))
@@ -153,7 +152,7 @@ def Update_window():
 					comBox_VariableInput.addItem(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))
 					comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))	
 					comBox_VariableInput.addItem("Pureza [kg/kg]")
-					comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
+					comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 					comBox_VariableInput.addItem("pH")
 				elif flag==("Fw"+str(num_window)):
 					update=1
@@ -163,6 +162,7 @@ def Update_window():
 					Brix.setDisabled(1)
 					Purity.setDisabled(1)
 					Insoluble_Solids.setDisabled(1)
+					pH.setEnabled(1)
 					Temp.setEnabled(1)
 					Pressure.setEnabled(1)
 					label_vapor_type.hide()
@@ -171,13 +171,13 @@ def Update_window():
 					Flow.setText(str(water_data[0]))
 					Temp.setText(str(round(water_data[1],3)))
 					pH.setText(str(water_data[2]))
-					Pressure.setText(str(water_data[3]))
+					Pressure.setText(str(water_data[3]/1000.0))
 					Density.setText(str(round(water_data[4],3)))
 					Enthalpy.setText(str("{:.3E}".format(Decimal(water_data[5]))))
 					##
 					comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
 					comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))		
-					comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
+					comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 					comBox_VariableInput.addItem("pH")
 	else:
 		update=0
@@ -208,8 +208,7 @@ class window_confirm_inputs(QDialog):
 			if Type_flow_selec=="Vapor":
 				if saturado==1:
 					Mvin=float(Flow.text())
-					Pvin=float(Pressure.text())
-					pHvin=float(pH.text())
+					Pvin=(float(Pressure.text()))*1000.0
 					##
 					Tvin=vapor.temperature(Pvin)
 					Temp.setText(str(round(Tvin,3)))
@@ -225,12 +224,11 @@ class window_confirm_inputs(QDialog):
 					Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpv))))
 					#*#
 					flag0="Fv"
-					dato=str(Pvin)+"\t"+str(Mvin)+"\t"+str(pHvin)+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Yv)+"\t"+str(saturado)
+					dato=str(Pvin)+"\t"+str(Mvin)+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Yv)+"\t"+str(saturado)
 				else :
 					Mvin=float(Flow.text())
-					Pvin=float(Pressure.text())
+					Pvin=(float(Pressure.text()))*1000.0
 					Tvin=float(Temp.text())
-					pHvin=float(pH.text())
 					##
 					#....¿?
 
@@ -241,7 +239,7 @@ class window_confirm_inputs(QDialog):
 				Tjin=float(Temp.text())
 				Zjin=float(Purity.text())
 				pHj=float(pH.text())
-				Pj=float(Pressure.text())
+				Pj=(float(Pressure.text()))*1000.0
 				##
 				Cpj=liquor.heat_capacity(Tjin,Bjin,Zjin)
 
@@ -262,7 +260,7 @@ class window_confirm_inputs(QDialog):
 				Mw=float(Flow.text())
 				Tw=float(Temp.text())
 				pHw=float(pH.text())
-				Pw=float(Pressure.text())
+				Pw=(float(Pressure.text()))*1000.0
 				##
 				pw=water.density(Tw)
 				Density.setText(str(round(pw,3)))
@@ -274,12 +272,61 @@ class window_confirm_inputs(QDialog):
 			print "OK PARAMETERS"
 			self.close()
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
-			outfile = open('Blocks_data.txt', 'a')
-			outfile.write("\n"+flag0+flag+"\t"+dato)
-			outfile.close()
+			upd, change=update_data(flag0+flag)
+			if upd==0:
+				outfile = open('Blocks_data.txt', 'a')
+				outfile.write("\n"+flag0+flag+"\t"+dato)
+				outfile.close()
+			else:
+				replace("Blocks_data.txt",change,flag0+flag+"\t"+dato)
+			Resultado=QtGui.QDialog()
+			QtGui.QMessageBox.information(Resultado, 
+			'Ok',
+			_translate("Dialog","Instanciación correcta de datos.",None),QtGui.QMessageBox.Ok)
 		def NO(self):
 			self.close()
 
+def replace(path, pattern, subst):
+	# #Create temp file
+	# 	fh, abs_path = mkstemp()
+	# 	with open(abs_path,'w') as new_file:
+	# 		with open(path) as old_file:
+	# 			for line in old_file:
+	# 				new_file.write(line.replace(pattern, subst))
+	# 	close(fh)
+	# 	#Remove original file
+	# 	remove(path)
+	# 	#Move new file
+	# 	move(abs_path, path)
+	###---------#####
+		# for line in fileinput.input(path, inplace=1):
+		# 	if pattern in line:
+		# 		line = line.replace(pattern,subst)
+		# 	sys.stdout.write(line)
+	###---------#####
+		flags=0
+		with open(path, "r+" ) as filex:
+			fileContents = filex.read()
+			textPattern = re.compile( re.escape( pattern ), flags )
+			fileContents = textPattern.sub( subst, fileContents )
+			filex.seek( 0 )
+			filex.truncate()
+			filex.write(fileContents) 
+
+def update_data(dato):
+	flg=0
+	dats=""
+	input_heat = open('Blocks_data.txt', 'r+')
+	data=input_heat.readlines()
+	for i in data:
+		info=(i.strip()).split("\t")
+		if info[0]==dato:
+			flg=1
+			dats=(i.strip())
+		else:
+			flg=0
+			dats=""
+	return flg, dats
 
 class Ui_Dialog(object):
 
@@ -290,9 +337,9 @@ class Ui_Dialog(object):
 				and(len(pH.text())>0)and(len(Purity.text())>0)and(len(Pressure.text())>0))
 		elif Type_flow_selec=="Vapor":
 			if saturado==1:
-				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)and(len(pH.text())>0)
+				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)
 			else:
-				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)and(len(pH.text())>0)and(len(Temp.text())>0)
+				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)and(len(Temp.text())>0)
 		elif Type_flow_selec=="Agua":
 			confirm=(len(Flow.text())>0)and(len(Temp.text())>0)and(len(pH.text())>0)
 		else:
@@ -510,53 +557,51 @@ class Ui_Dialog(object):
 		if update==1:
 			SpinBox_VariableInput.valueChanged.connect(self.variable_change)
 
-	def replace(self,path, pattern, subst):
-	# #Create temp file
-	# 	fh, abs_path = mkstemp()
-	# 	with open(abs_path,'w') as new_file:
-	# 		with open(path) as old_file:
-	# 			for line in old_file:
-	# 				new_file.write(line.replace(pattern, subst))
-	# 	close(fh)
-	# 	#Remove original file
-	# 	remove(path)
-	# 	#Move new file
-	# 	move(abs_path, path)
-	###---------#####
-		# for line in fileinput.input(path, inplace=1):
-		# 	if pattern in line:
-		# 		line = line.replace(pattern,subst)
-		# 	sys.stdout.write(line)
-	###---------#####
-		flags=0
-		with open(path, "r+" ) as filex:
-			fileContents = filex.read()
-			textPattern = re.compile( re.escape( pattern ), flags )
-			fileContents = textPattern.sub( subst, fileContents )
-			filex.seek( 0 )
-			filex.truncate()
-			filex.write(fileContents) 
-
+	def Update_initial_condition(self):
+		infile = open('time_exec.txt', 'r+')
+		data=infile.readlines()
+		if len(data)>1:
+			if data[-1]!="stop":
+				array=data[-1].strip().split("\t")
+				array_1=data[-1].strip()
+				yb_n=array[2]
+				array_change=array[0]+"\t"+array[1]+"\t"+array[1]
+				replace('time_exec.txt',array_1,array_change)
+		infile.close()
 
 	def variable_change(self):
-		#print"cambio de variable"
+		global VariableInput
 		input_heat = open('Blocks_data.txt', 'r+')
 		data=input_heat.readlines()
 		Kj=False
 		valor=SpinBox_VariableInput.value()
 		if(VariableInput==(_translate("Dialog", "Flujo másico [t/h]", None))):
+			# if float(Flow.text())!=valor:
+			# 	self.Update_initial_condition()
 			Flow.setText(str(valor))
 		elif(VariableInput==("Brix [kg/kg]")):
+			# if float(Brix.text())!=valor:
+			# 	self.Update_initial_condition()
 			Brix.setText(str(valor))
 		elif(VariableInput==(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))):
+			# if float(Insoluble_Solids.text())!=valor:
+			# 	self.Update_initial_condition()
 			Insoluble_Solids.setText(str(valor))
 		elif(VariableInput==(_translate("Dialog", "Temperatura [°C]", None))):
+			# if float(Temp.text())!=valor:
+			# 	self.Update_initial_condition()
 			Temp.setText(str(valor))
 		elif(VariableInput==("Pureza [kg/kg]")):
+			# if float(Purity.text())!=valor:
+			# 	self.Update_initial_condition()
 			Purity.setText(str(valor))
-		elif(VariableInput==(_translate("Dialog", "Presión [Pa]", None))):
+		elif(VariableInput==(_translate("Dialog", "Presión [kPa]", None))):
+			# if float(Pressure.text())!=valor:
+			# 	self.Update_initial_condition()
 			Pressure.setText(str(valor))
 		elif(VariableInput==("pH")):
+			# if float(pH.text())!=valor:
+			# 	self.Update_initial_condition()
 			pH.setText(str(valor))
 		if len(data)>0:
 			for i in data:
@@ -567,20 +612,20 @@ class Ui_Dialog(object):
 						dato1=str(i.strip())
 						Kj=True
 						if saturado==1:
-							Tvin=vapor.temperature(float(Pressure.text()))
+							Tvin=vapor.temperature(float(Pressure.text())*1000.0)
 							Temp.setText(str(round(Tvin,3)))
-							pv=vapor.density(float(Pressure.text()))
+							pv=vapor.density(float(Pressure.text())*1000.0)
 							Density.setText(str(round(pv,3)))
 							uv=vapor.viscosity(Tvin)
 							Viscosity.setText(str("{:.3E}".format(Decimal(uv))))
-							Hv=vapor.enthalpy(Tvin,float(Pressure.text()))##-la del agua??
+							Hv=vapor.enthalpy(Tvin,(float(Pressure.text())*1000.0))##-la del agua??
 							Enthalpy.setText(str("{:.3E}".format(Decimal(Hv))))
 							Yv=vapor.thermal_conductivity(Tvin)
 							Conductivity.setText(str(round(Yv,3)))
 							Cpv=Hv/Tvin
 							Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpv))))
 
-							dato2=(flag+"\t"+Pressure.text()+"\t"+Flow.text()+"\t"+pH.text()+"\t"+Temp.text()+"\t"+Specific_Heat.text()+"\t"+Density.text()
+							dato2=(flag+"\t"+str(float(Pressure.text())*1000.0)+"\t"+Flow.text()+"\t"+Temp.text()+"\t"+Specific_Heat.text()+"\t"+Density.text()
 								+"\t"+Viscosity.text()+"\t"+Enthalpy.text()+"\t"+Conductivity.text()+"\t"+"1")
 						else:
 							pass
@@ -597,7 +642,7 @@ class Ui_Dialog(object):
 						Enthalpy.setText(str("{:.3E}".format(Decimal(Hj))))
 						Yj=liquor.thermal_conductivity(float(Temp.text()),float(Brix.text()))
 						Conductivity.setText(str(round(Yj,3)))
-						dato2=(flag+"\t"+Flow.text()+"\t"+Brix.text()+"\t"+Purity.text()+"\t"+Temp.text()+"\t"+Insoluble_Solids.text()+"\t"+pH.text()+"\t"+Pressure.text()+"\t"
+						dato2=(flag+"\t"+Flow.text()+"\t"+Brix.text()+"\t"+Purity.text()+"\t"+Temp.text()+"\t"+Insoluble_Solids.text()+"\t"+pH.text()+"\t"+str(float(Pressure.text())*1000.0)+"\t"
 							+Specific_Heat.text()+"\t"+Density.text()+"\t"+Viscosity.text()+"\t"+Enthalpy.text()+"\t"+Conductivity.text())
 					if flag==("Fw"+str(num_window)):
 						dato1=str(i.strip())
@@ -606,13 +651,14 @@ class Ui_Dialog(object):
 						Density.setText(str(round(pw,3)))
 						Hw=water.enthalpy(float(Temp.text()))
 						Enthalpy.setText(str("{:.3E}".format(Decimal(Hw))))
-						dato2=flag+"\t"+Flow.text()+"\t"+Temp.text()+"\t"+pH.text()+"\t"+Pressure.text()+"\t"+Density.text()+"\t"+Enthalpy.text()
+						dato2=flag+"\t"+Flow.text()+"\t"+Temp.text()+"\t"+pH.text()+"\t"+str(float(Pressure.text())*1000.0)+"\t"+Density.text()+"\t"+Enthalpy.text()
 		if Kj==True:
 			input_heat.close()
-			self.replace("Blocks_data.txt",dato1,dato2)
+			replace("Blocks_data.txt",dato1,dato2)
 
 	def TabChange(self):
-		#self.replace("Blocks_data.txt","dato1","epaaa")
+		global VariableInput
+		#replace("Blocks_data.txt","dato1","epaaa")
 		CurrentTab=Flow_tabWidget.currentIndex()
 		#print CurrentTab
 		if CurrentTab==2:
@@ -641,7 +687,7 @@ class Ui_Dialog(object):
 					SpinBox_VariableInput.setValue(float(Purity.text()))
 				else:
 					SpinBox_VariableInput.setValue(0.0)
-			elif(VariableInput==(_translate("Dialog", "Presión [Pa]", None))):
+			elif(VariableInput==(_translate("Dialog", "Presión [kPa]", None))):
 				if len(Pressure.text())>0:
 					SpinBox_VariableInput.setValue(float(Pressure.text()))
 				else:
@@ -656,7 +702,6 @@ class Ui_Dialog(object):
 	def selection_VariableInput(self):
 		global VariableInput
 		VariableInput=comBox_VariableInput.currentText()
-
 		if(VariableInput==(_translate("Dialog", "Flujo másico [t/h]", None))):
 			if len(Flow.text())>0:
 				SpinBox_VariableInput.setValue(float(Flow.text()))
@@ -682,7 +727,7 @@ class Ui_Dialog(object):
 				SpinBox_VariableInput.setValue(float(Purity.text()))
 			else:
 				SpinBox_VariableInput.setValue(0.0)
-		elif(VariableInput==(_translate("Dialog", "Presión [Pa]", None))):
+		elif(VariableInput==(_translate("Dialog", "Presión [kPa]", None))):
 			if len(Pressure.text())>0:
 				SpinBox_VariableInput.setValue(float(Pressure.text()))
 			else:
@@ -702,6 +747,7 @@ class Ui_Dialog(object):
 		Type_flow_selec=comBox_Type_Flow.currentText()
 		if Type_flow_selec=="Vapor":
 			Brix.setDisabled(1)
+			pH.setDisabled(1)
 			Purity.setDisabled(1)
 			Insoluble_Solids.setDisabled(1)
 			Temp.setDisabled(1)
@@ -713,18 +759,18 @@ class Ui_Dialog(object):
 			if saturado==1:
 				comBox_VariableInput.clear()
 				comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-				comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
-				comBox_VariableInput.addItem("pH")
+				comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 			else:
+				comBox_VariableInput.clear()
 				comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-				comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
-				comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))				
-				comBox_VariableInput.addItem("pH")
+				comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
+				comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))
 		elif Type_flow_selec=="Jugo":
 			Brix.setEnabled(1)
 			Purity.setEnabled(1)
 			Insoluble_Solids.setEnabled(1)
 			Temp.setEnabled(1)
+			pH.setEnabled(1)
 			Pressure.setEnabled(1)
 			label_vapor_type.hide()
 			checkBox_Saturated_vapor.hide()
@@ -735,11 +781,12 @@ class Ui_Dialog(object):
 			comBox_VariableInput.addItem(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))
 			comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))	
 			comBox_VariableInput.addItem("Pureza [kg/kg]")
-			comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
+			comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 			comBox_VariableInput.addItem("pH")
 		elif Type_flow_selec=="Agua":
 			Brix.setDisabled(1)
 			Purity.setDisabled(1)
+			pH.setEnabled(1)
 			Insoluble_Solids.setDisabled(1)
 			Temp.setEnabled(1)
 			Pressure.setEnabled(1)
@@ -749,7 +796,7 @@ class Ui_Dialog(object):
 			##
 			comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
 			comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))		
-			comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
+			comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 			comBox_VariableInput.addItem("pH")
 
 	def selection_TypeVapor(self):
@@ -760,15 +807,13 @@ class Ui_Dialog(object):
 				Temp.setDisabled(1)
 				comBox_VariableInput.clear()
 				comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-				comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))			
-				comBox_VariableInput.addItem("pH")
+				comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))			
 			elif checkBox_Overheated_vapor.isChecked():
 				Temp.setEnabled(1)
 				comBox_VariableInput.clear()
 				comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-				comBox_VariableInput.addItem(_translate("Dialog", "Presión [Pa]", None))
+				comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 				comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))				
-				comBox_VariableInput.addItem("pH")
 				saturado=0
 		else:
 			self.Pressure.setEnabled(1)
@@ -781,7 +826,7 @@ class Ui_Dialog(object):
 		self.label_Purity.setText(_translate("Dialog", "Pureza [kg/kg]", None))
 		self.label_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
 		self.label_pH.setText(_translate("Dialog", "pH", None))
-		self.label_Pressure.setText(_translate("Dialog", "Presión [Pa]", None))
+		self.label_Pressure.setText(_translate("Dialog", "Presión [kPa]", None))
 		
 		self.mood_button_group = QtGui.QButtonGroup()
 		checkBox_Saturated_vapor.setText(_translate("Dialog", "Vapor saturado", None))

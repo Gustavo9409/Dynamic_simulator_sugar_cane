@@ -28,10 +28,13 @@ global i_ht
 global i_vl
 global i_fl
 global i_tk
+global i_cnv
+global i_dvg
 global l
 global run_flag
 global Ts_value
 global Sim_time
+global array_connections
 Sim_time=1.0
 l=0
 i_ev=1
@@ -39,7 +42,10 @@ i_ht=1
 i_vl=1
 i_fl=1
 i_tk=1
+i_dvg=1
+i_cnv=1
 run_flag=0
+array_connections=[]
 
 outfile=open('time_exec.txt', 'w')
 outfile.close()
@@ -160,6 +166,8 @@ class DeleteDialog(QDialog):
 		global i_tk
 		global i_ht
 		global i_ev
+		global i_dvg
+		global i_cnv
 		Delete_item = editor.diagramScene.items(pos)
 		for item in Delete_item:
 			if hasattr(item, 'name_block'):
@@ -210,6 +218,12 @@ class DeleteDialog(QDialog):
 								flag=info[0]
 								if flag==("Ht"+str(aux3)):
 									self.replace("Blocks_data.txt",str(i.strip()),"")
+				if aux2=="Divergencia":
+					if int(aux3)==(i_dvg-1):
+						i_dvg=i_dvg-1
+				if aux2=="Convergencia":
+					if int(aux3)==(i_cnv-1):
+						i_cnv=i_cnv-1
 					
 		self.close()
 	def NO(self):
@@ -226,13 +240,15 @@ class DeleteDialog(QDialog):
 
 class PortItem(QGraphicsEllipseItem):
 	""" Represents a port to a subsystem """
-	def __init__(self, name,typ, parent=None):
-		QGraphicsEllipseItem.__init__(self, QRectF(-6,-6,12.0,12.0), parent)
+	def __init__(self, name,typ,block, parent=None):
+		QGraphicsEllipseItem.__init__(self, QRectF(-6,-6,8.0,8.0), parent)
 		self.setCursor(QCursor(QtCore.Qt.CrossCursor))
 		# Properties:
-		if typ=='out':
+		self.name_block=block
+		self.typ=typ
+		if self.typ=='out':
 			self.setBrush(QBrush(Qt.green))
-		elif typ=='in':
+		elif self.typ=='in':
 			self.setBrush(QBrush(Qt.blue))
 		# Name:
 		self.name = name
@@ -276,12 +292,12 @@ class BlockItem_Evap(QGraphicsRectItem):
 
 		# Inputs and outputs of the block:
 		self.inputs = []
-		self.inputs.append( PortItem('Jugo de entrada','in', self) )
-		self.inputs.append( PortItem('Vapor vivo','in', self) )
+		self.inputs.append( PortItem('Jugo de entrada','in',str(name_block), self) )
+		self.inputs.append( PortItem('Vapor vivo','in',str(name_block), self) )
 		self.outputs = []
-		self.outputs.append( PortItem('Jugo de salida','out', self) )
-		self.outputs.append( PortItem('Vapor vegetal','out', self) )
-		self.outputs.append( PortItem('Vapor condensado','out', self) )
+		self.outputs.append( PortItem('Jugo de salida','out',str(name_block), self) )
+		self.outputs.append( PortItem('Vapor vegetal','out',str(name_block), self) )
+		self.outputs.append( PortItem('Vapor condensado','out',str(name_block), self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
@@ -313,11 +329,11 @@ class BlockItem_Evap(QGraphicsRectItem):
 		self.label.setPos(lx, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(-4, (h / 2)+15)
-		self.inputs[1].setPos(w+4, (h / 2)+60)
+		self.inputs[0].setPos(2, (h / 2)+16)
+		self.inputs[1].setPos(w+2, (h / 2)+62)
 		self.outputs[0].setPos(w, h-12)
-		self.outputs[1].setPos((w/2)+28, 23)
-		self.outputs[2].setPos((w/2)-3, h-5)
+		self.outputs[1].setPos((w/2)+28, 25)
+		self.outputs[2].setPos((w/2)-2, h-5)
 
 		return w, h
 
@@ -349,11 +365,11 @@ class BlockItem_Heat(QGraphicsRectItem):
 
 		# Inputs and outputs of the block:
 		self.inputs = []
-		self.inputs.append(PortItem('Fluido de entrada','in', self) )
-		self.inputs.append(PortItem('Vapor de entrada','in', self) )
+		self.inputs.append(PortItem('Fluido de entrada','in',str(name_block), self) )
+		self.inputs.append(PortItem('Vapor de entrada','in',str(name_block), self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Fluido de salida','out', self) )
-		self.outputs.append(PortItem('Vapor condensado','out', self) )
+		self.outputs.append(PortItem('Fluido de salida','out',str(name_block), self) )
+		self.outputs.append(PortItem('Vapor condensado','out',str(name_block), self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
@@ -384,10 +400,10 @@ class BlockItem_Heat(QGraphicsRectItem):
 		ly = (h - lh) / 2
 		self.label.setPos(lx, ly)
 		# Update port positions:
-		self.inputs[0].setPos(32, 0 )
-		self.inputs[1].setPos(154, 4)
-		self.outputs[0].setPos(32, h)
-		self.outputs[1].setPos(w-45, h-4)
+		self.inputs[0].setPos(33, 0 )
+		self.inputs[1].setPos(155, 5)
+		self.outputs[0].setPos(33, h)
+		self.outputs[1].setPos(w-43, h-4)
 
 		return w, h
 
@@ -418,9 +434,9 @@ class BlockItem_Flow(QGraphicsRectItem):
 
 		# Inputs and outputs of the block:
 		self.inputs = []
-		self.inputs.append(PortItem('Entrada','in', self) )
+		self.inputs.append(PortItem('Entrada','in',str(name_block), self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Salida','out', self) )
+		self.outputs.append(PortItem('Salida','out',str(name_block), self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
@@ -451,22 +467,10 @@ class BlockItem_Flow(QGraphicsRectItem):
 		ly = (h - lh) / 2
 		self.label.setPos(lx, ly)
 		# Update port positions:
-		if len(self.inputs) == 1:
-		 self.inputs[0].setPos(-4, h / 2)
-		elif len(self.inputs) > 1:
-		 y = 5
-		 dy = (h - 10) / (len(self.inputs) - 1)
-		 for inp in self.inputs:
-			inp.setPos(-4, y)
-			y += dy
-		if len(self.outputs) == 1:
-		 self.outputs[0].setPos(w+4, h / 2)
-		elif len(self.outputs) > 1:
-		 y = 5
-		 dy = (h - 10) / (len(self.outputs) + 0)
-		 for outp in self.outputs:
-			outp.setPos(w+4, y)
-			y += dy
+		self.inputs[0].setPos(-4, (h / 2)+1)
+		
+		self.outputs[0].setPos(w+4, (h / 2)+1)
+		
 		return w, h  
 
 class BlockItem_Valve(QGraphicsRectItem):
@@ -496,9 +500,9 @@ class BlockItem_Valve(QGraphicsRectItem):
 
 		# Inputs and outputs of the block:
 		self.inputs = []
-		self.inputs.append(PortItem('Fluido de entrada','in', self) )
+		self.inputs.append(PortItem('Fluido de entrada','in',str(name_block), self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Fluido de salida','out', self) )
+		self.outputs.append(PortItem('Fluido de salida','out',str(name_block), self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
@@ -530,10 +534,146 @@ class BlockItem_Valve(QGraphicsRectItem):
 		self.label.setPos(lx, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(-4, h-20)
-		self.outputs[0].setPos(w+4, h-20)
+		self.inputs[0].setPos(0, h-17)
+		self.outputs[0].setPos(w+4, h-17)
 
 		return w, h
+
+class BlockItem_Convergence(QGraphicsRectItem):
+	""" 
+	Represents a block in the diagram
+	Has an x and y and width and height
+	width and height can only be adjusted with a tip in the lower right corner.
+
+	- in and output ports
+	- parameters
+	- description
+	"""
+	def __init__(self, name_block='Untitled', parent=None):
+		super(BlockItem_Convergence, self).__init__(parent)
+		w = 42.0
+		h = 70.0
+		# Properties of the rectangle:
+		self.setPen(QtGui.QPen(Qt.NoPen)) 
+		Img= QtGui.QImage(dir_script+"\Images\Convergence.jpg"); 
+		self.setBrush(QtGui.QBrush(Img))
+		self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
+		self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+		# Label:
+		self.name_block=name_block
+		# self.label = QGraphicsTextItem(self.name_block, self)
+		# self.label.setDefaultTextColor(QtGui.QColor('red'))
+
+		# Inputs and outputs of the block:
+		self.inputs = []
+		self.inputs.append(PortItem('Entrada 1','in',str(name_block), self) )
+		self.inputs.append(PortItem('Entrada 2','in',str(name_block), self) )
+		self.outputs = []
+		self.outputs.append(PortItem('Salida','out',str(name_block), self) )
+		# Update size:
+		self.changeSize(w, h)
+	def editParameters(self):
+		pd = ParameterDialog_Flow(self.name_block,self.window())
+		#pd.exec_()
+	def DeleteBlock(self):
+		pd = DeleteDialog(self.window())
+		pd.exec_()
+	def contextMenuEvent(self, event):
+		menu = QMenu()
+		dl = menu.addAction('Eliminar')
+		# pa = menu.addAction('Propiedades')
+		dl.triggered.connect(self.DeleteBlock)
+		# pa.triggered.connect(self.editParameters)
+		menu.exec_(event.screenPos())
+	def changeSize(self, w, h):
+		""" Resize block function """
+		# Limit the block size:
+		if h < 20:
+		 h = 20
+		if w < 40:
+		 w = 40
+		self.setRect(0.0, 0.0, w, h)
+		# center label:
+		# rect = self.label.boundingRect()
+		# lw, lh = rect.width(), rect.height()
+		# lx = (w - lw) / 2
+		# ly = (h - lh) / 2
+		# self.label.setPos(lx, ly)
+		# Update port positions:
+		self.inputs[0].setPos(-4, (h / 4)+3)
+		self.inputs[1].setPos(-4, h-(h/4) )
+		self.outputs[0].setPos(w+4, (h / 2)+1)
+		
+		return w, h 
+
+class BlockItem_Divergence(QGraphicsRectItem):
+	""" 
+	Represents a block in the diagram
+	Has an x and y and width and height
+	width and height can only be adjusted with a tip in the lower right corner.
+
+	- in and output ports
+	- parameters
+	- description
+	"""
+	def __init__(self, name_block='Untitled', parent=None):
+		super(BlockItem_Divergence, self).__init__(parent)
+		w = 45.0
+		h = 70.0
+		# Properties of the rectangle:
+		self.setPen(QtGui.QPen(Qt.NoPen)) 
+		Img= QtGui.QImage(dir_script+"\Images\Divergence.jpg"); 
+		self.setBrush(QtGui.QBrush(Img))
+		self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
+		self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+		# Label:
+		self.name_block=name_block
+		# self.label = QGraphicsTextItem(self.name_block, self)
+		# self.label.setDefaultTextColor(QtGui.QColor('red'))
+
+		# Inputs and outputs of the block:
+		self.inputs = []
+		self.inputs.append(PortItem('Entrada','in',str(name_block), self) )
+		self.outputs = []
+		self.outputs.append(PortItem('Salida 1','out',str(name_block), self) )
+		self.outputs.append(PortItem('Salida 2','out',str(name_block), self) )
+		# Update size:
+		self.changeSize(w, h)
+	def editParameters(self):
+		pd = ParameterDialog_Flow(self.name_block,self.window())
+		#pd.exec_()
+	def DeleteBlock(self):
+		pd = DeleteDialog(self.window())
+		pd.exec_()
+	def contextMenuEvent(self, event):
+		menu = QMenu()
+		dl = menu.addAction('Eliminar')
+		# pa = menu.addAction('Propiedades')
+		dl.triggered.connect(self.DeleteBlock)
+		# pa.triggered.connect(self.editParameters)
+		menu.exec_(event.screenPos())
+	def changeSize(self, w, h):
+		""" Resize block function """
+		# Limit the block size:
+		if h < 20:
+		 h = 20
+		if w < 40:
+		 w = 40
+		self.setRect(0.0, 0.0, w, h)
+		# center label:
+		# rect = self.label.boundingRect()
+		# lw, lh = rect.width(), rect.height()
+		# lx = (w - lw) / 2
+		# ly = (h - lh) / 2
+		# self.label.setPos(lx, ly)
+		# Update port positions:
+		self.inputs[0].setPos(-2, (h / 2)+1)
+		self.outputs[0].setPos(w+2, (h / 4)+3)
+		self.outputs[1].setPos(w+2,  h-(h/4))
+		
+		return w, h 		
+
+
 
 class BlockItem_Tank(QGraphicsRectItem):
 	""" 
@@ -563,9 +703,9 @@ class BlockItem_Tank(QGraphicsRectItem):
 
 		# Inputs and outputs of the block:
 		self.inputs = []
-		self.inputs.append(PortItem('Fluido de entrada','in', self) )
+		self.inputs.append(PortItem('Fluido de entrada','in',str(name_block), self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Fluido de salida','out', self) )
+		self.outputs.append(PortItem('Fluido de salida','out',str(name_block), self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
@@ -596,8 +736,8 @@ class BlockItem_Tank(QGraphicsRectItem):
 		ly = (h - lh) / 2
 		self.label.setPos(lx, ly)
 		# Update port positions:
-		self.inputs[0].setPos(-4, h-34)
-		self.outputs[0].setPos(w+4, h-34)
+		self.inputs[0].setPos(0, h-32)
+		self.outputs[0].setPos(w+4, h-32)
 		return w, h
 
 	  
@@ -627,7 +767,9 @@ class EditorGraphicsView(QGraphicsView):
 			global i_ht 
 			global i_vl 
 			global i_tk 
-			global i_fl  
+			global i_fl
+			global i_cnv
+			global i_dvg  
 			name = str(event.mimeData().data('component/name'))
 			if namex==str("Flujo"):
 				b1 = BlockItem_Flow(name+str(i_fl))
@@ -649,6 +791,16 @@ class EditorGraphicsView(QGraphicsView):
 				b1.setPos(self.mapToScene(event.pos()))
 				self.scene().addItem(b1)
 				i_tk=i_tk+1
+			elif namex==str("Convergencia"):
+				b1 = BlockItem_Convergence(name+str(i_cnv))
+				b1.setPos(self.mapToScene(event.pos()))
+				self.scene().addItem(b1)
+				i_cnv=i_cnv+1
+			elif namex==str("Divergencia"):
+				b1 = BlockItem_Divergence(name+str(i_dvg))
+				b1.setPos(self.mapToScene(event.pos()))
+				self.scene().addItem(b1)
+				i_dvg=i_dvg+1
 			# elif namex==str(Valvula):
 			else:
 				b1 = BlockItem_Valve(name+str(i_vl))
@@ -689,6 +841,8 @@ class DiagramEditor(QWidget):
 		Vali = Validator()
 
 		self.generalayout = QtGui.QGridLayout(self)
+		self.generalayout.setSpacing(0)
+		self.generalayout.setContentsMargins(0,0,0,0);
 
 		self.resize(1000, 800)
 		self.timer = QtCore.QTimer()
@@ -702,9 +856,16 @@ class DiagramEditor(QWidget):
 		# Widget layout and child widgets:
 
 		self.horizontalLayoutWidget = QtGui.QWidget(self)
-		self.horizontalLayoutWidget.setGeometry(QtCore.QRect(0, 30, 1002, 770))
+		self.horizontalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 1002, 770))
+		
+		self.buttonsLayoutWidget=  QtGui.QWidget(self)
+		self.buttonsLayoutWidget.setGeometry(QtCore.QRect(0, 30, 1002, 26))
+
+		self.buttonsHorizontalLayout = QtGui.QHBoxLayout(self.buttonsLayoutWidget)
+		self.buttonsHorizontalLayout.setGeometry(QtCore.QRect(0, 30,970, 26))
+
 		self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
-		self.horizontalLayout.setGeometry(QtCore.QRect(0, 30, 970, 800))
+		self.horizontalLayout.setGeometry(QtCore.QRect(0, 0, 970, 800))
 		self.buttonRun = QtGui.QPushButton(self)
 		self.buttonRun.setGeometry(QtCore.QRect(940, 9, 24, 24))
 		self.buttonRun.setIcon(QtGui.QIcon(dir_script+"\Images\play_icon.png"))
@@ -720,12 +881,14 @@ class DiagramEditor(QWidget):
 		self.buttonPause.setStyleSheet("border: none")
 
 		
+		
 		self.label_Ts=QtGui.QLabel(self)
 		self.label_Ts.setGeometry(QtCore.QRect(747, 9, 127, 24))
 		self.label_Ts.setText("Tiempo de muestreo (seg):")
+		self.label_Ts.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 		Ts_value=QtGui.QLineEdit(self)
 		Ts_value.setGeometry(QtCore.QRect(876, 11, 33, 21))
-		Ts_value.setText("1.0")
+		Ts_value.setText("0.5")
 		Vali.NumValidator(Ts_value)
 
 
@@ -738,6 +901,17 @@ class DiagramEditor(QWidget):
 		label_indicator=QtGui.QLabel(self)
 		label_indicator.setGeometry(QtCore.QRect(45, 9, 105, 24))
 		label_indicator.setText(_translate("Dialog","Simulación: --", None))
+		
+		self.buttonsHorizontalLayout.addWidget(indicator)
+		self.buttonsHorizontalLayout.addWidget(label_indicator,15)
+		self.buttonsHorizontalLayout.addWidget(self.label_Ts,15)
+		self.buttonsHorizontalLayout.addWidget(Ts_value,1)
+		self.buttonsHorizontalLayout.addWidget(self.buttonRun)
+		self.buttonsHorizontalLayout.addWidget(self.buttonPause)
+
+
+		self.generalayout.addWidget(self.buttonsLayoutWidget,0,0)
+		self.generalayout.addWidget(self.horizontalLayoutWidget,1,0)
 		
 
 		# self.libraryBrowserView = QtGui.QListView(self)
@@ -753,17 +927,23 @@ class DiagramEditor(QWidget):
 		self.iconHeater=QIcon(dir_script+"\Images\heater-icon.png");
 		self.iconFlow=QIcon(dir_script+"\Images\_arrow_flow-icon.png");
 		self.iconValve=QIcon(dir_script+"\Images\_valve_icon.png");   
-		self.iconTank=QIcon(dir_script+"\Images\Tank-icon.png");   
+		self.iconTank=QIcon(dir_script+"\Images\Tank-icon.png");
+		self.icon_divergence=QIcon(dir_script+"\Images\Divergence.jpg")  
+		self.icon_convergence=QIcon(dir_script+"\Images\Convergence.jpg")  
 		self.EvaporItem=QtGui.QStandardItem(self.iconEvaporator, 'Evaporador');
 		self.HeaterItem=QtGui.QStandardItem(self.iconHeater, 'Calentador') ;
 		self.Flow=QtGui.QStandardItem(self.iconFlow, 'Flujo') ;
 		self.Valve=QtGui.QStandardItem(self.iconValve,_translate("Dialog","Válvula", None)) ;
-		self.Tank=QtGui.QStandardItem(self.iconTank, 'Tanque') ;
+		self.Tank=QtGui.QStandardItem(self.iconTank, 'Tanque') 
+		self.Divergence=QtGui.QStandardItem(self.icon_divergence, 'Divergencia') 
+		self.Convergence=QtGui.QStandardItem(self.icon_convergence, 'Convergencia') 
 		self.libItems.append(self.EvaporItem)
 		self.libItems.append(self.HeaterItem)
 		self.libItems.append(self.Valve)
 		self.libItems.append(self.Tank)
 		self.libItems.append(self.Flow)
+		self.libItems.append(self.Divergence)
+		self.libItems.append(self.Convergence)
 		# for i in self.libItems:
 		#    self.libraryModel.appendRow(i)
 
@@ -772,14 +952,22 @@ class DiagramEditor(QWidget):
 		self.libraryBrowserView_TREE.setIconSize(QtCore.QSize(60,60))
 		self.libraryBrowserView_TREE.setModel(self.libraryModel)
 		parent1 = QStandardItem('Equipos')
+		parent1.setEditable(0)
+		parent1.setSelectable(0)
 		parent1.appendRow(self.libItems[0])
 		parent1.appendRow(self.libItems[1])
 		parent1.appendRow(self.libItems[2])
 		parent1.appendRow(self.libItems[3])
 		self.libraryModel.appendRow(parent1)
 		parent2 = QStandardItem('Entradas de flujo')
+		parent2.setEditable(0)
+		parent2.setSelectable(0)
 		parent2.appendRow(self.libItems[4])
 		self.libraryModel.appendRow(parent2)
+		parent3 = QStandardItem('Otros')
+		parent3.appendRow(self.libItems[5])
+		parent3.appendRow(self.libItems[6])
+		self.libraryModel.appendRow(parent3)		
 		self.libraryBrowserView_TREE.setDragDropMode(self.libraryBrowserView_TREE.DragOnly)
 		self.horizontalLayout.addWidget(self.libraryBrowserView_TREE,1)
 		####
@@ -812,7 +1000,7 @@ class DiagramEditor(QWidget):
 				box = QtGui.QMessageBox()
 				box.setIcon(QtGui.QMessageBox.Question)
 				box.setWindowTitle('Simular')
-				box.setText(_translate("MessBox","¿ Esta seguro que desea iniciar la simulación ?", None))
+				box.setText(_translate("MessBox","¿ Esta seguro que desea iniciar la simulación ?\nDebe tener todas las ventanas de los equipos cerradas.", None))
 				box.setStandardButtons(QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
 				buttonY = box.button(QtGui.QMessageBox.Yes)
 				buttonY.setText('Si')
@@ -823,6 +1011,29 @@ class DiagramEditor(QWidget):
 					global timer
 					global run_flag
 					global Sim_time
+					Heater_flag=[]
+					FLow_flag=[]
+					b_ht=0
+					for k, par_data in enumerate(array_connections):
+						print par_data[0]+".."+par_data[1]
+						if par_data[1][:-1]=="Calentador":
+							if k%2==0:
+								Heater_flag.append("Ht"+par_data[1][len(par_data[1])-1:])					
+							if par_data[0][:-1]=="Flujo":
+								if par_data[2]=="Fluido de entrada":
+									FLow_flag.append("Fj"+par_data[0][len(par_data[0])-1:])
+								else:	
+									FLow_flag.append("Fv"+par_data[0][len(par_data[0])-1:])
+								b_ht=b_ht+1
+					if b_ht==2:
+						print "cantidad de entradas bien en calentador"
+						print Heater_flag
+						print FLow_flag
+					else:
+						print "faltan entradas a calentador"
+
+
+
 					file_heat = open('Blocks_data.txt', 'r+')
 					Mjin=103.0
 					Bjin=0.15
@@ -839,16 +1050,19 @@ class DiagramEditor(QWidget):
 						if len(info)>1:
 							flag=info[0]
 							#print ("Flag "+flag+" "+flag[:2])
-							if flag[:2]=="Ht":
+							if flag==Heater_flag[0]:
 								for k in range(1,len(info)):
 									heat_param.append(info[k])
 							if flag[:1]=="F":
-								if flag[:2]=="Fv":
-									for k in range(1,len(info)):
-										vapor_data.append(info[k])
-								elif flag[:2]=="Fj":
-									for k in range(1,len(info)):
-										juice_data.append(info[k])
+								for dat in FLow_flag:
+									if flag[:2]=="Fv" and flag==dat:
+										print "fue vapor "+dat
+										for k in range(1,len(info)):
+											vapor_data.append(info[k])
+									elif flag[:2]=="Fj" and flag==dat:
+										print "fue jugo "+dat
+										for k in range(1,len(info)):
+											juice_data.append(info[k])
 					file_heat.close()
 
 					if len(heat_param)>0 and len(vapor_data)>0 and len(juice_data)>0:
@@ -907,6 +1121,16 @@ class DiagramEditor(QWidget):
 
 
 	def startConnection(self, port):
+		global prt1
+		global prt2
+		global itemname1
+		global itemname2
+		prt1=""
+		prt2=""
+		itemname1=""
+		itemname2=""
+		prt1=str(port.typ)
+		itemname1=str(port.name_block)
 		self.startedConnection = Connection(port, None)
 	def sceneMouseMoveEvent(self, event):
 		global pos
@@ -922,6 +1146,9 @@ class DiagramEditor(QWidget):
 			pos = event.scenePos()
 			self.startedConnection.setEndPos(pos)
 	def sceneMouseReleaseEvent(self, event):
+		global puerto2
+		global itemname2
+		global array_connections
 		# Clear the actual connection:
 		pos = event.scenePos()
 		items = self.diagramScene.items(pos)
@@ -932,7 +1159,7 @@ class DiagramEditor(QWidget):
 					aux=str(item.name_block)
 				if not self.timer.isActive():
 					self.timer.start()
-			if self.left_click_count>=2:
+			if self.left_click_count>=3:
 				aux2=re.sub("\d+", "", aux)
 				if str(aux2)==str("Valvula"):
 					pd = ParameterDialog_Valve(aux,self.window())
@@ -947,7 +1174,15 @@ class DiagramEditor(QWidget):
 		if self.startedConnection:
 			for item in items:
 				if type(item) is PortItem:
-					self.startedConnection.setToPort(item)
+					prt2=str(item.typ)
+					itemname2=str(item.name_block)
+					if prt2!=prt1 and itemname2!=itemname1:
+						self.startedConnection.setToPort(item)
+						connections=[itemname1, itemname2,str(item.name)]
+						array_connections.append(connections)
+						print array_connections
+					else:
+						self.startedConnection.delete()
 			if self.startedConnection.toPort == None:
 				self.startedConnection.delete()
 			self.startedConnection = None
@@ -979,6 +1214,12 @@ class DiagramEditor(QWidget):
 				# check whether the process name matches
 				if proc.name() == PROCNAME:
 					proc.kill()
+			if run_flag==1:
+				try:
+					start_thread()  
+				except (KeyboardInterrupt, SystemExit):
+					cleanup_stop_thread()
+					sys.exit()
 			event.accept()
 		else:
 			event.ignore()

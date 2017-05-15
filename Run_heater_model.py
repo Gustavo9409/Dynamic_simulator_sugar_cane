@@ -46,7 +46,11 @@ def Thread_time(output_time,output_model_value):
 	outfile=open('time_exec.txt', 'w') ##Para cuando no sea pausa sino detenimiento
 	outfile.close()
 	plt.ion()
+	yb_l=yb
 	yt=[0.0,Tjout]
+	end_tt=[0.0,Ts_2]
+	inf2=[0.0,0.0,0.0]
+	fl=0
 
 	while True:
 		b = clock()
@@ -54,8 +58,18 @@ def Thread_time(output_time,output_model_value):
 		if b - a > Ts_2:
 			texc=texc+Ts_2
 			tt.append(texc)
-			yout = odeint(ht_model,yb,tt,u)
-			yt.append(yout[len(tt)-1,0])
+			end_tt=[tt[-2],tt[-1]]
+
+			# end_tt[1]=tt[-1]
+			# if fl==1:
+			# 	end_tt[0]=tt[-1]
+			# 	fl=0
+			yout = odeint(ht_model,yb_l,end_tt,u)
+			yb_l=[yout[1,0]]
+			# print yout
+			print end_tt
+			yt.append(yout[1,0])
+			#yt.append(yout[len(tt)-1,0])
 
 			# plt.plot(tt[len(tt)-2:len(tt)],yt[len(tt)-2:len(tt)],'b-')
 			# plt.xlabel('Time (min)')
@@ -70,18 +84,24 @@ def Thread_time(output_time,output_model_value):
 			if len(data)>0:
 				time_exec=data[-1].strip()
 				infile.close()
+				info=time_exec.split("\t")
+				
+				# if len(data)>1:
+				# 	inf2=data[-2].strip().split("\t")
+				# else:
+				# 	inf2[2]=info[2]
+				# if info[2]!=inf2[2]:
+				# 	fl=1
 				print ("HILO:"+str(time_exec))
 				if time_exec=="stop":
 					texc=0.0
 					break
-				else:
-					info=time_exec.split("\t")
-					yb_l=[float(info[2])]
-					
+				# else:
+				# 	yb_l=[float(info[2])]
 					
 				
 			outfile = open('time_exec.txt', 'a')
-			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\t"+str(yb)+"\n")
+			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\t"+str(yb_l[0])+"\n")
 			outfile.close()
 
 			#print("t="+str(output_time)+" ,Tjout="+str(output_model_value))	
