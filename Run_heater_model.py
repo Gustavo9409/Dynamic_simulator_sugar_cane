@@ -60,48 +60,30 @@ def Thread_time(output_time,output_model_value):
 			tt.append(texc)
 			end_tt=[tt[-2],tt[-1]]
 
-			# end_tt[1]=tt[-1]
-			# if fl==1:
-			# 	end_tt[0]=tt[-1]
-			# 	fl=0
 			yout = odeint(ht_model,yb_l,end_tt,u)
 			yb_l=[yout[1,0]]
 			# print yout
-			print end_tt
+			#print end_tt
 			yt.append(yout[1,0])
-			#yt.append(yout[len(tt)-1,0])
 
-			# plt.plot(tt[len(tt)-2:len(tt)],yt[len(tt)-2:len(tt)],'b-')
-			# plt.xlabel('Time (min)')
-			# plt.ylabel('Tjout (C)')
-			# plt.show()
-			# plt.pause(0.000001)
 			output_time=tt[len(tt)-1]
 			output_model_value=yt[len(tt)-1]
 			
 			infile = open('time_exec.txt', 'r')
 			data=infile.readlines()
+			
 			if len(data)>0:
 				time_exec=data[-1].strip()
 				infile.close()
 				info=time_exec.split("\t")
-				
-				# if len(data)>1:
-				# 	inf2=data[-2].strip().split("\t")
-				# else:
-				# 	inf2[2]=info[2]
-				# if info[2]!=inf2[2]:
-				# 	fl=1
+
 				print ("HILO:"+str(time_exec))
 				if time_exec=="stop":
 					texc=0.0
-					break
-				# else:
-				# 	yb_l=[float(info[2])]
-					
+					break					
 				
 			outfile = open('time_exec.txt', 'a')
-			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\t"+str(yb_l[0])+"\n")
+			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\n")
 			outfile.close()
 
 			#print("t="+str(output_time)+" ,Tjout="+str(output_model_value))	

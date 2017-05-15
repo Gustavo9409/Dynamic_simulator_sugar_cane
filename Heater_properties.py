@@ -68,10 +68,12 @@ except AttributeError:
 	def _translate(context, text, disambig):
 		return QtGui.QApplication.translate(context, text, disambig)
 
+## Class number validation
 class Validator(object):
 	def NumValidator(self,LineEdit):
 		LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
+## Class for calculated heater properties
 class calculated_properties():
 	def Juice_velocity(self,Fj,Tj,Bj,Zj):
 		pjin=liquor.density(Tj,Bj,Zj)
@@ -120,7 +122,7 @@ def Update_data():
 	input_heat.close()
 	
 	if confirm==True:
-		## Calculated heater properties
+	## Calculated heater properties
 		Dosp=float(Ext_Pipe_Diameter.text())
 		Disp=float(Ext_Pipe_Diameter.text())-(2*(float(Pipe_Thickness.text())/25.4))
 		Np=float(Pipe_x_Step.text())
@@ -135,42 +137,36 @@ def Update_data():
 		Tjc=(float(juice_data[3])+round(float(split_model_data_n1[1]),3))/2.0;
 		Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
 
-		a=round(heat_properties.Juice_velocity(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2])),3)
-		Juice_Velocity.setText(str(a))
-		b=round(heat_properties.Heat_area(),3)
-		Heat_Area.setText(str(b))
-		f="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
-		Scalling_Resist.setText(str(f))
-		c="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
+		#Juice Velocity
+		Juice_vel=round(heat_properties.Juice_velocity(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2])),3)
+		Juice_Velocity.setText(str(Juice_vel))
+		#Heat Area
+		Heat_A=round(heat_properties.Heat_area(),3)
+		Heat_Area.setText(str(Heat_A))
+		#Saclling resistance
+		Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		Scalling_Resist.setText(str(Scall_R))
+		#Overall heat trasnfer coefficient
+		OverallU="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
 			Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0,Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
-		Overall_U.setText(str(c))
-		d="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
-		Inside_U.setText(str(d))
-		e="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0)))
-		Outside_U.setText(str(e))
+		Overall_U.setText(str(OverallU))
+		#Internal heat trasnfer coefficient
+		InternalU="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		Inside_U.setText(str(InternalU))
+		#External heat trasnfer coefficient
+		ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0)))
+		Outside_U.setText(str(ExternalU))
+		#Reynolds number
+		Re=(4*((juice_data[0]*juice_data[8])/Np))/(0.0254*math.pi*Disp*juice_data[9])
 		#Moody Friction factor
 		f1=(1.4+2*math.log(Er))**-2
 		f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
 		#Viscosity of pipe fluid
 		up=liquor.viscosity(juice_data[3],juice_data[1],juice_data[2])
 		#Viscosity of pipe fluid at wall temperature
-		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])),juice_data[1],juice_data[2])
-		##f?? , u_tube_wall??
-		Drop_pressure_pipe_side=((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(a**2.0))/2.0) ##Rein
-		##
-		Sn=##pitch (center-to-center distance) of the tube assembly
-		Cp=##1 for a square pitch, and 0.86 for a triangular pitch
-		Lb=##is the baffle spacing
-		Ds=##inside diameter of the shell
-		Nb=##number of baffles
-		Sm=Ds*Lb*(clearance/pitch)## the clearance and pitch are defined in the notes on shell-andtube heat exchangers
-		Gs=float(juice_data[0])/Sm
-		De=(4*(Cp*(Sn**2)-(math.pi*(Dosp**2))/4.0))/math.pi*Dosp
-		#Viscosity of shell fluid
-		us=vapor.viscosity(vapor_data[2])
-		#Viscosity of shell fluid at wall temperature
-		us_tube_wall=vapor.viscosity((Tjc+vapor_data[2]))
-		Drop_pressure_shell_side=(2*f*(Gs**2)*Ds*(Nb+1))/()*De*((us/us_tube_wall)**0.14)#(Subramanian) Shell Side Pressure Drop in a Shell-and-Tube Heat Exchanger
+		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),juice_data[1],juice_data[2])
+		#Drop pressure pipe side (REIN)
+		Drop_pressure_pipe_side=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0) 
 
 	##Process values 
 	#Vapor
@@ -196,7 +192,8 @@ def Update_data():
 		OutFluid_Brix.setText(str(juice_data[1]))
 		OutFluid_Flow.setText(str(juice_data[0]))
 		OutFluid_pH.setText(str(juice_data[5]))
-		#OutFluid_pressure.setText(round(,1))
+		y=float(((juice_data[6]))-Drop_pressure_pipe_side)
+		OutFluid_pressure.setText(str(round((y/1000.0),2)))
 		OutFluid_InsolubleSolids.setText(str(juice_data[4]))
 		OutFluid_Purity.setText(str(juice_data[2]))
 
@@ -306,7 +303,6 @@ class MyDynamicMplCanvas(MyMplCanvas):
 		global time_exec
 		global model_value
 		global split_model_data_n1
-		# Build a list of 4 random integers between 0 and 10 (both inclusive)
 		infile = open('time_exec.txt', 'r+')
 		data=infile.readlines()
 		if len(data)>1:
@@ -369,9 +365,6 @@ class window_confirm_param(QDialog):
 			self.button.clicked.connect(self.OK)
 			self.button2.clicked.connect(self.NO)
 		def OK(self):
-			# timer = QtCore.QTimer(Dialog)
-			# timer.timeout.connect(self.read_data)
-			# timer.start(0.5*1000)
 			Np=Pipe_x_Step.text()
 			Nst=N_steps.text()
 			Lp=Lenght_Pipe.text()
