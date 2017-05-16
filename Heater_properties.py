@@ -20,12 +20,12 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from numpy import arange, sin, pi
 from decimal import Decimal
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import vapor_properties
-from heat_transfer import htc_shell_tube
+from heat_transfer import htc_shell_tube , t_log
 
 import random
 import threading
@@ -53,6 +53,7 @@ SnT=1.0
 vapor=vapor_properties()
 liquor=liquor_properties()
 Ht=htc_shell_tube()
+dtlog=t_log()
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -104,6 +105,7 @@ heat_properties=calculated_properties()
 
 ##Function for update data when inputs change
 def Update_data():
+	
 	input_heat = open('Blocks_data.txt', 'r+')
 	data=input_heat.readlines()
 	vapor_data=[]
@@ -166,16 +168,27 @@ def Update_data():
 		#Viscosity of pipe fluid at wall temperature
 		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),juice_data[1],juice_data[2])
 		#Drop pressure pipe side (REIN)
-		Drop_pressure_pipe_side=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0) 
+		Drop_pressure_pipe_side=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0)
 
+		##Mass flow of vapor
+		DT=float(dtlog.deltatlog(juice_data[3],float(split_model_data_n1[1]),vapor_data[2]))
+		OvU=Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
+			Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0,Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)
+		Mv= ((OvU*Heat_A*DT)/vapor_data[7])*3.96832
+		x, y=update_data_txt("Fv2")
+		#print y
+		#print ("Fv2"+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"+str(vapor_data[4])+"\t"+str(vapor_data[5])+"\t"+str(vapor_data[6])+"\t"+str(vapor_data[7])+"\t"+str(vapor_data[8])+"\t"+str(vapor_data[9]))
+		replace("Blocks_data.txt",y,"Fv2"+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"
+			+str(vapor_data[4])+"\t"+str(vapor_data[5])+"\t"+str(vapor_data[6])+"\t"+str(vapor_data[7])+"\t"+str(vapor_data[8])+"\t"+str(vapor_data[9]))
 	##Process values 
 	#Vapor
 		#input
 		InStm_Press.setText(str(round(float(vapor_data[0])/1000.0,2)))
-		InStm_Flow.setText(str(vapor_data[1]))
+		#InStm_Flow.setText(str(vapor_data[1]))
+		InStm_Flow.setText(str(round(Mv,3)))
 		InStm_Temp.setText(str(round(vapor_data[2],2)))
 		#output
-		CondStm_Flow.setText(str(vapor_data[1]))
+		CondStm_Flow.setText(str(round(float(vapor_data[1]),3)))
 		CondStm_Temp.setText(str(round(vapor_data[2],2)))
 		#CondStm_Press.setText(str(round(float(vapor_data[0])/1000.0,1)))
 	#Juice
@@ -258,9 +271,9 @@ def update_data_txt(dato):
 		if info[0]==dato:
 			flg=1
 			dats=(i.strip())
-		else:
-			flg=0
-			dats=""
+		# else:
+		# 	flg=0
+		# 	dats=""
 	return flg, dats	
 
 
@@ -269,6 +282,7 @@ class MyMplCanvas(FigureCanvas):
 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
 	def __init__(self, parent=None, width=4, height=4, dpi=100):
+		global mpl_toolbar
 		fig = Figure(figsize=[width, height], tight_layout = {'pad': 0}, dpi=dpi)
 		self.axes = fig.add_subplot(111)
 
@@ -276,12 +290,19 @@ class MyMplCanvas(FigureCanvas):
 
 		FigureCanvas.__init__(self, fig)
 		self.setParent(parent)
-
+		
 		FigureCanvas.setSizePolicy(self,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+		mpl_toolbar = NavigationToolbar(self,Heat_tab_3)
+		#self.mpl_connect('key_press_event', self.on_key_press)
 		#FigureCanvas.updateGeometry(self)
 
 	def compute_initial_figure(self):
 		pass
+	def on_key_press(self, event):
+		print('you pressed', event.key)
+		# implement the default mpl key press events described at
+		# http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
+		key_press_handler(event, FigureCanvas, self.mpl_toolbar)
 
 class MyDynamicMplCanvas(MyMplCanvas):
 	"""A canvas that updates itself every second with a new plot."""
@@ -390,6 +411,7 @@ class window_confirm_param(QDialog):
 			QtGui.QMessageBox.information(Resultado, 
 			'Ok',
 			_translate("Dialog","Instanciación correcta de datos.",None),QtGui.QMessageBox.Ok)
+			Dialog_window.close()
 		def NO(self):
 			self.close()
 
@@ -426,6 +448,7 @@ class Ui_Dialog(object):
 		global Time_Op
 		global Initial_Out_Temp
 		global nameDialog
+		global Dialog_window
 		global Ts
 		global Temp_Output_variable
 		global Selector_Heater_type
@@ -463,8 +486,11 @@ class Ui_Dialog(object):
 		global CondStm_Temp
 		global CondStm_Press
 
+		global Heat_tab_3
+
 		nameDialog=name
 		Ts=ts
+		Dialog_window=Dialog
 		Vali = Validator()
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(432, 355)
@@ -481,8 +507,8 @@ class Ui_Dialog(object):
 		self.Heat_tab_2.setObjectName(_fromUtf8("Heat_tab_2"))
 
 		self.tabWidget_Heater.addTab(self.Heat_tab_2, _fromUtf8(""))
-		self.Heat_tab_3 = QtGui.QWidget()
-		self.Heat_tab_3.setObjectName(_fromUtf8("Heat_tab_3"))
+		Heat_tab_3 = QtGui.QWidget()
+		Heat_tab_3.setObjectName(_fromUtf8("Heat_tab_3"))
 
 	##--Instance button--##
 		self.OKButton_Heat = QtGui.QPushButton(self.Heat_tab1)
@@ -521,7 +547,7 @@ class Ui_Dialog(object):
 		self.label_Type_Material.setGeometry(QtCore.QRect(14, 230, 81, 16))
 		self.label_Type_Material.setObjectName(_fromUtf8("label_Type_Material"))
 
-		##----Instantiation of elements for calculated properties----##
+	##----Instantiation of elements for calculated properties----##
 		#Group box
 		self.Calculated_properties_GrBx = QtGui.QGroupBox(self.Heat_tab1)
 		self.Calculated_properties_GrBx.setGeometry(QtCore.QRect(213, 6, 205, 181))
@@ -845,14 +871,14 @@ class Ui_Dialog(object):
 				
 
 	##----Instantiation of elements for variable output---#
-		self.label = QtGui.QLabel(self.Heat_tab_3)
+		self.label = QtGui.QLabel(Heat_tab_3)
 		self.label.setGeometry(QtCore.QRect(10, 10, 161, 16))
 		self.label.setObjectName(_fromUtf8("label"))
-		Temp_Output_variable = QtGui.QLineEdit(self.Heat_tab_3)
+		Temp_Output_variable = QtGui.QLineEdit(Heat_tab_3)
 		Temp_Output_variable.setGeometry(QtCore.QRect(180, 10, 51, 20))
 		Temp_Output_variable.setReadOnly(True)
 
-		self.verticalLayoutWidget = QtGui.QWidget(self.Heat_tab_3)
+		self.verticalLayoutWidget = QtGui.QWidget(Heat_tab_3)
 		self.verticalLayoutWidget.setGeometry(QtCore.QRect(15, 35, 410, 260))
 		self.verticalLayoutWidget.setObjectName(_fromUtf8("verticalLayoutWidget"))
 		self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
@@ -860,11 +886,12 @@ class Ui_Dialog(object):
 		self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
 		#Addition of grafics in window
 		dc = MyDynamicMplCanvas(Dialog, width=4, height=3, dpi=85)
-		self.verticalLayout.addWidget(dc)
+		self.verticalLayout.addWidget(dc,3)
+		self.verticalLayout.addWidget(mpl_toolbar,1)
 
 	##----Selector of Heat type----##
 		#Selectable list
-		self.tabWidget_Heater.addTab(self.Heat_tab_3, _fromUtf8(""))
+		self.tabWidget_Heater.addTab(Heat_tab_3, _fromUtf8(""))
 		Selector_Heater_type = QtGui.QComboBox(Dialog)
 		Selector_Heater_type.setGeometry(QtCore.QRect(7, 6, 411, 22))
 		Selector_Heater_type.setObjectName(_fromUtf8("Selector_Heater_type"))
@@ -945,7 +972,7 @@ class Ui_Dialog(object):
 		self.label_CondStm_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
 		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(self.Heat_tab_2), _translate("Dialog", "Variables de proceso", None))
 		self.label.setText(_translate("Dialog", "Temperatura de jugo de salida:", None))
-		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(self.Heat_tab_3), _translate("Dialog", "Gráfica", None))
+		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(Heat_tab_3), _translate("Dialog", "Gráfica", None))
 
 
 if __name__ == "__main__":
@@ -953,7 +980,7 @@ if __name__ == "__main__":
 	app = QtGui.QApplication(sys.argv)
 	Dialog = QtGui.QWidget()
 	ui = Ui_Dialog()
-	ui.setupUi("Calentador",Dialog)
+	ui.setupUi("Calentador",0.5,Dialog)
 	Dialog.show()
 	sys.exit(app.exec_())
 

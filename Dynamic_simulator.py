@@ -35,7 +35,7 @@ global run_flag
 global Ts_value
 global Sim_time
 global array_connections
-Sim_time=1.0
+Sim_time=0.5
 l=0
 i_ev=1
 i_ht=1
@@ -140,11 +140,11 @@ class ParameterDialog_Valve(QDialog):
 		self.Resultado.exec_()
 
 class ParameterDialog_Flow(QDialog):
-	def __init__(self,dat, parent=None):
+	def __init__(self,dat,time, parent=None):
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = Flow_properties()
-		self.ui.setupUi(dat,self.Resultado)
+		self.ui.setupUi(dat,time,self.Resultado)
 		self.Resultado.exec_()
 
 class DeleteDialog(QDialog):
@@ -440,7 +440,7 @@ class BlockItem_Flow(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Flow(self.name_block,self.window())
+		pd = ParameterDialog_Flow(self.name_block,Sim_time,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -965,6 +965,8 @@ class DiagramEditor(QWidget):
 		parent2.appendRow(self.libItems[4])
 		self.libraryModel.appendRow(parent2)
 		parent3 = QStandardItem('Otros')
+		parent3.setEditable(0)
+		parent3.setSelectable(0)
 		parent3.appendRow(self.libItems[5])
 		parent3.appendRow(self.libItems[6])
 		self.libraryModel.appendRow(parent3)		
@@ -1164,7 +1166,7 @@ class DiagramEditor(QWidget):
 				if str(aux2)==str("Valvula"):
 					pd = ParameterDialog_Valve(aux,self.window())
 				if str(aux2)==str("Flujo"):
-					pd = ParameterDialog_Flow(aux,self.window())
+					pd = ParameterDialog_Flow(aux,Sim_time,self.window())
 				if str(aux2)==str("Evaporador"):
 					pd = ParameterDialog_Evaporator(aux,self.window())
 				if str(aux2)==str("Calentador"):

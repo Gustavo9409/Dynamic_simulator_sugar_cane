@@ -24,6 +24,10 @@ liquor=liquor_properties()
 water=water_properties()
 vapor=vapor_properties()
 
+from Flow_inputs import update_flow_data
+flow_data=update_flow_data()
+
+
 global saturado
 global Type_flow_selec
 global confirm
@@ -64,6 +68,25 @@ class Validator(object):
 	def NumValidator(self,LineEdit):
 		LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
+
+def call_timer(objectq):
+	timer = QtCore.QTimer(objectq)
+	timer.timeout.connect(update_value)
+	timer.start(float(Ts)*1000)
+
+
+def update_value():
+	input_heat = open('Blocks_data.txt', 'r+')
+	data=input_heat.readlines()
+	input_heat.close()
+	if len(data)>0:
+		for i in data:
+			info=(i.strip()).split("\t")
+			flag=info[0]
+			if flag==("Fv"+str(num_window)):
+				Flow.setText(str(round(float(info[2]),3)))
+				#break
+
 def Update_window():
 	global update
 	global num_window
@@ -93,7 +116,10 @@ def Update_window():
 					Purity.setDisabled(1)
 					Insoluble_Solids.setDisabled(1)
 					Temp.setDisabled(1)
+					Flow.setDisabled(1)
 					pH.setDisabled(1)
+					Evaporation_Enthalpy.show()
+					label_Evaporation_Enthalpy.show()
 					checkBox_Saturated_vapor.setChecked(True)
 					label_vapor_type.show()
 					checkBox_Saturated_vapor.show()
@@ -101,18 +127,22 @@ def Update_window():
 					if str(vapor_data[len(vapor_data)-1])=="1.0": ##Que es un vapor saturado
 						saturado=1
 						Pressure.setText(str(float(vapor_data[0])/1000.0))
-						Flow.setText(str(vapor_data[1]))
+						Flow.setText(str(round(float(vapor_data[1]),3)))
 						Temp.setText(str(round(vapor_data[2],3)))
 						Specific_Heat.setText(str("{:.3E}".format(Decimal(vapor_data[3]))))
 						Density.setText(str(round(vapor_data[4],3)))
 						Viscosity.setText(str("{:.3E}".format(Decimal(vapor_data[5]))))
 						Enthalpy.setText(str("{:.3E}".format(vapor_data[6])))
-						Conductivity.setText(str(round(vapor_data[7],3)))
+						Evaporation_Enthalpy.setText(str("{:.3E}".format(vapor_data[7])))
+						Conductivity.setText(str(round(vapor_data[8],3)))
 						checkBox_Saturated_vapor.setChecked(True)
 						##
 						comBox_VariableInput.clear()
 						comBox_VariableInput.addItem(_translate("Dialog", "Flujo másico [t/h]", None))
-						comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))						
+						comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
+						##
+						call_timer(Dialog_window)
+						''' Funcion que actualice el flujo '''						
 					else:
 						saturado=0
 						comBox_VariableInput.clear()
@@ -131,6 +161,8 @@ def Update_window():
 					Temp.setEnabled(1)
 					pH.setEnabled(1)
 					Pressure.setEnabled(1)
+					Evaporation_Enthalpy.hide()
+					label_Evaporation_Enthalpy.hide()
 					label_vapor_type.hide()
 					checkBox_Saturated_vapor.hide()
 					checkBox_Overheated_vapor.hide()
@@ -163,6 +195,8 @@ def Update_window():
 					Purity.setDisabled(1)
 					Insoluble_Solids.setDisabled(1)
 					pH.setEnabled(1)
+					Evaporation_Enthalpy.hide()
+					label_Evaporation_Enthalpy.hide()
 					Temp.setEnabled(1)
 					Pressure.setEnabled(1)
 					label_vapor_type.hide()
@@ -198,41 +232,41 @@ class window_confirm_inputs(QDialog):
 			l.addWidget(self.button2)
 			self.button.clicked.connect(self.OK)
 			self.button2.clicked.connect(self.NO)
+
+		#**Affirmative selection**#
 		def OK(self):
-			#Output
-			Specific_Heat.setText("")
-			Enthalpy.setText("")
-			Viscosity.setText("")
-			Density.setText("")
-			Conductivity.setText("")
+
+			# -- If select water flow -- ##
 			if Type_flow_selec=="Vapor":
 				if saturado==1:
-					Mvin=float(Flow.text())
+				##Get inputs
+					Mvin=00.00
 					Pvin=(float(Pressure.text()))*1000.0
-					##
-					Tvin=vapor.temperature(Pvin)
+				##Update steam flow info 
+					Tvin,pv,uv,Hv,Yv,Cpv,Hvw=flow_data.update_vapor(Pvin)
+
+				##Set data in text field
+					Flow.setText(str(Mvin))
 					Temp.setText(str(round(Tvin,3)))
-					pv=vapor.density(Pvin)
 					Density.setText(str(round(pv,3)))
-					uv=vapor.viscosity(Tvin)
 					Viscosity.setText(str("{:.3E}".format(Decimal(uv))))
-					Hv=vapor.enthalpy(Tvin,Pvin)##-la del agua??
 					Enthalpy.setText(str("{:.3E}".format(Decimal(Hv))))
-					Yv=vapor.thermal_conductivity(Tvin)
 					Conductivity.setText(str(round(Yv,3)))
-					Cpv=Hv/Tvin
 					Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpv))))
-					#*#
+					Evaporation_Enthalpy.setText(str("{:.3E}".format(Decimal(Hvw))))
+				##Prepare frame to data base
 					flag0="Fv"
-					dato=str(Pvin)+"\t"+str(Mvin)+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Yv)+"\t"+str(saturado)
+					dato=str(Pvin)+"\t"+str(Mvin)+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Hvw)+"\t"+str(Yv)+"\t"+str(saturado)
 				else :
-					Mvin=float(Flow.text())
+					Mvin=00.00
 					Pvin=(float(Pressure.text()))*1000.0
 					Tvin=float(Temp.text())
 					##
 					#....¿?
 
+			# -- If select juice flow -- ##
 			elif Type_flow_selec=="Jugo":
+			##Get inputs
 				Mjin=float(Flow.text())
 				Bjin=float(Brix.text())
 				SolIn=float(Insoluble_Solids.text())
@@ -240,70 +274,53 @@ class window_confirm_inputs(QDialog):
 				Zjin=float(Purity.text())
 				pHj=float(pH.text())
 				Pj=(float(Pressure.text()))*1000.0
-				##
-				Cpj=liquor.heat_capacity(Tjin,Bjin,Zjin)
-
-				
+			##Update juice flow info 
+				Cpj,pj,uj,Hj,Yj=flow_data.update_juice(Bjin,Zjin,Tjin)		
+			##Set data in text field	
 				Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpj))))
-				pj=liquor.density(Tjin,Bjin,Zjin)
 				Density.setText(str(round(pj,3)))
-				uj=liquor.viscosity(Tjin,Bjin,Zjin)
 				Viscosity.setText(str("{:.3E}".format(Decimal(uj))))
-				Hj=Cpj*Tjin
 				Enthalpy.setText(str("{:.3E}".format(Decimal(Hj))))
-				Yj=liquor.thermal_conductivity(Tjin,Bjin)
 				Conductivity.setText(str(round(Yj,3)))
-				#*#
+			##Prepare frame to data base
 				flag0="Fj"
 				dato=str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj)
+			
+			# -- If select water flow -- ##
 			elif Type_flow_selec=="Agua":
+			##Get inputs
 				Mw=float(Flow.text())
 				Tw=float(Temp.text())
 				pHw=float(pH.text())
 				Pw=(float(Pressure.text()))*1000.0
-				##
-				pw=water.density(Tw)
+			##Update water flow info 
+				pw,Hw=flow_data.update_water(Tw)
+			##Set data in text field
 				Density.setText(str(round(pw,3)))
-				Hw=water.enthalpy(Tw)
 				Enthalpy.setText(str("{:.3E}".format(Decimal(Hw))))
-				
+			##Prepare frame to data base
 				flag0="Fw"
 				dato=str(Mw)+"\t"+str(Tw)+"\t"+str(pHw)+"\t"+str(Pw)+"\t"+str(pw)+"\t"+str(Hw)
-			print "OK PARAMETERS"
-			self.close()
+
+			##New changes in data base
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
-			upd, change=update_data(flag0+flag)
+			upd, change=update_DB(flag0+flag)
+			##First data instance
 			if upd==0:
 				outfile = open('Blocks_data.txt', 'a')
 				outfile.write("\n"+flag0+flag+"\t"+dato)
 				outfile.close()
+			#Overwrite data instance
 			else:
 				replace("Blocks_data.txt",change,flag0+flag+"\t"+dato)
+
 			Resultado=QtGui.QDialog()
-			QtGui.QMessageBox.information(Resultado, 
-			'Ok',
-			_translate("Dialog","Instanciación correcta de datos.",None),QtGui.QMessageBox.Ok)
+			QtGui.QMessageBox.information(Resultado,'Ok',_translate("Dialog","Instanciación correcta de datos.",None),QtGui.QMessageBox.Ok)
+			Dialog_window.close()
 		def NO(self):
 			self.close()
 
 def replace(path, pattern, subst):
-	# #Create temp file
-	# 	fh, abs_path = mkstemp()
-	# 	with open(abs_path,'w') as new_file:
-	# 		with open(path) as old_file:
-	# 			for line in old_file:
-	# 				new_file.write(line.replace(pattern, subst))
-	# 	close(fh)
-	# 	#Remove original file
-	# 	remove(path)
-	# 	#Move new file
-	# 	move(abs_path, path)
-	###---------#####
-		# for line in fileinput.input(path, inplace=1):
-		# 	if pattern in line:
-		# 		line = line.replace(pattern,subst)
-		# 	sys.stdout.write(line)
-	###---------#####
 		flags=0
 		with open(path, "r+" ) as filex:
 			fileContents = filex.read()
@@ -313,7 +330,7 @@ def replace(path, pattern, subst):
 			filex.truncate()
 			filex.write(fileContents) 
 
-def update_data(dato):
+def update_DB(dato):
 	flg=0
 	dats=""
 	input_heat = open('Blocks_data.txt', 'r+')
@@ -323,9 +340,9 @@ def update_data(dato):
 		if info[0]==dato:
 			flg=1
 			dats=(i.strip())
-		else:
-			flg=0
-			dats=""
+		# else:
+		# 	flg=0
+		# 	dats=""
 	return flg, dats
 
 class Ui_Dialog(object):
@@ -337,9 +354,9 @@ class Ui_Dialog(object):
 				and(len(pH.text())>0)and(len(Purity.text())>0)and(len(Pressure.text())>0))
 		elif Type_flow_selec=="Vapor":
 			if saturado==1:
-				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)
+				confirm=(len(Pressure.text())>0)
 			else:
-				confirm=(len(Flow.text())>0)and(len(Pressure.text())>0)and(len(Temp.text())>0)
+				confirm=(len(Pressure.text())>0)and(len(Temp.text())>0)
 		elif Type_flow_selec=="Agua":
 			confirm=(len(Flow.text())>0)and(len(Temp.text())>0)and(len(pH.text())>0)
 		else:
@@ -355,7 +372,7 @@ class Ui_Dialog(object):
 			'Advertencia',
 			"Falta por ingresar algun dato.",QtGui.QMessageBox.Ok)
 
-	def setupUi(self,name,Dialog):
+	def setupUi(self,name,ts,Dialog):
 		#Global input
 		global Flow
 		global Brix
@@ -374,12 +391,17 @@ class Ui_Dialog(object):
 		#Global output
 		global Specific_Heat
 		global Enthalpy
+		global Evaporation_Enthalpy
+		global label_Evaporation_Enthalpy
 		global Viscosity
 		global Density
 		global Conductivity
-
+		global Dialog_window
 		global nameDialog
+		global Ts
 		Vali = Validator()
+		Ts=ts
+		Dialog_window=Dialog
 
 		nameDialog=name
 		Dialog.setObjectName(_fromUtf8("Dialog"))
@@ -473,7 +495,7 @@ class Ui_Dialog(object):
 		self.Flow_tab_2 = QtGui.QWidget()
 		self.Flow_tab_2.setObjectName(_fromUtf8("Flow_tab_2"))
 		self.Outputs_GrBx = QtGui.QGroupBox(self.Flow_tab_2)
-		self.Outputs_GrBx.setGeometry(QtCore.QRect(8, 14, 401, 121))
+		self.Outputs_GrBx.setGeometry(QtCore.QRect(8, 14, 401, 141))
 		self.Outputs_GrBx.setTitle(_fromUtf8(""))
 		self.Outputs_GrBx.setObjectName(_fromUtf8("Outputs_GrBx"))
 		self.label_Specific_Heat = QtGui.QLabel(self.Outputs_GrBx)
@@ -520,10 +542,21 @@ class Ui_Dialog(object):
 		self.label_Therma_Conductivity = QtGui.QLabel(self.Outputs_GrBx)
 		self.label_Therma_Conductivity.setGeometry(QtCore.QRect(230, 61, 111, 31))
 		self.label_Therma_Conductivity.setObjectName(_fromUtf8("label_Therma_Conductivity"))
+
+		Evaporation_Enthalpy = QtGui.QLineEdit(self.Outputs_GrBx)
+		Evaporation_Enthalpy.setGeometry(QtCore.QRect(327, 111, 61, 20))
+		Evaporation_Enthalpy.setReadOnly(True)
+		Evaporation_Enthalpy.setObjectName(_fromUtf8("Evaporation_Enthalpy"))
+		Evaporation_Enthalpy.hide()
+
+		label_Evaporation_Enthalpy = QtGui.QLabel(self.Outputs_GrBx)
+		label_Evaporation_Enthalpy.setGeometry(QtCore.QRect(230, 101, 111, 31))
+		label_Evaporation_Enthalpy.setObjectName(_fromUtf8("label_Evaporation_Enthalpy"))
+		label_Evaporation_Enthalpy.hide()
+
 		Flow_tabWidget.addTab(self.Flow_tab_2, _fromUtf8(""))
 		self.Flow_tab_3 = QtGui.QWidget()
 		self.Flow_tab_3.setObjectName(_fromUtf8("Flow_tab_3"))
-
 
 		comBox_VariableInput = QtGui.QComboBox(self.Flow_tab_3)
 		comBox_VariableInput.setGeometry(QtCore.QRect(18, 15, 151, 22))
@@ -731,7 +764,6 @@ class Ui_Dialog(object):
 			if len(Pressure.text())>0:
 				SpinBox_VariableInput.setValue(float(Pressure.text()))
 			else:
-				print "ACA"
 				SpinBox_VariableInput.setValue(0.0)
 		elif(VariableInput==("pH")):
 			if len(pH.text())>0:
@@ -748,7 +780,10 @@ class Ui_Dialog(object):
 		if Type_flow_selec=="Vapor":
 			Brix.setDisabled(1)
 			pH.setDisabled(1)
+			Flow.setDisabled(1)
 			Purity.setDisabled(1)
+			Evaporation_Enthalpy.show()
+			label_Evaporation_Enthalpy.show()
 			Insoluble_Solids.setDisabled(1)
 			Temp.setDisabled(1)
 			checkBox_Saturated_vapor.setChecked(True)
@@ -769,9 +804,12 @@ class Ui_Dialog(object):
 			Brix.setEnabled(1)
 			Purity.setEnabled(1)
 			Insoluble_Solids.setEnabled(1)
+			Flow.setEnabled(1)
 			Temp.setEnabled(1)
 			pH.setEnabled(1)
 			Pressure.setEnabled(1)
+			Evaporation_Enthalpy.hide()
+			label_Evaporation_Enthalpy.hide()
 			label_vapor_type.hide()
 			checkBox_Saturated_vapor.hide()
 			checkBox_Overheated_vapor.hide()
@@ -786,10 +824,13 @@ class Ui_Dialog(object):
 		elif Type_flow_selec=="Agua":
 			Brix.setDisabled(1)
 			Purity.setDisabled(1)
+			Flow.setEnabled(1)
 			pH.setEnabled(1)
 			Insoluble_Solids.setDisabled(1)
 			Temp.setEnabled(1)
 			Pressure.setEnabled(1)
+			Evaporation_Enthalpy.hide()
+			label_Evaporation_Enthalpy.hide()
 			label_vapor_type.hide()
 			checkBox_Saturated_vapor.hide()
 			checkBox_Overheated_vapor.hide()
@@ -846,6 +887,7 @@ class Ui_Dialog(object):
 		"dinámica [Pa s]", None))
 		self.label_Therma_Conductivity.setText(_translate("Dialog", "Conductividad \n"
 		"térmica [W/ m °K]", None))
+		label_Evaporation_Enthalpy.setText(_translate("Dialog", "Entalpía de \nevaporación [J/kg]", None))
 		Flow_tabWidget.setTabText(Flow_tabWidget.indexOf(self.Flow_tab_2), _translate("Dialog", "Datos calculados", None))
 		Flow_tabWidget.setTabText(Flow_tabWidget.indexOf(self.Flow_tab_3), _translate("Dialog", "Entradas dinámicas", None))
 
