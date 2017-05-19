@@ -20,13 +20,15 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from numpy import arange, sin, pi
 from decimal import Decimal
-from matplotlib.backends.backend_qt4agg import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
-from matplotlib.figure import Figure
+# from matplotlib.backends.backend_qt4agg_DynamicSim import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT )##as NavigationToolbar)
+# from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import vapor_properties
 from heat_transfer import htc_shell_tube , t_log
+from Dynamic_diagrams import DynamicGraphic
 
+# import matplotlib.backends.backend_qt5_DynamicSim as backend
 import random
 import threading
 import re
@@ -102,6 +104,22 @@ class calculated_properties():
 global heat_properties
 heat_properties=calculated_properties()
 
+# class NavigationToolbar(NavigationToolbar2QT):
+# 	def __init__(self, canvas_, parent_):
+# 		#backend.figureoptions = None  # Monkey patched to kill the figure options button on matplotlib toolbar
+# 		##Images: C:\Python27\Lib\site-packages\matplotlib\mpl-data\images
+# 		##Functions: C:\Python27\Lib\site-packages\matplotlib\backends\backend_qt5.py
+# 		self.toolitems = (
+# 			('Home', 'Regresar a la vista inicial', 'Home2', 'home'),
+# 			('Back', 'Regresar a la vista anterior', 'Row2L', 'back'),
+# 			('Forward', 'Dirigirse a la siguiente vista', 'Row2R', 'forward'),
+# 			(None, None, None, None),
+# 			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), 'move', 'pan'),
+# 			('Edit axis',_translate("Dialog",'Modificación de ejes', None), 'qt4_editor_options','Edit_axis'),
+# 			(None, None, None, None),
+# 			(None, None, None, None),)
+# 		NavigationToolbar2QT.__init__(self, canvas_, parent_)
+	
 
 ##Function for update data when inputs change
 def Update_data():
@@ -136,7 +154,7 @@ def Update_data():
 		B=float(Scalling_Coeff.text())
 		Aosc=heat_properties.Heat_area()
 		Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
-		Tjc=(float(juice_data[3])+round(float(split_model_data_n1[1]),3))/2.0;
+		Tjc=(float(juice_data[3])+float(split_model_data_n1[1]))/2.0;
 		Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
 
 		#Juice Velocity
@@ -145,18 +163,18 @@ def Update_data():
 		#Heat Area
 		Heat_A=round(heat_properties.Heat_area(),3)
 		Heat_Area.setText(str(Heat_A))
-		#Saclling resistance
+		#Scalling resistance
 		Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
 		Scalling_Resist.setText(str(Scall_R))
 		#Overall heat trasnfer coefficient
 		OverallU="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
-			Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0,Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
+			Tjc,float(vapor_data[2]),float(vapor_data[0]),Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
 		Overall_U.setText(str(OverallU))
 		#Internal heat trasnfer coefficient
 		InternalU="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
 		Inside_U.setText(str(InternalU))
 		#External heat trasnfer coefficient
-		ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0)))
+		ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0]))))
 		Outside_U.setText(str(ExternalU))
 		#Reynolds number
 		Re=(4*((juice_data[0]*juice_data[8])/Np))/(0.0254*math.pi*Disp*juice_data[9])
@@ -164,27 +182,25 @@ def Update_data():
 		f1=(1.4+2*math.log(Er))**-2
 		f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
 		#Viscosity of pipe fluid
-		up=liquor.viscosity(juice_data[3],juice_data[1],juice_data[2])
+		up=liquor.viscosity(juice_data[3],float(juice_data[1]),float(juice_data[2]))
 		#Viscosity of pipe fluid at wall temperature
-		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),juice_data[1],juice_data[2])
+		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),float(juice_data[1]),float(juice_data[2]))
 		#Drop pressure pipe side (REIN)
 		Drop_pressure_pipe_side=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0)
 
 		##Mass flow of vapor
 		DT=float(dtlog.deltatlog(juice_data[3],float(split_model_data_n1[1]),vapor_data[2]))
 		OvU=Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
-			Tjc,float(vapor_data[2]),float(vapor_data[0])/1000.0,Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)
-		Mv= ((OvU*Heat_A*DT)/vapor_data[7])*3.96832
+			Tjc,float(vapor_data[2]),float(vapor_data[0]),Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)
+		Mv= ((OvU*Heat_A*(DT+274.15))/vapor_data[7])*3.6
 		x, y=update_data_txt("Fv2")
-		#print y
-		#print ("Fv2"+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"+str(vapor_data[4])+"\t"+str(vapor_data[5])+"\t"+str(vapor_data[6])+"\t"+str(vapor_data[7])+"\t"+str(vapor_data[8])+"\t"+str(vapor_data[9]))
+		##Overwrite vapor flow value in DataBase
 		replace("Blocks_data.txt",y,"Fv2"+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"
 			+str(vapor_data[4])+"\t"+str(vapor_data[5])+"\t"+str(vapor_data[6])+"\t"+str(vapor_data[7])+"\t"+str(vapor_data[8])+"\t"+str(vapor_data[9]))
 	##Process values 
 	#Vapor
 		#input
 		InStm_Press.setText(str(round(float(vapor_data[0])/1000.0,2)))
-		#InStm_Flow.setText(str(vapor_data[1]))
 		InStm_Flow.setText(str(round(Mv,3)))
 		InStm_Temp.setText(str(round(vapor_data[2],2)))
 		#output
@@ -197,18 +213,18 @@ def Update_data():
 		InFluid_Flow.setText(str(juice_data[0]))
 		InFluid_pH.setText(str(juice_data[5]))
 		InFluid_pressure.setText(str(round(float(juice_data[6])/1000.0,1)))
-		InFluid_InsolubleSolids.setText(str(juice_data[4]))
-		InFluid_Purity.setText(str(juice_data[2]))
-		InFluid_Brix.setText(str(juice_data[1]))
+		InFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
+		InFluid_Purity.setText(str(juice_data[2]*100.0))
+		InFluid_Brix.setText(str(float(juice_data[1])*100.0))
 		#output
 		OutFluid_Temp.setText(str(round(float(split_model_data_n1[1]),3)))
-		OutFluid_Brix.setText(str(juice_data[1]))
+		OutFluid_Brix.setText(str(float(juice_data[1])*100.0))
 		OutFluid_Flow.setText(str(juice_data[0]))
 		OutFluid_pH.setText(str(juice_data[5]))
 		y=float(((juice_data[6]))-Drop_pressure_pipe_side)
 		OutFluid_pressure.setText(str(round((y/1000.0),2)))
-		OutFluid_InsolubleSolids.setText(str(juice_data[4]))
-		OutFluid_Purity.setText(str(juice_data[2]))
+		OutFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
+		OutFluid_Purity.setText(str(float(juice_data[2])*100.0))
 
 ##Function for update window when closing
 def Update_window():
@@ -277,50 +293,103 @@ def update_data_txt(dato):
 	return flg, dats	
 
 
-##-- Class for graphic instantiation--## 
-class MyMplCanvas(FigureCanvas):
-	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
+# #-- Class for graphic instantiation--## 
+# class MyMplCanvas(FigureCanvas):
+# 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-	def __init__(self, parent=None, width=4, height=4, dpi=100):
-		global mpl_toolbar
-		fig = Figure(figsize=[width, height], tight_layout = {'pad': 0}, dpi=dpi)
-		self.axes = fig.add_subplot(111)
+# 	def __init__(self, parent=None, width=4, height=4, dpi=100):
+# 		global mpl_toolbar
+# 		fig = Figure(figsize=[width, height], tight_layout = {'pad': 0}, dpi=dpi)
+# 		self.axes = fig.add_subplot(111)
 
-		self.compute_initial_figure()
+# 		self.compute_initial_figure()
 
-		FigureCanvas.__init__(self, fig)
-		self.setParent(parent)
+# 		FigureCanvas.__init__(self, fig)
+# 		self.setParent(parent)
 		
-		FigureCanvas.setSizePolicy(self,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
-		mpl_toolbar = NavigationToolbar(self,Heat_tab_3)
-		#self.mpl_connect('key_press_event', self.on_key_press)
-		#FigureCanvas.updateGeometry(self)
+# 		FigureCanvas.setSizePolicy(self,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
+# 		mpl_toolbar = NavigationToolbar(self,Heat_tab_3)
+# 		#self.mpl_connect('key_press_event', self.on_key_press)
+# 		#FigureCanvas.updateGeometry(self)
 
-	def compute_initial_figure(self):
-		pass
-	def on_key_press(self, event):
-		print('you pressed', event.key)
-		# implement the default mpl key press events described at
-		# http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
-		key_press_handler(event, FigureCanvas, self.mpl_toolbar)
+# 	def compute_initial_figure(self):
+# 		pass
+# 	def on_key_press(self, event):
+# 		print('you pressed', event.key)
+# 		# implement the default mpl key press events described at
+# 		# http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
+# 		key_press_handler(event, FigureCanvas, self.mpl_toolbar)
 
-class MyDynamicMplCanvas(MyMplCanvas):
-	"""A canvas that updates itself every second with a new plot."""
-	def __init__(self, *args, **kwargs):
-		MyMplCanvas.__init__(self, *args, **kwargs)
-		#self.axes.yaxis.set_label_coords(0.0, 1.03)
-		#self.axes.xaxis.set_label_coords(1.03, 0.0)
+# class MyDynamicMplCanvas(MyMplCanvas):
+# 	"""A canvas that updates itself every second with a new plot."""
+# 	def __init__(self, *args, **kwargs):
+# 		MyMplCanvas.__init__(self, *args, **kwargs)
+# 		#self.axes.yaxis.set_label_coords(0.0, 1.03)
+# 		#self.axes.xaxis.set_label_coords(1.03, 0.0)
 		
-		timer = QtCore.QTimer(self)
-		timer.timeout.connect(self.update_figure)
-		timer.start(Ts*1000)
+# 		timer = QtCore.QTimer(self)
+# 		timer.timeout.connect(self.update_figure)
+# 		timer.start(Ts*1000)
 
 
-	def compute_initial_figure(self):
-		pass
-		#self.axes.plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
+# 	def compute_initial_figure(self):
+# 		pass
+# 		#self.axes.plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
 
-	def update_figure(self):
+# 	def update_figure(self):
+# 		print "YES"
+# 		global time_exec
+# 		global model_value
+# 		global split_model_data_n1
+# 		infile = open('time_exec.txt', 'r+')
+# 		data=infile.readlines()
+# 		if len(data)>1:
+# 			if data[-1]!="stop" and data[-2]!="stop":
+# 				model_data_n0=data[-2].strip()
+# 				model_data_n1=data[-1].strip()
+
+# 				split_model_data_n0=model_data_n0.split("\t")
+# 				split_model_data_n1=model_data_n1.split("\t")
+
+# 				time_exec.append(float(split_model_data_n0[0]))
+# 				model_value.append(round(float(split_model_data_n0[1]),3))
+
+# 				time_exec.append(float(split_model_data_n1[0]))
+# 				model_value.append(round(float(split_model_data_n1[1]),3))
+				
+# 				plot_time=time_exec[len(time_exec)-2:len(time_exec)]
+# 				plot_model=model_value[len(model_value)-2:len(model_value)]
+
+# 				#print(str(plot_time)+" -*- "+str(plot_model))
+
+# 				infile.close()
+# 				self.axes.set_xlabel('Time (min)',fontsize=11)
+# 				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+# 				self.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+# 				self.axes.plot(plot_time,plot_model,'b-')
+# 				Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
+# 				self.draw()
+# 				Update_data()
+
+# 			else :
+# 				time_exec=[]
+# 				model_value=[]
+# 				self.axes.cla()
+# 				for values in data:
+# 					if values!="stop":
+# 						values.strip()
+# 						split_model_data=values.split("\t")
+# 						time_exec.append(float(split_model_data[0]))
+# 						model_value.append(round(float(split_model_data[1]),3))
+# 				self.axes.set_xlabel('Time (min)',fontsize=11)
+# 				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+# 				self.axes.plot(time_exec,model_value,'b-')
+# 				Update_data()
+# 		# else:
+# 		# 	print "No hay datos para leer"
+
+
+def update_figure():
 		global time_exec
 		global model_value
 		global split_model_data_n1
@@ -346,30 +415,30 @@ class MyDynamicMplCanvas(MyMplCanvas):
 				#print(str(plot_time)+" -*- "+str(plot_model))
 
 				infile.close()
-				self.axes.set_xlabel('Time (min)',fontsize=11)
-				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-				self.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-				self.axes.plot(plot_time,plot_model,'b-')
+				Graph.axes.set_xlabel('Time (min)',fontsize=11)
+				Graph.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+				Graph.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+				Graph.axes.plot(plot_time,plot_model,'b-')
 				Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
-				self.draw()
+				Graph.draw()
 				Update_data()
 
 			else :
 				time_exec=[]
 				model_value=[]
-				self.axes.cla()
+				Graph.axes.cla()
 				for values in data:
 					if values!="stop":
 						values.strip()
 						split_model_data=values.split("\t")
 						time_exec.append(float(split_model_data[0]))
 						model_value.append(round(float(split_model_data[1]),3))
-				self.axes.set_xlabel('Time (min)',fontsize=11)
-				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-				self.axes.plot(time_exec,model_value,'b-')
+				Graph.axes.set_xlabel('Time (min)',fontsize=11)
+				Graph.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+				Graph.axes.plot(time_exec,model_value,'b-')
 				Update_data()
-		# else:
-		# 	print "No hay datos para leer"
+
+
 
 ##-- Class for confirm parameters --## 
 class window_confirm_param(QDialog):
@@ -485,8 +554,10 @@ class Ui_Dialog(object):
 		global CondStm_Flow
 		global CondStm_Temp
 		global CondStm_Press
+		global Graph
 
 		global Heat_tab_3
+		global verticalLayoutWidget
 
 		nameDialog=name
 		Ts=ts
@@ -878,16 +949,21 @@ class Ui_Dialog(object):
 		Temp_Output_variable.setGeometry(QtCore.QRect(180, 10, 51, 20))
 		Temp_Output_variable.setReadOnly(True)
 
-		self.verticalLayoutWidget = QtGui.QWidget(Heat_tab_3)
-		self.verticalLayoutWidget.setGeometry(QtCore.QRect(15, 35, 410, 260))
-		self.verticalLayoutWidget.setObjectName(_fromUtf8("verticalLayoutWidget"))
-		self.verticalLayout = QtGui.QVBoxLayout(self.verticalLayoutWidget)
-		self.verticalLayout.setGeometry(QtCore.QRect(15, 0, 400, 300))
-		self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+		verticalLayoutWidget = QtGui.QWidget(Heat_tab_3)
+		verticalLayoutWidget.setGeometry(QtCore.QRect(15, 35, 410, 260))
+		verticalLayoutWidget.setObjectName(_fromUtf8("verticalLayoutWidget"))
+		# self.verticalLayout = QtGui.QVBoxLayout(verticalLayoutWidget)
+		# self.verticalLayout.setGeometry(QtCore.QRect(15, 0, 400, 300))
+		# self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
 		#Addition of grafics in window
-		dc = MyDynamicMplCanvas(Dialog, width=4, height=3, dpi=85)
-		self.verticalLayout.addWidget(dc,3)
-		self.verticalLayout.addWidget(mpl_toolbar,1)
+
+		Graph = DynamicGraphic(Dialog,Heat_tab_3, width=4, height=3, dpi=85)
+		verticalLayoutWidget.setLayout(Graph.dynamic_graph)
+		self.Timer_graph()
+
+		# dc = MyDynamicMplCanvas(Dialog, width=4, height=3, dpi=85)
+		# self.verticalLayout.addWidget(dc,3)
+		# self.verticalLayout.addWidget(mpl_toolbar,1)
 
 	##----Selector of Heat type----##
 		#Selectable list
@@ -948,9 +1024,9 @@ class Ui_Dialog(object):
 		self.Output_fluid_GrBx.setTitle(_translate("Dialog", "Fluido de salida", None))
 		self.label_OutFluid_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
 		self.label_OutFluid_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
-		self.label_OutFluid_Brix.setText(_translate("Dialog", "Brix [kg/kg]", None))
-		self.label_OutFluid_Purity.setText(_translate("Dialog", "Pureza [kg/kg]", None))
-		self.label_OutFluid_InsolubleSolids.setText(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))
+		self.label_OutFluid_Brix.setText(_translate("Dialog", "Brix [%]", None))
+		self.label_OutFluid_Purity.setText(_translate("Dialog", "Pureza [%]", None))
+		self.label_OutFluid_InsolubleSolids.setText(_translate("Dialog", "Sólidos insolubles [%]", None))
 		self.label_OutFluid_pH.setText(_translate("Dialog", "pH ", None))
 		self.label_OutFluid_pressure.setText(_translate("Dialog", "Presión[kPa] ", None))
 		self.label_InFluid_pressure.setText(_translate("Dialog", "Presión[kPa] ", None))
@@ -958,9 +1034,9 @@ class Ui_Dialog(object):
 		self.Input_fluid_GrBx.setTitle(_translate("Dialog", "Fluido de entrada", None))
 		self.label_InFluid_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
 		self.label_InFluid_Temp.setText(_translate("Dialog", "Temperatura [°C]", None))
-		self.label_InFluid_Brix.setText(_translate("Dialog", "Brix [kg/kg]", None))
-		self.label_InFluid_Purity.setText(_translate("Dialog", "Pureza [kg/kg]", None))
-		self.label_InFluid_InsolubleSolids.setText(_translate("Dialog", "Sólidos insolubles [kg/kg]", None))
+		self.label_InFluid_Brix.setText(_translate("Dialog", "Brix [%]", None))
+		self.label_InFluid_Purity.setText(_translate("Dialog", "Pureza [%]", None))
+		self.label_InFluid_InsolubleSolids.setText(_translate("Dialog", "Sólidos insolubles [%]", None))
 		self.label_InFluid_pH.setText(_translate("Dialog", "pH ", None))
 		self.Input_Steam_GrBx.setTitle(_translate("Dialog", "Vapor de entrada", None))
 		self.label_InStm_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
@@ -974,6 +1050,21 @@ class Ui_Dialog(object):
 		self.label.setText(_translate("Dialog", "Temperatura de jugo de salida:", None))
 		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(Heat_tab_3), _translate("Dialog", "Gráfica", None))
 
+	def Timer_graph(self):
+		timer = QtCore.QTimer(Dialog_window)
+		timer.timeout.connect(update_figure)
+		timer.start(Ts*1000)
+
+# class MyDynamicMplCanvas(Graph):
+# 	"""A canvas that updates itself every second with a new plot."""
+# 	def __init__(self, *args, **kwargs):
+# 		Graph.__init__(self, *args, **kwargs)
+# 		#self.axes.yaxis.set_label_coords(0.0, 1.03)
+# 		#self.axes.xaxis.set_label_coords(1.03, 0.0)
+		
+# 		timer = QtCore.QTimer(self)
+# 		timer.timeout.connect(self.update_figure)
+# 		timer.start(Ts*1000)
 
 if __name__ == "__main__":
 	import sys
