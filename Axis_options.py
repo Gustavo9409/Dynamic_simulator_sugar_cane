@@ -22,9 +22,10 @@ try:
 except AttributeError:
 	def _translate(context, text, disambig):
 		return QtGui.QApplication.translate(context, text, disambig)
-
+global figure
+figure=None
 class Ui_Dialog(object):
-	def setupUi(self,axes, Dialog):
+	def setupUi(self,axes,Window,ts, Dialog):
 		global checkBox_x_stat
 		global checkBox_x_din
 		global checkBox_x_wind
@@ -47,8 +48,15 @@ class Ui_Dialog(object):
 
 		global axis
 		global Dialog_window
+		global Ts
+		global figure
+		global window_timer
 
+		window_timer=Window
 		axis=axes
+		Ts=ts
+
+		figure = axis.get_figure()
 
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(366, 395)
@@ -269,6 +277,7 @@ class Ui_Dialog(object):
 		self.horizontalLayout.addWidget(self.Cancel_btn)
 		self.verticalLayout.addLayout(self.horizontalLayout)
 		self.horizontalLayout_10.addWidget(self.widget)
+		self.Cancel_btn.clicked.connect(self.cancel_options)
 
 		self.retranslateUi(Dialog)
 		self.tabWidget.setCurrentIndex(0)
@@ -289,18 +298,53 @@ class Ui_Dialog(object):
 		x_label.setText(xlabel)
 		y_label.setText(ylabel)
 
+		
+
+	def cancel_options(self):
+		Dialog_window.close()
+
 	def apply_options(self):
+		global figure
+		global Widht_window
+
 		if checkBox_x_stat.isChecked():
+			# figure = axis.get_figure()
+			if figure.canvas.current_timer:
+				figure.canvas.current_timer.stop()
+
 			axis.set_title(tittle.text())
 			axis.set_xlim(float(x_min.text()), float(x_max.text()))
 			axis.set_xlabel(x_label.text())
 			axis.set_ylim(float(y_min.text()), float(y_max.text()))
 			axis.set_ylabel(y_label.text())
 			#Re-draw
-			figure = axis.get_figure()
+			
 			figure.canvas.draw()
 			#Close window
 			Dialog_window.close()
+
+		elif checkBox_x_din.isChecked():
+			# figure = axis.get_figure()
+			if figure.canvas.current_timer:
+				figure.canvas.current_timer.stop()
+
+			figure.canvas.current_timer = QtCore.QTimer(window_timer)
+			figure.canvas.current_timer.timeout.connect(update_time_dynamic)
+			figure.canvas.current_timer.start(Ts*1000)
+			Dialog_window.close()
+
+		elif checkBox_x_wind.isChecked():
+			# figure = axis.get_figure()
+			Widht_window=float(window_range.text())
+			if figure.canvas.current_timer:
+				figure.canvas.current_timer.stop()
+
+			figure.canvas.current_timer = QtCore.QTimer(window_timer)
+			figure.canvas.current_timer.timeout.connect(update_time_windows)
+			figure.canvas.current_timer.start(Ts*1000)
+			Dialog_window.close()
+
+
 
 	def selection_check(self):
 		if checkBox_x_stat.isChecked():
@@ -329,13 +373,13 @@ class Ui_Dialog(object):
 			xlabel=axis.get_xlabel()
 			ylabel=axis.get_ylabel()
 
-			tittle.setText(str(title))
-			x_min.setText(str(xmin))
-			x_max.setText(str(xmax))
-			y_min.setText(str(ymin))
-			y_max.setText(str(ymax))
-			x_label.setText(xlabel)
-			y_label.setText(ylabel)
+			# tittle.setText(str(title))
+			# x_min.setText(str(xmin))
+			# x_max.setText(str(xmax))
+			# y_min.setText(str(ymin))
+			# y_max.setText(str(ymax))
+			# x_label.setText(xlabel)
+			# y_label.setText(ylabel)
 
 		elif checkBox_x_din.isChecked():
 			print "Dinam"
@@ -357,8 +401,6 @@ class Ui_Dialog(object):
 			label_x_max.setDisabled(1)
 			x_label.setDisabled(1)
 			label_x_label.setDisabled(1)
-
-
 
 		elif checkBox_x_wind.isChecked():
 			print "Wind"
@@ -393,6 +435,60 @@ class Ui_Dialog(object):
 		self.Apply_btn.setText(_translate("Dialog", "Aplicar", None))
 		self.Cancel_btn.setText(_translate("Dialog", "Cancelar", None))
 
+def update_time_dynamic():
+	# figure = axis.get_figure()
+	xmin_init=Ts
+	xmin, xmax = axis.get_xlim()
+	
+	infile = open('time_exec.txt', 'r+')
+	data=infile.readlines()
+	infile.close()
+	if len(data)>1:
+
+		if data[-1]!="stop":
+			axis_x_updt=data[-1].strip().split("\t")
+			x_updt_max=axis_x_updt[0]
+		else:
+			x_updt_max=xmax
+			if figure.canvas.current_timer:
+				figure.canvas.current_timer.stop()
+
+	axis.set_xlim(xmin_init,float(x_updt_max))
+	figure.canvas.draw()
+
+def update_time_windows():
+	# figure = axis.get_figure()
+	xmin, xmax = axis.get_xlim()
+
+	infile = open('time_exec.txt', 'r+')
+	data=infile.readlines()
+	infile.close()
+	if len(data)>1:
+		if data[-1]!="stop":
+			axis_x_updt=data[-1].strip().split("\t")
+			x_updt_max=axis_x_updt[0]
+		else:
+			x_updt_max=xmax
+			if figure.canvas.current_timer:
+				figure.canvas.current_timer.stop()
+
+	if (float(x_updt_max)>Widht_window):
+		Change=float(x_updt_max)-xmax
+		diff=float(x_updt_max)-(xmin)
+		if Widht_window-diff>=0:
+			if diff>=Widht_window:
+				axis.set_xlim(xmin+Change,float(x_updt_max))
+				figure.canvas.draw()
+			else:
+				axis.set_xlim(xmin,float(x_updt_max))
+				figure.canvas.draw()
+		else:
+			x_min_d=float(x_updt_max)- Widht_window
+			axis.set_xlim(x_min_d,float(x_updt_max))
+			figure.canvas.draw()
+	else :
+		axis.set_xlim(xmin,float(x_updt_max))
+		figure.canvas.draw()
 
 if __name__ == "__main__":
 	import sys
@@ -402,4 +498,5 @@ if __name__ == "__main__":
 	ui.setupUi(Dialog)
 	Dialog.show()
 	sys.exit(app.exec_())
+
 

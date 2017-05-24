@@ -1,5 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import sys
+import os
+import re
+import numpy as np
+import psutil
+
 import sip
 sip.setapi('QVariant',2)
 sip.setapi('QString', 2)
@@ -7,6 +13,7 @@ sip.setapi('QString', 2)
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4.QtCore import pyqtSignal
 #Import blocks
 from Evapor_properties import Ui_Dialog as Evap_properties
 from Heater_properties import Ui_Dialog as Heat_properties
@@ -14,13 +21,9 @@ from Tank_properties import Ui_Dialog as Tank_properties
 from Valve_properties import Ui_Dialog as Valve_properties
 from Flow_properties import Ui_Dialog as Flow_properties
 #Import simulation
-from Run_heater_model import Simulation_heat
+from run_heater_model import Simulation_heat
 #
-import sys
-import os
-import re
-import numpy as np
-import psutil
+
 dir_script=str(os.getcwd())
 
 global i_ev
@@ -35,6 +38,7 @@ global run_flag
 global Ts_value
 global Sim_time
 global array_connections
+global array_arrows
 Sim_time=0.5
 l=0
 i_ev=1
@@ -46,6 +50,7 @@ i_dvg=1
 i_cnv=1
 run_flag=0
 array_connections=[]
+array_arrows=[]
 
 outfile=open('time_exec.txt', 'w')
 outfile.close()
@@ -88,27 +93,53 @@ class Connection:
 			fromPort.posCallbacks.append(self.setBeginPos)
 		self.toPort = toPort
 		# Create arrow item:
-		self.arrow = ArrowItem()
+		self.arrow = ArrowItem(self.fromPort,self.toPort)
 		editor.diagramScene.addItem(self.arrow)
 	def setFromPort(self, fromPort):
 		self.fromPort = fromPort
 		if self.fromPort:
 			self.pos1 = fromPort.scenePos()
 			self.fromPort.posCallbacks.append(self.setBeginPos)
+		self.arrow.port1=self.fromPort
 	def setToPort(self, toPort):
+		global array_arrows
 		self.toPort = toPort
 		if self.toPort:
 			self.pos2 = toPort.scenePos()
 			self.toPort.posCallbacks.append(self.setEndPos)
+		self.arrow.port2=self.toPort
+		array_arrows.append(self.arrow)
 	def setEndPos(self, endpos):
 		self.pos2 = endpos
 		self.arrow.setLine(QLineF(self.pos1, self.pos2))
+		
 	def setBeginPos(self, pos1):
 		self.pos1 = pos1
 		self.arrow.setLine(QLineF(self.pos1, self.pos2))
 	def delete(self):
 		editor.diagramScene.removeItem(self.arrow)
 		# Remove position update callbacks:
+
+class ArrowItem(QGraphicsLineItem):
+	def __init__(self,port1,port2):
+		super(ArrowItem, self).__init__(None)
+		self.setPen(QtGui.QPen(QtCore.Qt.red,3))
+		self.setFlag(self.ItemIsSelectable, True)
+		self.port1=port1
+		self.port2=port2
+	def x(self):
+		pass
+	def contextMenuEvent(self, event):
+		menu = QMenu()
+		self.type_line1=QIcon(dir_script+"\Images\_type3_arrow.png");
+		self.type_line2=QIcon(dir_script+"\Images\_type2_arrow.png");
+		self.type_line3=QIcon(dir_script+"\Images\_type1_arrow.png");
+		dl = menu.addAction(self.type_line1,'Normal')
+		pa = menu.addAction(self.type_line2,'Curvo')
+		pa = menu.addAction(self.type_line3,'Recto')
+		menu.exec_(event.screenPos())
+
+
 
 class ParameterDialog_Evaporator(QDialog):
 	def __init__(self,dat, parent=None):
@@ -176,12 +207,36 @@ class DeleteDialog(QDialog):
 				aux3=re.sub('([a-zA-Z]+)', "", aux)
 				editor.diagramScene.removeItem(item)
 				if aux2=="Valvula":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Valvula" or par_data[1][:-1]=="Valvula":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Valvula" or str(arrows.port2.name_block)[:-1]=="Valvula":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_vl-1):
 						i_vl=i_vl-1
 				if aux2=="Tanque":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Tanque" or par_data[1][:-1]=="Tanque":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Tanque" or str(arrows.port2.name_block)[:-1]=="Tanque":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_tk-1):
 						i_tk=i_tk-1
 				if aux2=="Flujo":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Flujo" or par_data[1][:-1]=="Flujo":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Flujo" or str(arrows.port2.name_block)[:-1]=="Flujo":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_fl-1):
 						i_fl=i_fl-1
 
@@ -201,9 +256,25 @@ class DeleteDialog(QDialog):
 								elif flag==("Fw"+str(aux3)):
 									self.replace("Blocks_data.txt",str(i.strip()),"")
 				if aux2=="Evaporador":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Evaporador" or par_data[1][:-1]=="Evaporador":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Evaporador" or str(arrows.port2.name_block)[:-1]=="Evaporador":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_ev-1):
 						i_ev=i_ev-1
 				if aux2=="Calentador":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Calentador" or par_data[1][:-1]=="Calentador":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Calentador" or str(arrows.port2.name_block)[:-1]=="Calentador":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_ht-1):
 						i_ht=i_ht-1
 
@@ -219,9 +290,25 @@ class DeleteDialog(QDialog):
 								if flag==("Ht"+str(aux3)):
 									self.replace("Blocks_data.txt",str(i.strip()),"")
 				if aux2=="Divergencia":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Divergencia" or par_data[1][:-1]=="Divergencia":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Divergencia" or str(arrows.port2.name_block)[:-1]=="Divergencia":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_dvg-1):
 						i_dvg=i_dvg-1
 				if aux2=="Convergencia":
+					if len(array_connections)>0:
+						for k,par_data in enumerate(array_connections):
+							if par_data[0][:-1]=="Convergencia" or par_data[1][:-1]=="Convergencia":
+								for j,arrows in enumerate(array_arrows):
+									if str(arrows.port1.name_block)[:-1]=="Convergencia" or str(arrows.port2.name_block)[:-1]=="Convergencia":
+										editor.diagramScene.removeItem(arrows)
+										array_connections.pop(k)
+										array_arrows.pop(j)
 					if int(aux3)==(i_cnv-1):
 						i_cnv=i_cnv-1
 					
@@ -741,14 +828,6 @@ class BlockItem_Tank(QGraphicsRectItem):
 		return w, h
 
 	  
-class ArrowItem(QGraphicsLineItem):
-	def __init__(self):
-		super(ArrowItem, self).__init__(None)
-		self.setPen(QtGui.QPen(QtCore.Qt.red,2))
-		self.setFlag(self.ItemIsSelectable, True)
-	def x(self):
-		pass
-
 class EditorGraphicsView(QGraphicsView):
 	def __init__(self, scene, parent=None):
 		QGraphicsView.__init__(self, scene, parent)
@@ -803,7 +882,7 @@ class EditorGraphicsView(QGraphicsView):
 				i_dvg=i_dvg+1
 			# elif namex==str(Valvula):
 			else:
-				b1 = BlockItem_Valve(name+str(i_vl))
+				b1 = BlockItem_Valve("Valvula"+str(i_vl))
 				b1.setPos(self.mapToScene(event.pos()))
 				self.scene().addItem(b1)
 				i_vl=i_vl+1
@@ -822,6 +901,7 @@ class LibraryModel(QStandardItemModel):
 		return mimedata
 
 class DiagramScene(QGraphicsScene):
+	itemSelected = QtCore.pyqtSignal(QtGui.QGraphicsItem)
 	def __init__(self, parent=None):
 		super(DiagramScene, self).__init__(parent)
 	def mouseMoveEvent(self, mouseEvent):
@@ -997,6 +1077,9 @@ class DiagramEditor(QWidget):
 			print(time_exec+"--"+model_value)
 			infile.close()
 	def run_emulation(self):
+		global Heater_juice_in
+		global Heater_vapor_in
+
 		if len(Ts_value.text())>0:
 			if float(Ts_value.text())>=0.5 and float(Ts_value.text())<=3.0 : 
 				box = QtGui.QMessageBox()
@@ -1022,7 +1105,7 @@ class DiagramEditor(QWidget):
 							if k%2==0:
 								Heater_flag.append("Ht"+par_data[1][len(par_data[1])-1:])					
 							if par_data[0][:-1]=="Flujo":
-								if par_data[2]=="Fluido de entrada":
+								if par_data[3]=="Fluido de entrada":
 									FLow_flag.append("Fj"+par_data[0][len(par_data[0])-1:])
 								else:	
 									FLow_flag.append("Fv"+par_data[0][len(par_data[0])-1:])
@@ -1037,11 +1120,6 @@ class DiagramEditor(QWidget):
 
 
 					file_heat = open('Blocks_data.txt', 'r+')
-					Mjin=103.0
-					Bjin=0.15
-					Zjin=0.87
-					Tjin=77.0
-					Pvin=4.738
 					data=file_heat.readlines()
 					sim_heat_data=[]
 					heat_param=[]
@@ -1059,10 +1137,12 @@ class DiagramEditor(QWidget):
 								for dat in FLow_flag:
 									if flag[:2]=="Fv" and flag==dat:
 										print "fue vapor "+dat
+										Heater_vapor_in=dat
 										for k in range(1,len(info)):
 											vapor_data.append(info[k])
 									elif flag[:2]=="Fj" and flag==dat:
 										print "fue jugo "+dat
+										Heater_juice_in=dat
 										for k in range(1,len(info)):
 											juice_data.append(info[k])
 					file_heat.close()
@@ -1127,11 +1207,13 @@ class DiagramEditor(QWidget):
 		global prt2
 		global itemname1
 		global itemname2
+		global port_item1
 		prt1=""
 		prt2=""
 		itemname1=""
 		itemname2=""
 		prt1=str(port.typ)
+		port_item1=port
 		itemname1=str(port.name_block)
 		self.startedConnection = Connection(port, None)
 	def sceneMouseMoveEvent(self, event):
@@ -1177,25 +1259,43 @@ class DiagramEditor(QWidget):
 			for item in items:
 				if type(item) is PortItem:
 					prt2=str(item.typ)
+					port_item2=item
 					itemname2=str(item.name_block)
 					if prt2!=prt1 and itemname2!=itemname1:
-						self.startedConnection.setToPort(item)
-						connections=[itemname1, itemname2,str(item.name)]
-						array_connections.append(connections)
-						print array_connections
-					else:
-						self.startedConnection.delete()
+						if prt1=="out" and prt2=='in':
+							self.startedConnection.setToPort(item)
+							connections=[itemname1, itemname2,str(port_item1.name),str(port_item2.name)]
+							array_connections.append(connections)
+							print array_connections
+						elif prt1=="in" and prt2=='out':
+							self.startedConnection.setToPort(item)
+							connections=[itemname2,itemname1,str(port_item2.name),str(port_item1.name)]
+							array_connections.append(connections)
+							print array_connections
+					# else:
+						#self.startedConnection.delete()
 			if self.startedConnection.toPort == None:
 				self.startedConnection.delete()
 			self.startedConnection = None
 	def keyPressEvent(self, kevent):
-		items = self.diagramScene.items(pos)
+		#items = self.diagramScene.items(pos)
+		items = self.diagramScene.selectedItems()
 		for item in items:
 			if item.isSelected()==True:
 				key = kevent.key()
 				if key == QtCore.Qt.Key_Delete :
-					pd = DeleteDialog(self.window())
-					pd.exec_()
+					if hasattr(item, 'port1'): ##If is an ArrowItem()
+						editor.diagramScene.removeItem(item)
+						for j,arrows in enumerate(array_arrows):
+							if arrows==item:
+								array_arrows.pop(j)
+						for k, par_data in enumerate(array_connections):
+							if ((str(par_data[0])==str(item.port1.name_block) and str(par_data[1])==str(item.port2.name_block))
+								or (str(par_data[0])==str(item.port2.name_block) and str(par_data[1])==str(item.port1.name_block))):
+								array_connections.pop(k)
+					else: ## If is a BlockItem()
+						pd = DeleteDialog(self.window())
+						pd.exec_()
 	def timeout(self):
 		self.left_click_count = 0
 

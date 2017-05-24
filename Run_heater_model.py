@@ -1,8 +1,9 @@
+ #-*- coding: utf-8 -*-
 from scipy import *
 from scipy.integrate import odeint
 from scipy.integrate import ode
 from physicochemical_properties import liquor_properties
-from Heater_model import heater_model as ht_model
+from heaters import *
 from time import sleep, clock
 
 import numpy as np
@@ -60,7 +61,7 @@ def Thread_time(output_time,output_model_value):
 			tt.append(texc)
 			end_tt=[tt[-2],tt[-1]]
 
-			yout = odeint(ht_model,yb_l,end_tt,u)
+			yout = odeint(heater_shell_tube.model_temperature,yb_l,end_tt,u)
 			yb_l=[yout[1,0]]
 			# print yout
 			#print end_tt
@@ -101,17 +102,22 @@ def Thread_time(output_time,output_model_value):
 				if flag[:2]=="Fv":
 					for k in range(1,len(info)):
 						vapor_data.append(float(info[k]))
-					lst[9]=vapor_data[0]
+					lst[12]=vapor_data[0]
 					#print lst[9]		
 				elif flag[:2]=="Fj":
 					for k in range(1,len(info)):
 						juice_data.append(float(info[k]))
-					lst[5]=(juice_data[0]/3.6)/juice_data[8]
-					lst[6:9]=juice_data[1:4]
+					lst[8]=(juice_data[0]/3.6)/juice_data[8]
+					lst[9]=juice_data[1]
+					lst[10]=juice_data[2]
+					lst[11]=juice_data[3]
+					# lst[6:9]=juice_data[1:4]
 					#print lst[5]
 		input_heat.close()
 		u=tuple(lst)
 
+		# (Np, Nst, Lp, dp, Dosp, Fjin, Bjin, Zjin, Tjin, Pvin, Ep, B, Hrop)
+		# u = (Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op, Fjin, Tjin, Bjin, Zjin, Pvin)
 
 '''
 # ============================================================================================
@@ -142,16 +148,17 @@ class Simulation_heat:
 		#self.tiempo=tt[len(tt)-1]
 		Np=float(param[0])
 		Nst=float(param[1])
-		Lp=float(param[2])
-		dp=float(param[3])
-		Dosp=float(param[4])
+		Dosp=float(param[2])
+		Lp=float(param[3])
+		Ip=float(param[4])
 		Ep=float(param[5])
-		B=float(param[6])
-		Hrop=float(param[7])
+		Gf=float(param[6])
+		Op=float(param[7])
+		Tjout=float(param[8])
 		Mjin=float(param[9])
-		Bjin=float(param[10])
-		Zjin=float(param[11])
-		Tjin=float(param[12])
+		Tjin=float(param[10])
+		Bjin=float(param[11])
+		Zjin=float(param[12])
 		Pvin=float(param[13])
 
 		# Np=6.0         #-
@@ -169,8 +176,7 @@ class Simulation_heat:
 		# Hrop=100       #hr
 
 		#Initial condition
-		# Tjout=78.0    #C
-		Tjout=float(param[8])
+		# Tjout=78.0    #C°
 
 		#Density
 		pjin = liquor.density(Tjin,Bjin,Zjin)
@@ -184,7 +190,7 @@ class Simulation_heat:
 		initial_x = [Tjout]
 		yb = initial_x
 		u = ()
-		u = (Np, Nst, Lp, dp, Dosp, Fjin, Bjin, Zjin, Tjin, Pvin, Ep, B, Hrop)
+		u = (Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op, Fjin, Tjin, Bjin, Zjin, Pvin)
 		#print ("tupla_1 ")+str(u)
 
 		'''

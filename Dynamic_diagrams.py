@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
+import sys
+import os
+directory=str(os.getcwd())
+sys.path.insert(0, directory+'\matplotlib_edit_package')
+import matplotlib.pyplot as plt
+import backend_qt5_DynamicSim as backend
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from matplotlib.backends.backend_qt4agg_DynamicSim import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT )##as NavigationToolbar)
+from backend_qt4agg_DynamicSim import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT )##as NavigationToolbar)
 from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
-import matplotlib.backends.backend_qt5_DynamicSim as backend
+
 
 global time_exec
 global model_value
@@ -34,30 +40,31 @@ class NavigationToolbar(NavigationToolbar2QT):
 		##Images: C:\Python27\Lib\site-packages\matplotlib\mpl-data\images
 		##Functions: C:\Python27\Lib\site-packages\matplotlib\backends\backend_qt5.py
 		self.toolitems = (
-			('Home', 'Regresar a la vista inicial', 'Home2', 'Home_edit'),
-			('Back', 'Regresar a la vista anterior', 'Row2L', 'back'),
-			('Forward', 'Dirigirse a la siguiente vista', 'Row2R', 'forward'),
-			(None, None, None, None),
-			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), 'move', 'pan'),
-			('Edit axis',_translate("Dialog",'Modificación de ejes', None), 'qt4_editor_options','Edit_axis'),
-			(None, None, None, None),
-			(None, None, None, None),)
+			(None, None, None, None,None),
+			('V_cursor', 'Cursores', 'haircross', 'V_cursor',None),
+			(None, None, None, None,None),
+			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), 'move', 'pan',None),
+			(None, None, None, None,None),
+			('Edit axis',_translate("Dialog",'Modificación de ejes', None), 'qt4_editor_options','Edit_axis',[Ts,g_Widget]),
+			(None, None, None, None,None),)
 		NavigationToolbar2QT.__init__(self, canvas_, parent_)
 
 
 class DynamicGraphic(FigureCanvas):
 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
-	def __init__(self,Widget,parent=None, width=4, height=4, dpi=100):
-		
+	def __init__(self,Widget,ts,parent=None, width=4, height=4, dpi=100):
+		global Ts
+		global g_Widget
 		fig = Figure(figsize=[width, height], tight_layout = {'pad': 0}, dpi=dpi)
 		self.axes = fig.add_subplot(111)
-
+		self.current_timer=None
 		# self.compute_initial_figure()
 
 		FigureCanvas.__init__(self, fig)
 		self.setParent(parent)
-		
+		Ts=ts
+		g_Widget=Widget
 		FigureCanvas.setSizePolicy(self,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
 		self.mpl_toolbar = NavigationToolbar(self,Widget)
 
@@ -121,53 +128,6 @@ class DynamicGraphic(FigureCanvas):
 
 # 		self.generalayout.addWidget(self.LayoutWidget,0,0)
 
-def update_figure():
-	print (g_model_data_txt)
-	global time_exec
-	global model_value
-	global split_model_data_n1
-	infile = open('time_exec.txt', 'r+')
-	data=infile.readlines()
-	if len(data)>1:
-		if data[-1]!="stop" and data[-2]!="stop":
-			model_data_n0=data[-2].strip()
-			model_data_n1=data[-1].strip()
-
-			split_model_data_n0=model_data_n0.split("\t")
-			split_model_data_n1=model_data_n1.split("\t")
-
-			time_exec.append(float(split_model_data_n0[0]))
-			model_value.append(round(float(split_model_data_n0[g_model_data_txt]),3))
-
-			time_exec.append(float(split_model_data_n1[0]))
-			model_value.append(round(float(split_model_data_n1[g_model_data_txt]),3))
-			
-			plot_time=time_exec[len(time_exec)-2:len(time_exec)]
-			plot_model=model_value[len(model_value)-2:len(model_value)]
-
-			#print(str(plot_time)+" -*- "+str(plot_model))
-
-			infile.close()
-			self.axes.set_xlabel('Time (min)',fontsize=11)
-			self.axes.set_ylabel(_translate("Dialog", g_data_label, None),fontsize=11)
-			self.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-			self.axes.plot(plot_time,plot_model,'b-')
-			self.Temp_Output_variable.setText(str(round(float(split_model_data_n1[g_model_data_txt]),3)))
-			self.draw()
-		else :
-			time_exec=[]
-			model_value=[]
-			self.axes.cla()
-			for values in data:
-				if values!="stop":
-					values.strip()
-					split_model_data=values.split("\t")
-					time_exec.append(float(split_model_data[0]))
-					model_value.append(round(float(split_model_data[self.model_data_txt]),3))
-			self.axes.set_xlabel('Time (min)',fontsize=11)
-			self.axes.set_ylabel(_translate("Dialog", self.data_label, None),fontsize=11)
-			self.axes.plot(time_exec,model_value,'b-')
-			# Update_data()
 
 class Ui_Dialog(object):
 	def setupUi(self,Dialog):
@@ -175,6 +135,7 @@ class Ui_Dialog(object):
 		# global data_label
 		# model_data_txt=1
 		# data_label="Tjout [°C]"
+		xs=0.5
 
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(950, 670)
@@ -183,9 +144,16 @@ class Ui_Dialog(object):
 		self.verticalLayoutWidget.setObjectName(_fromUtf8("verticalLayoutWidget"))
 
 
-		dc = DynamicGraphic(Dialog,self.verticalLayoutWidget,width=4, height=3, dpi=85)
+		dc = DynamicGraphic(Dialog,xs,self.verticalLayoutWidget,width=4, height=3, dpi=85)
 		self.verticalLayoutWidget.setLayout(dc.dynamic_graph)
-
+		t=[0, 1, 2, 3]
+		dc.axes.plot(t, [1, 2, 0, 4], 'r')
+		dc.axes.set_xlabel('Time (min)',fontsize=11)
+		dc.axes.set_ylabel('Tjout (C)',fontsize=11)
+		ax2 = dc.axes.twinx()
+		ax2.plot(t, [10, 8, 2, 6], 'b')
+		ax2.set_xlabel('Time (min)',fontsize=11)
+		ax2.set_ylabel('Fjin (t/h)',fontsize=11)
 		self.retranslateUi(Dialog)
 		QtCore.QMetaObject.connectSlotsByName(Dialog)
 

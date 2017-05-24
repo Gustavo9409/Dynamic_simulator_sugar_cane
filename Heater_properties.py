@@ -15,6 +15,12 @@ from matplotlib.backends import qt_compat
 # 	from PySide import QtGui, QtCore
 # else:
 # 	from PyQt4 import QtGui, QtCore
+# import matplotlib.backends.backend_qt5_DynamicSim as backend
+import random
+import threading
+import re
+import math
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -25,14 +31,8 @@ from decimal import Decimal
 from matplotlib.ticker import FormatStrFormatter
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import vapor_properties
-from heat_transfer import htc_shell_tube , t_log
+from heaters import *
 from Dynamic_diagrams import DynamicGraphic
-
-# import matplotlib.backends.backend_qt5_DynamicSim as backend
-import random
-import threading
-import re
-import math
 
 global time_1
 global outout_1
@@ -55,7 +55,6 @@ SnT=1.0
 vapor=vapor_properties()
 liquor=liquor_properties()
 Ht=htc_shell_tube()
-dtlog=t_log()
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -95,10 +94,10 @@ class calculated_properties():
 		return Ac
 	def Scalling_r(self,Fj,Tj,Bj,Zj):
 		vj=self.Juice_velocity(Fj,Tj,Bj,Zj)
-		Hrop=float(Time_Op.text())
-		B=float(Scalling_Coeff.text())
+		Op=float(Time_Op.text())
+		Gf=float(Scalling_Coeff.text())
 
-		Ri=((3.5*10**-6)*(Hrop**B))*(1+(10.73/(vj**3)))
+		Ri=((3.5*10**-6)*(Op**Gf))*(1+(10.73/(vj**3)))
 		return Ri
 
 global heat_properties
@@ -149,50 +148,51 @@ def Update_data():
 		Ep=float(Pipe_Rough.text())
 		Er=Ep/Dosp
 		Lp=float(Lenght_Pipe.text())
+		Ip=float(Pipe_Thickness.text()) 
 		Nst=float(N_steps.text())
-		Hrop=float(Time_Op.text())
-		B=float(Scalling_Coeff.text())
+		Op=float(Time_Op.text())
+		Gf=float(Scalling_Coeff.text())
 		Aosc=heat_properties.Heat_area()
 		Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
-		Tjc=(float(juice_data[3])+float(split_model_data_n1[1]))/2.0;
+		Tjc=(float(juice_data[1])+float(split_model_data_n1[1]))/2.0;
 		Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
-
+		
 		#Juice Velocity
-		Juice_vel=round(heat_properties.Juice_velocity(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2])),3)
+		Juice_vel=round(heat_properties.Juice_velocity(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3])),3)
 		Juice_Velocity.setText(str(Juice_vel))
 		#Heat Area
-		Heat_A=round(heat_properties.Heat_area(),3)
-		Heat_Area.setText(str(Heat_A))
+		Heat_Area.setText(str(round(Aosc,3)))
 		#Scalling resistance
-		Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]))))
 		Scalling_Resist.setText(str(Scall_R))
 		#Overall heat trasnfer coefficient
-		OverallU="{:.3E}".format(Decimal(Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
-			Tjc,float(vapor_data[2]),float(vapor_data[0]),Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)))
+		OvU=(Ht.overall_u(Np,Nst,Dosp,Lp,Ip,Ep,Gf,Op,Fj,float(juice_data[1]),float(juice_data[2]),
+			float(juice_data[3]),float(vapor_data[2]),float(vapor_data[0]),Tjc))
+		OverallU="{:.3E}".format(Decimal(OvU))
 		Overall_U.setText(str(OverallU))
 		#Internal heat trasnfer coefficient
-		InternalU="{:.3E}".format(Decimal(Ht.internal_u(Disp,Dosp,Np,Ep,Fj,float(juice_data[3]),float(juice_data[1]),float(juice_data[2]))))
+		InternalU="{:.3E}".format(Decimal(Ht.internal_u(Np,Dosp,Ip,Ep,Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]))))
 		Inside_U.setText(str(InternalU))
 		#External heat trasnfer coefficient
-		ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tjc,float(vapor_data[2]),float(vapor_data[0]))))
+		ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,float(vapor_data[2]),float(vapor_data[0]),Tjc)))
 		Outside_U.setText(str(ExternalU))
 		#Reynolds number
-		Re=(4*((juice_data[0]*juice_data[8])/Np))/(0.0254*math.pi*Disp*juice_data[9])
+		Re=(4*((Fj*float(juice_data[8]))/Np))/(0.0254*math.pi*Disp*juice_data[9])
 		#Moody Friction factor
 		f1=(1.4+2*math.log(Er))**-2
 		f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
 		#Viscosity of pipe fluid
-		up=liquor.viscosity(juice_data[3],float(juice_data[1]),float(juice_data[2]))
+		up=liquor.viscosity(juice_data[1],float(juice_data[2]),float(juice_data[3]))
 		#Viscosity of pipe fluid at wall temperature
-		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),float(juice_data[1]),float(juice_data[2]))
+		up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),float(juice_data[2]),float(juice_data[3]))
 		#Drop pressure pipe side (REIN)
-		Drop_pressure_pipe_side=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0)
-
+		Delta_drop_pressure=(((Nst*(f*Lp)/(Disp*(up/up_tube_wall)**0.14)))+2.5)*(((float(juice_data[7]))*(Juice_vel**2.0))/2.0)
+		
 		##Mass flow of vapor
-		DT=float(dtlog.deltatlog(juice_data[3],float(split_model_data_n1[1]),vapor_data[2]))
-		OvU=Ht.overall_u(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]),
-			Tjc,float(vapor_data[2]),float(vapor_data[0]),Np,Aisc,Aosc,Disp,Dosp,Ep,Hrop,B)
-		Mv= ((OvU*Heat_A*(DT+274.15))/vapor_data[7])*3.6
+		DT=float(deltatlog(juice_data[3],float(split_model_data_n1[1]),vapor_data[2]))
+		
+		Mv= ((OvU*Aosc*(DT))/vapor_data[7])*3.6
+		
 		x, y=update_data_txt("Fv2")
 		##Overwrite vapor flow value in DataBase
 		replace("Blocks_data.txt",y,"Fv2"+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"
@@ -209,22 +209,22 @@ def Update_data():
 		#CondStm_Press.setText(str(round(float(vapor_data[0])/1000.0,1)))
 	#Juice
 		#input
-		InFluid_Temp.setText(str(juice_data[3]))
+		InFluid_Temp.setText(str(juice_data[1]))
 		InFluid_Flow.setText(str(juice_data[0]))
 		InFluid_pH.setText(str(juice_data[5]))
 		InFluid_pressure.setText(str(round(float(juice_data[6])/1000.0,1)))
 		InFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
-		InFluid_Purity.setText(str(juice_data[2]*100.0))
-		InFluid_Brix.setText(str(float(juice_data[1])*100.0))
+		InFluid_Purity.setText(str(juice_data[3]*100.0))
+		InFluid_Brix.setText(str(float(juice_data[2])*100.0))
 		#output
 		OutFluid_Temp.setText(str(round(float(split_model_data_n1[1]),3)))
-		OutFluid_Brix.setText(str(float(juice_data[1])*100.0))
+		OutFluid_Brix.setText(str(float(juice_data[2])*100.0))
 		OutFluid_Flow.setText(str(juice_data[0]))
 		OutFluid_pH.setText(str(juice_data[5]))
-		y=float(((juice_data[6]))-Drop_pressure_pipe_side)
-		OutFluid_pressure.setText(str(round((y/1000.0),2)))
+		Out_pressure=float(((juice_data[6]))-Delta_drop_pressure)
+		OutFluid_pressure.setText(str(round((Out_pressure/1000.0),2)))
 		OutFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
-		OutFluid_Purity.setText(str(float(juice_data[2])*100.0))
+		OutFluid_Purity.setText(str(float(juice_data[3])*100.0))
 
 ##Function for update window when closing
 def Update_window():
@@ -242,6 +242,7 @@ def Update_window():
 			if len(info)>1:
 				flag=info[0]
 				#print ("Flag "+flag)
+				
 				if flag==("Ht"+str(num_window)):
 					update=1
 					for k in range(1,len(info)):
@@ -249,9 +250,9 @@ def Update_window():
 					if heater_data[9]==1.0: ##Shell and tubes
 						Pipe_x_Step.setText(str(heater_data[0]))
 						N_steps.setText(str(heater_data[1]))
-						Lenght_Pipe.setText(str(heater_data[2]))
-						Pipe_Thickness.setText(str(heater_data[3]))
-						Ext_Pipe_Diameter.setText(str(heater_data[4]))
+						Ext_Pipe_Diameter.setText(str(heater_data[2]))
+						Lenght_Pipe.setText(str(heater_data[3]))
+						Pipe_Thickness.setText(str(heater_data[4]))					
 						Pipe_Rough.setText(str(heater_data[5]))
 						Scalling_Coeff.setText(str(heater_data[6]))
 						Time_Op.setText(str(heater_data[7]))
@@ -415,9 +416,6 @@ def update_figure():
 				#print(str(plot_time)+" -*- "+str(plot_model))
 
 				infile.close()
-				Graph.axes.set_xlabel('Time (min)',fontsize=11)
-				Graph.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-				Graph.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 				Graph.axes.plot(plot_time,plot_model,'b-')
 				Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
 				Graph.draw()
@@ -458,11 +456,11 @@ class window_confirm_param(QDialog):
 			Np=Pipe_x_Step.text()
 			Nst=N_steps.text()
 			Lp=Lenght_Pipe.text()
-			dp=Pipe_Thickness.text()
+			Ip=Pipe_Thickness.text()
 			Dosp=Ext_Pipe_Diameter.text()
 			Ep=Pipe_Rough.text()
-			B=Scalling_Coeff.text()
-			Hrop=Time_Op.text()
+			Gf=Scalling_Coeff.text()
+			Op=Time_Op.text()
 			Tjout_ini=Initial_Out_Temp.text()
 
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
@@ -470,10 +468,10 @@ class window_confirm_param(QDialog):
 			upd, chang=update_data_txt("Ht"+flag)
 			if upd==0:
 				outfile = open('Blocks_data.txt', 'a')
-				outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Lp+"\t"+dp+"\t"+Dosp+"\t"+Ep+"\t"+B+"\t"+Hrop+"\t"+Tjout_ini+"\t"+str(SnT))
+				outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Dosp+"\t"+Lp+"\t"+Ip+"\t"+Ep+"\t"+Gf+"\t"+Op+"\t"+Tjout_ini+"\t"+str(SnT))
 				outfile.close()
 			else:
-				replace("Blocks_data.txt",chang,"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Lp+"\t"+dp+"\t"+Dosp+"\t"+Ep+"\t"+B+"\t"+Hrop+"\t"+Tjout_ini+"\t"+str(SnT))
+				replace("Blocks_data.txt",chang,"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Dosp+"\t"+Lp+"\t"+Ip+"\t"+Ep+"\t"+Gf+"\t"+Op+"\t"+Tjout_ini+"\t"+str(SnT))
 			print "OK PARAMETERS"
 			self.close()
 			Resultado=QtGui.QDialog()
@@ -957,7 +955,10 @@ class Ui_Dialog(object):
 		# self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
 		#Addition of grafics in window
 
-		Graph = DynamicGraphic(Dialog,Heat_tab_3, width=4, height=3, dpi=85)
+		Graph = DynamicGraphic(Dialog,Ts,Heat_tab_3, width=4, height=3, dpi=85)
+		Graph.axes.set_xlabel('Time (min)',fontsize=11)
+		Graph.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+		Graph.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
 		verticalLayoutWidget.setLayout(Graph.dynamic_graph)
 		self.Timer_graph()
 

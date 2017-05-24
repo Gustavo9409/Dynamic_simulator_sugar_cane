@@ -172,9 +172,9 @@ def Update_window():
 					checkBox_Saturated_vapor.hide()
 					checkBox_Overheated_vapor.hide()
 					Flow.setText(str(juice_data[0]))
-					Brix.setText(str(float(juice_data[1])*100.0))
-					Purity.setText(str(float(juice_data[2])*100.0))
-					Temp.setText(str(round(juice_data[3],3)))
+					Brix.setText(str(float(juice_data[2])*100.0))
+					Purity.setText(str(float(juice_data[3])*100.0))
+					Temp.setText(str(round(juice_data[1],3)))
 					Insoluble_Solids.setText(str(float(juice_data[4])*100.0))
 					pH.setText(str(juice_data[5]))
 					Pressure.setText(str(juice_data[6]/1000.0))
@@ -290,7 +290,7 @@ class window_confirm_inputs(QDialog):
 				Conductivity.setText(str(round(Yj,3)))
 			##Prepare frame to data base
 				flag0="Fj"
-				dato=str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj)
+				dato=str(Mjin)+"\t"+str(Tjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj)
 			
 			# -- If select water flow -- ##
 			elif Type_flow_selec=="Agua":
@@ -672,8 +672,9 @@ class Ui_Dialog(object):
 						Enthalpy.setText(str("{:.3E}".format(Decimal(Hj))))
 						Conductivity.setText(str(round(Yj,3)))
 					##Prepare frame to data base
-						dato2=(flag+"\t"+str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"
-							+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
+						dato2=(flag+"\t"+str(Mjin)+"\t"+str(Tjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
+						# dato2=(flag+"\t"+str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"
+						# 	+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
 
 					## -- If the change is realized in a water flow -- ##
 					elif flag==("Fw"+str(num_window)):
