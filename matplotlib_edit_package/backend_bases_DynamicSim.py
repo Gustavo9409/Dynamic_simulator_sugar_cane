@@ -50,6 +50,11 @@ import matplotlib.cbook as cbook
 import matplotlib.colors as colors
 import matplotlib.transforms as transforms
 import matplotlib.widgets as widgets
+import matplotlib.lines as mlines
+
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 #import matplotlib.path as path
 from matplotlib import rcParams
 from matplotlib import is_interactive
@@ -2749,6 +2754,7 @@ class NavigationToolbar2(object):
 		self._idRelease = None
 		self._active = None
 		self._lastCursor = None
+		self.lastActive= None
 		self._init_toolbar()
 		self._idDrag = self.canvas.mpl_connect(
 			'motion_notify_event', self.mouse_move)
@@ -2830,11 +2836,13 @@ class NavigationToolbar2(object):
 				if self._lastCursor != cursors.SELECT_REGION:
 					self.set_cursor(cursors.SELECT_REGION)
 					self._lastCursor = cursors.SELECT_REGION
-			elif (self._active == 'PAN' and
-				  self._lastCursor != cursors.MOVE):
+			elif (self._active == 'PAN' and self._lastCursor != cursors.MOVE):
 				self.set_cursor(cursors.MOVE)
-
 				self._lastCursor = cursors.MOVE
+			elif self._active=="V_cursor":
+				self.set_cursor(cursors.HAND)
+				self._lastCursor = cursors.HAND
+
 
 	def mouse_move(self, event):
 		self._set_cursor(event)
@@ -2862,12 +2870,31 @@ class NavigationToolbar2(object):
 				else:
 					self.set_message(s)
 		else:
-			self.set_message(self.mode)
+			if self.mode!="Cursor":
+				self.set_message(self.mode)
 
 	def pan(self, *args):
 		"""Activate the pan/zoom tool. pan with left button, zoom with right"""
 		# set the pointer icon and button press funcs to the
 		# appropriate callbacks
+		if self.lastActive=='V_cursor':
+			if self.vertical_line is not None:
+				self.vertical_line.remove()
+			if self.vertical_line_2 is not None:
+				self.vertical_line_2.remove()
+			if self.ballons is not None:
+				for ball in self.ballons:
+					ball.remove()
+			if self.hand_cursor is not None:
+				self.canvas.all_labels.pop(-1)
+				self.canvas.all_handles.pop(-1)
+			for j,label in enumerate(self.labels):
+				self.canvas.all_labels[j]=label
+			self.canvas.axes.legend(self.canvas.all_handles,self.canvas.all_labels)
+			self.draw()
+
+			self.lastActive='pan'
+
 		if self._active == 'V_cursor':
 			self._active = None
 
@@ -2890,6 +2917,7 @@ class NavigationToolbar2(object):
 				'button_release_event', self.release_pan)
 			self.mode = 'pan/zoom'
 			self.canvas.widgetlock(self)
+			self.lastActive="pan"
 		else:
 			self.canvas.widgetlock.release(self)
 
@@ -2900,35 +2928,127 @@ class NavigationToolbar2(object):
 
 	def V_cursor(self, *args):
 		"""Activate cursor to follow line"""
+
+		self.data_y=[]
+		self.secundary_axes=None
+		# self.vertical_lines=[]
 		if self._active == 'PAN':
 			self._active = None
+			
+			# self.widgets.release()
 
 		if self._active == 'V_cursor':
 			self._active = None
-			self.ly.remove()
-			self.line_signal.set_marker(None)
+			self.canvas.principal_signal_selector.setEnabled(True)
+			if self.canvas.signals_min_factor is not None:
+				for checks in self.canvas.signals_table_checkboxs:
+					checks.setEnabled(True)
+				for lines in self.canvas.signals_min_factor:
+					lines.setEnabled(True)
+				for lines in self.canvas.signals_max_factor:
+					lines.setEnabled(True)
+
+			if self.hand_cursor is not None:
+				self.canvas.all_labels.pop(-1)
+				self.canvas.all_handles.pop(-1)
+			for j,label in enumerate(self.labels):
+				self.canvas.all_labels[j]=label
+			self.canvas.axes.legend(self.canvas.all_handles,self.canvas.all_labels)
+			self.vertical_line.remove()
+			self.vertical_line=None
+			if self.vertical_line_2 is not None:
+				self.vertical_line_2.remove()
+				self.vertical_line_2=None
+			# if self.vertical_line_3 is not None:
+			# 	self.vertical_line_3.remove()
+			for ball in self.ballons:
+				ball.remove()
+				self.ballons=None
 			self.draw()
 		else:
 			self._active = 'V_cursor'
-
+		if self._idPress is not None:
+			self._idPress = self.canvas.mpl_disconnect(self._idPress)
+			self.mode = ''
 		if self._idRelease is not None:
 			self._idRelease = self.canvas.mpl_disconnect(self._idRelease)
 			self.mode = ''
 
 		if self._active:
-			for ax in self.canvas.figure.get_axes():			
-				self.line_signal = ax.lines[0]
-				self.data_x=self.line_signal.get_xdata()
-				self.data_y=self.line_signal.get_ydata()
-				self.line_color=self.line_signal.get_color()
-				# print (self.line_color)
-				self.line_signal.set_marker('D')
-				self.ly = ax.axvline(color=self.line_color)  # the vert line
+			self.canvas.principal_signal_selector.setDisabled(True)
+			if self.canvas.signals_min_factor is not None:
+				for lines in self.canvas.signals_min_factor:
+					lines.setDisabled(True)
+				for lines in self.canvas.signals_max_factor:
+					lines.setDisabled(True)
+				for checks in self.canvas.signals_table_checkboxs:
+					checks.setDisabled(True)
+			self.hand_cursor =None
+			self.lines_cnt=0
+			self.vertical_line_2=None
+			self.vertical_line_3=None
+			drs=[]
+			self.labels=[]
+			self.graphs_lines=[]
+			self.original_y_data=[]
+			self.ballons=[]
+			for ax_i,ax in enumerate(self.canvas.figure.get_axes()):
+				self.line_signal = ax.lines
+				handles, label = ax.get_legend_handles_labels()
+				for elmts in label:
+					self.labels.append(elmts)
+				for elmts in self.line_signal:
+					self.graphs_lines.append(elmts)
+				##
+				for k,signals in enumerate(self.line_signal): 			
+					self.num_lines=k
+					for elmts in signals.get_ydata():
+						drs.append(float(elmts))
+					self.original_y_data.append(drs)
+					drs=[]
+					if ax_i==1:
+						aux=signals.get_ydata()
+						for elmts in aux:				
+							aux2=float(elmts)*(self.canvas.max_factors[k]-self.canvas.min_factors[k])
+							elmts2=aux2+self.canvas.min_factors[k]
+							drs.append(elmts2)
+						self.data_y.append(drs)
+						drs=[]
 
-			self._idRelease = self.canvas.mpl_connect(
-				'motion_notify_event', self.release_cursor)
+					if ax_i==0:
+						for elmts in signals.get_ydata():
+								drs.append(float(elmts))
+						self.data_y.append(drs)
+						drs=[]
+						for elmts in signals.get_xdata():
+							drs.append(float(elmts))
+						self.data_x=drs
+						drs=[]
+
+				if ax_i==0:
+					self.principal_axes=ax
+					self.vertical_line = ax.axvline(color='k',picker=100)  # the vertical line
+					self.vertical_line.set_xdata(self.data_x[0])
+					self._idPress = self.canvas.mpl_connect('button_press_event', self.on_press_cursor)
+				else:
+					self.secundary_axes=ax
+					
+					
+			# for signals in self.graphs_lines:
+			# 	# set marker in line
+			# 	signals.set_markevery([0])
+			# 	# self.cidrelease = self.canvas.mpl_connect(
+			# 	# 	'button_release_event', self.on_release_cursor)
+				# self.cidmotion = self.canvas.mpl_connect(
+				# 	'motion_notify_event', self.on_motion)
+
+			# self._idRelease = self.canvas.mpl_connect(
+			# 	'motion_notify_event', self.release_cursor)
+			# self._idRelease = self.canvas.mpl_connect('button_press_event', self.on_press_cursor)
+			self.draw()
 			self.mode = 'Cursor'
 			self.canvas.widgetlock(self)
+			self.lastActive="V_cursor"
 		else:
 			self.canvas.widgetlock.release(self)
 
@@ -3059,26 +3179,154 @@ class NavigationToolbar2(object):
 		self.release(event)
 		self.draw()
 
-	def release_cursor(self, event):
+	def release_cursor(self,event):
 		"""the release mouse button callback in cursor mode"""
-		x, y = event.xdata, event.ydata
+		y_mess=""
+		l=0
 
+		x, y = event.xdata, event.ydata
+		for ball in self.ballons:
+			ball.remove()
+
+		self.ballons=[]
 		# Comparation with data x in line with x coordinate
-		indx = np.searchsorted(self.data_x, [x])[0]
+		indx = np.searchsorted(self.data_x, [x])[0]		
 		if len(self.data_x)>indx:
 			x = self.data_x[indx]
-			y = self.data_y[indx]
 			# update the line position
-			self.ly.set_xdata(x)
-			# set marker in line
-			self.line_signal.set_markevery([x])
+			self.actual_line.set_xdata(x)
+			for signals,y_data in zip(self.graphs_lines,self.original_y_data):
+					# set marker in line		
+					y = y_data[indx]
+					self.line_color=signals.get_color()
+					if l==0:
+						aux,=self.principal_axes.plot(x,y,'o-',color=self.line_color)
+						self.ballons.append(aux)
+						
+					elif self.secundary_axes is not None:
+						aux, =self.secundary_axes.plot(x,y,'o-',color=self.line_color)						
+						self.ballons.append(aux)
+					l=l+1	
+					# signals.set_markevery([x])
+			for k,y_data in enumerate(self.data_y):
+				y = y_data[indx]
+				self.canvas.all_labels[k]=str(self.labels[k])+" , "+str(round(float(y),3))
+				y_mess=str(self.labels[k])+"= "+str(round(float(y),3))+", "+y_mess
+	
 			#print information in graphic
-			self.coords_cursor="x= "+str(round(float(x),2))+", y= "+str(round(float(y),2))
+			self.coords_cursor="t= "+str(round(float(x),2))#+", "+str(y_mess)
 			self.set_message('%s, %s' % (self.mode, self.coords_cursor))
-		
+			
+			
+
+			if self.vertical_line_2 is not None:
+
+				x_vert=self.vertical_line.get_data()[0]
+				indx = np.searchsorted(self.data_x, [x_vert])[0]
+				y_vert =self.data_y[0][indx]
+				x_vert2=self.vertical_line_2.get_data()[0]
+				indx_2= np.searchsorted(self.data_x, [x_vert2])[0]
+				y_vert2 =self.data_y[0][indx_2]
+				dif_t=round(float(abs(x_vert-x_vert2)),3)
+				dif_val=round(float(abs(y_vert-y_vert2)),3)
+				self.canvas.all_labels[-1]="dt= "+str(dif_t)+", dval="+str(dif_val)
+			
+			self.canvas.axes.legend(self.canvas.all_handles,self.canvas.all_labels)
+		else:
+			print ("No_indx")
 		#Draw cursor change
 		self.release(event)
 		self.draw()
+		self.canvas.mpl_disconnect(self.cidrelease)
+
+	def on_press_cursor(self, event):
+		x, y = event.xdata, event.ydata
+		# if self.ballons is not None:
+		# 	for ball in self.ballons:
+		# 		ball.remove(self)	
+		if 	event.button==1:
+			x_up=float(x)+0.1
+			x_dwn=float(x)-0.1
+			if float(self.vertical_line.get_data()[0])>x_dwn and float(self.vertical_line.get_data()[0])<x_up:
+				self.actual_line=self.vertical_line
+				self.cidrelease = self.canvas.mpl_connect('button_release_event', self.release_cursor)
+			if self.vertical_line_2 is not None:
+				if float(self.vertical_line_2.get_data()[0])>x_dwn and float(self.vertical_line_2.get_data()[0])<x_up:
+					self.actual_line=self.vertical_line_2
+					self.cidrelease = self.canvas.mpl_connect('button_release_event', self.release_cursor)
+			if self.vertical_line_3 is not None:
+				if float(self.vertical_line_3.get_data()[0])>x_dwn and float(self.vertical_line_3.get_data()[0])<x_up:
+					self.actual_line=self.vertical_line_3
+					self.cidrelease = self.canvas.mpl_connect('button_release_event', self.release_cursor)
+		elif event.button==3:
+			if self.lines_cnt<1:
+				if self.lines_cnt==0:
+					self.vertical_line_2= self.principal_axes.axvline(color='#696969',picker=100)  # the vertical line
+					self.vertical_line_2.set_xdata(self.data_x[2])
+					self.lines_cnt=self.lines_cnt+1
+					self.draw()
+					self.hand_cursor = mlines.Line2D([], [], color='k', marker='o',mec='r',mfc='r',markersize=8)
+					self.canvas.all_labels.append("")
+					self.canvas.all_handles.append(self.hand_cursor)
+					self.canvas.axes.legend(self.canvas.all_handles,self.canvas.all_labels)
+				else:
+					self.vertical_line_3= self.principal_axes.axvline(color='g',picker=100)  # the vertical line
+					self.vertical_line_3.set_xdata(self.data_x[3])
+					self.lines_cnt=self.lines_cnt+1
+					self.draw()
+
+
+		# 'on button press we will see if the mouse is over us and store some data'
+		# if event.inaxes != self.vertical_line.axes: return
+		# # if DraggableLine.lock is not None: return
+		# contains, attrd = self.vertical_line.contains(event)
+		# if not contains: return
+		
+		# print('event contains', self.vertical_line.xy)
+		# x0, y0 = self.vertical_line.xy
+		# self.press = x0, y0, event.xdata, event.ydata
+		# # DraggableLine.lock = self
+
+		# # draw everything but the selected line and store the pixel buffer
+		# canvas = self.vertical_line.figure.canvas
+		# axes = self.vertical_line.axes
+		# self.vertical_line.set_animated(True)
+		# canvas.draw()
+		# self.background = canvas.copy_from_bbox(self.vertical_line.axes.bbox)
+
+		# # now redraw just the line
+		# axes.draw_artist(self.vertical_line)
+
+		# # and blit just the redrawn area
+		# canvas.blit(axes.bbox)
+
+	def on_release_cursor(self, event):
+		'on release we reset the press data'
+		x, y = event.xdata, event.ydata
+		# Comparation with data x in line with x coordinate
+		indx = np.searchsorted(self.data_x, [x])[0]		
+		if len(self.data_x)>indx:
+			x = self.data_x[indx]
+			# update the line position
+			self.vertical_line.set_xdata(x)
+			for signals in self.graphs_lines:
+					# set marker in line
+					signals.set_markevery([x])
+		self.release(event)
+		# self.draw()
+
+		# if DraggableLine.lock is not self:
+		# 	return
+
+		# self.press = None
+		# DraggableLine.lock = None
+
+		# # turn off the rect animation property and reset the background
+		# self.line.set_animated(False)
+		# self.background = None
+
+		# # redraw the full figure
+		# self.line.figure.canvas.draw()
 
 	def drag_pan(self, event):
 		"""the drag callback in pan/zoom mode"""

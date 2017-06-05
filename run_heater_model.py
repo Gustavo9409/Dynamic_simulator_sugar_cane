@@ -63,8 +63,6 @@ def Thread_time(output_time,output_model_value):
 
 			yout = odeint(heater_shell_tube.model_temperature,yb_l,end_tt,u)
 			yb_l=[yout[1,0]]
-			# print yout
-			#print end_tt
 			yt.append(yout[1,0])
 
 			output_time=tt[len(tt)-1]
@@ -115,9 +113,6 @@ def Thread_time(output_time,output_model_value):
 					#print lst[5]
 		input_heat.close()
 		u=tuple(lst)
-
-		# (Np, Nst, Lp, dp, Dosp, Fjin, Bjin, Zjin, Tjin, Pvin, Ep, B, Hrop)
-		# u = (Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op, Fjin, Tjin, Bjin, Zjin, Pvin)
 
 '''
 # ============================================================================================

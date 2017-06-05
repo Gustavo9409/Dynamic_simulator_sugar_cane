@@ -35,6 +35,9 @@ class Ui_Dialog(object):
         
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(465, 398)
+
+        self.Layout=QtGui.QVBoxLayout(Dialog)
+
         self.tabWidget_Evap = QtGui.QTabWidget(Dialog)
         self.tabWidget_Evap.setGeometry(QtCore.QRect(3, 31, 461, 361))
         self.tabWidget_Evap.setObjectName(_fromUtf8("tabWidget_Evap"))
@@ -43,6 +46,13 @@ class Ui_Dialog(object):
         self.Evapor_propert_GrBx = QtGui.QGroupBox(self.Evap_tab_1)
         self.Evapor_propert_GrBx.setGeometry(QtCore.QRect(10, 10, 211, 231))
         self.Evapor_propert_GrBx.setObjectName(_fromUtf8("Evapor_propert_GrBx"))
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.Evapor_propert_GrBx.sizePolicy().hasHeightForWidth())
+        self.Evapor_propert_GrBx.setSizePolicy(sizePolicy)
+
+
         self.Cross_Sectional_Area = QtGui.QLineEdit(self.Evapor_propert_GrBx)
         self.Cross_Sectional_Area.setGeometry(QtCore.QRect(150, 41, 51, 20))
         self.Cross_Sectional_Area.setReadOnly(False)
@@ -60,6 +70,13 @@ class Ui_Dialog(object):
         self.comBox_Area_or_Pipes.addItem("--Seleccione dato--")
         self.comBox_Area_or_Pipes.addItem(_translate("Dialog", "Dato de área de calentamiento",None))
         self.comBox_Area_or_Pipes.addItem("Dato de tubos en calandria")
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.comBox_Area_or_Pipes.sizePolicy().hasHeightForWidth())
+        self.comBox_Area_or_Pipes.setSizePolicy(sizePolicy)
+
+
         self.label_Cross_Sectional_Area = QtGui.QLabel(self.Evapor_propert_GrBx)
         self.label_Cross_Sectional_Area.setGeometry(QtCore.QRect(10, 42, 141, 16))
         self.label_Cross_Sectional_Area.setObjectName(_fromUtf8("label_Cross_Sectional_Area"))
@@ -98,15 +115,24 @@ class Ui_Dialog(object):
         self.Downtake_Diameter.setGeometry(QtCore.QRect(150, 205, 51, 20))
         self.Downtake_Diameter.setReadOnly(False)
         self.Downtake_Diameter.setObjectName(_fromUtf8("Downtake_Diameter"))
+       
+
         self.Initial_Conditions_GrBx = QtGui.QGroupBox(self.Evap_tab_1)
         self.Initial_Conditions_GrBx.setGeometry(QtCore.QRect(229, 10, 221, 101))
         self.Initial_Conditions_GrBx.setObjectName(_fromUtf8("Initial_Conditions_GrBx"))
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.Initial_Conditions_GrBx.sizePolicy().hasHeightForWidth())
+        self.Initial_Conditions_GrBx.setSizePolicy(sizePolicy)
+
+
         self.Output_Juice_Brix = QtGui.QLineEdit(self.Initial_Conditions_GrBx)
         self.Output_Juice_Brix.setGeometry(QtCore.QRect(167, 18, 51, 20))
         self.Output_Juice_Brix.setObjectName(_fromUtf8("Output_Juice_Brix"))
-        self.groupBox_7 = QtGui.QGroupBox(self.Initial_Conditions_GrBx)
-        self.groupBox_7.setGeometry(QtCore.QRect(243, 13, 181, 80))
-        self.groupBox_7.setObjectName(_fromUtf8("groupBox_7"))
+        # self.groupBox_7 = QtGui.QGroupBox(self.Initial_Conditions_GrBx)
+        # self.groupBox_7.setGeometry(QtCore.QRect(243, 13, 181, 80))
+        # self.groupBox_7.setObjectName(_fromUtf8("groupBox_7"))
         self.label_Output_Juice_Brix = QtGui.QLabel(self.Initial_Conditions_GrBx)
         self.label_Output_Juice_Brix.setGeometry(QtCore.QRect(9, 20, 141, 16))
         self.label_Output_Juice_Brix.setObjectName(_fromUtf8("label_Output_Juice_Brix"))
@@ -122,10 +148,44 @@ class Ui_Dialog(object):
         self.label_Evaporator_Level = QtGui.QLabel(self.Initial_Conditions_GrBx)
         self.label_Evaporator_Level.setGeometry(QtCore.QRect(10, 76, 161, 16))
         self.label_Evaporator_Level.setObjectName(_fromUtf8("label_Evaporator_Level"))
+        # self.Layout_Initial_Conditions_GrBx=QtGui.QVBoxLayout(Dialog)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(self.label_Volumen,0,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(self.Volumen,0,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(self.label_Cross_Sectional_Area,1,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(self.Cross_Sectional_Area,1,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,2,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,2,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,3,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,3,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,4,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,4,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,5,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,5,1)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,6,0)
+        # self.Layout_Initial_Conditions_GrBx.addWidget(,6,1)
+
+
+
         self.OKButton_Evap = QtGui.QPushButton(self.Evap_tab_1)
         self.OKButton_Evap.setGeometry(QtCore.QRect(312, 307, 131, 23))
         self.OKButton_Evap.setObjectName(_fromUtf8("OKButton_Evap"))
+
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.OKButton_Evap.sizePolicy().hasHeightForWidth())
+        self.OKButton_Evap.setSizePolicy(sizePolicy)
+
         self.tabWidget_Evap.addTab(self.Evap_tab_1, _fromUtf8(""))
+        self.gridLayout = QtGui.QGridLayout(self.Evap_tab_1)
+        self.gridLayout.addWidget(self.Evapor_propert_GrBx, 0, 0)
+        self.gridLayout.addWidget(self.Initial_Conditions_GrBx, 0, 1)
+        self.gridLayout.addWidget(self.OKButton_Evap, 1, 1)
+
+
+
+
+
         self.Evap_tab_2 = QtGui.QWidget()
         self.Evap_tab_2.setObjectName(_fromUtf8("Evap_tab_2"))
         self.Input_fluid_GrBx = QtGui.QGroupBox(self.Evap_tab_2)
@@ -290,6 +350,9 @@ class Ui_Dialog(object):
         self.label_OutStm_Temp = QtGui.QLabel(self.Output_Steam_GrBx)
         self.label_OutStm_Temp.setGeometry(QtCore.QRect(230, 21, 121, 16))
         self.label_OutStm_Temp.setObjectName(_fromUtf8("label_OutStm_Temp"))
+        
+
+
         self.tabWidget_Evap.addTab(self.Evap_tab_2, _fromUtf8(""))
         self.Evap_tab_3 = QtGui.QWidget()
         self.Evap_tab_3.setObjectName(_fromUtf8("Evap_tab_3"))
@@ -308,6 +371,8 @@ class Ui_Dialog(object):
         self.comBox_Selector_Type_Evap.addItem("Evporador Kestner")
         self.comBox_Selector_Type_Evap.addItem("Evporador Falling Film")
 
+        self.Layout.addWidget(self.comBox_Selector_Type_Evap)
+        self.Layout.addWidget(self.tabWidget_Evap)
         self.retranslateUi(Dialog)
         self.tabWidget_Evap.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -325,7 +390,7 @@ class Ui_Dialog(object):
 "[in]", None))
         self.label_Downtake_Diameter.setText(_translate("Dialog", "Diámetro downtake [in]", None))
         self.Initial_Conditions_GrBx.setTitle(_translate("Dialog", "Condiciones iniciales", None))
-        self.groupBox_7.setTitle(_translate("Dialog", "Steam input", None))
+        # self.groupBox_7.setTitle(_translate("Dialog", "Steam input", None))
         self.label_Output_Juice_Brix.setText(_translate("Dialog", "Brix de jugo de salida [kg/kg]", None))
         self.label_Output_Juice_Flow.setText(_translate("Dialog", "Flujo másico de jugo de salida\n"
 "[t/h]", None))
@@ -367,7 +432,7 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     Dialog = QtGui.QDialog()
     ui = Ui_Dialog()
-    ui.setupUi(Dialog)
+    ui.setupUi("Calentador",Dialog)
     Dialog.show()
     sys.exit(app.exec_())
 

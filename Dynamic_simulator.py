@@ -26,6 +26,8 @@ from run_heater_model import Simulation_heat
 
 dir_script=str(os.getcwd())
 
+global Heater_juice_in
+global Heater_vapor_in
 global i_ev
 global i_ht
 global i_vl
@@ -39,6 +41,8 @@ global Ts_value
 global Sim_time
 global array_connections
 global array_arrows
+Heater_juice_in=""
+Heater_vapor_in=""
 Sim_time=0.5
 l=0
 i_ev=1
@@ -149,11 +153,11 @@ class ParameterDialog_Evaporator(QDialog):
 		self.Resultado.exec_()
 
 class ParameterDialog_Heater(QDialog):
-	def __init__(self,dat,time, parent):
+	def __init__(self,dat,time,jui_port,vap_port, parent):
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = Heat_properties()
-		self.ui.setupUi(dat,time,self.Resultado)
+		self.ui.setupUi(dat,time,jui_port,vap_port,self.Resultado)
 		self.Resultado.exec_()
 
 class ParameterDialog_Tank(QDialog):
@@ -460,7 +464,7 @@ class BlockItem_Heat(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Heater(self.name_block,Sim_time,self.window())
+		pd = ParameterDialog_Heater(self.name_block,Sim_time,Heater_juice_in,Heater_vapor_in,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -1251,8 +1255,8 @@ class DiagramEditor(QWidget):
 					pd = ParameterDialog_Flow(aux,Sim_time,self.window())
 				if str(aux2)==str("Evaporador"):
 					pd = ParameterDialog_Evaporator(aux,self.window())
-				if str(aux2)==str("Calentador"):
-					pd = ParameterDialog_Heater(aux,Sim_time,self.window())
+				if str(aux2)==str("Calentador"):	
+					pd = ParameterDialog_Heater(aux,Sim_time,Heater_juice_in,Heater_vapor_in,self.window())
 				if str(aux2)==str("Tanque"):
 					pd = ParameterDialog_Tank(aux,self.window())
 		if self.startedConnection:

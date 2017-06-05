@@ -585,6 +585,7 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 
 	def _init_toolbar(self):
 		global Edit_axis_args
+		global V_cursor_args
 		self.basedir = os.path.join(matplotlib.rcParams['datapath'], 'images')
 
 		for text, tooltip_text, image_file, callback,arguments in self.toolitems:
@@ -604,6 +605,14 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 					a.setToolTip('Edit axis, curve and image parameters')
 			if arguments is not None and text=="Edit axis":
 				Edit_axis_args=arguments
+			if arguments is not None and text=="V_cursor":
+				V_cursor_args=arguments
+				if V_cursor_args==False and callback in ['V_cursor']:
+					a.setDisabled(True)
+					print(a.isEnabled())
+				elif V_cursor_args==True and callback in ['V_cursor']:
+					a.setEnabled(True)
+					print(a.isEnabled())
 				
 		self.buttons = {}
 
@@ -704,11 +713,15 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 
 	def _update_buttons_checked(self):
 		# sync button checkstates to match active mode
+		self._actions['V_cursor'].setChecked(False)
 		self._actions['pan'].setChecked(self._active == 'PAN')		
 		#self._actions['zoom'].setChecked(self._active == 'ZOOM')
 
 	def _update_buttons_checked_2(self):
+		self._actions['pan'].setChecked(False)
+
 		self._actions['V_cursor'].setChecked(self._active == 'V_cursor')
+	
 
 	def V_cursor(self,*args):
 		super(NavigationToolbar2QT, self).V_cursor(*args)
