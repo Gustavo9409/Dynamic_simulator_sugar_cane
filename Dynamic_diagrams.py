@@ -304,8 +304,6 @@ class DynamicGraphic(FigureCanvas):
 			self.signals_table.setCellWidget(rowPosition, 4, LineEdit_max)
 
 	def update_table_signals(self,time,signals):
-		print(len(time))
-		print(len(signals[0]))
 		if len(self.ids_connect)>0:
 			for k,chkbox in enumerate(self.signals_table_checkboxs):
 				chkbox.stateChanged.disconnect()

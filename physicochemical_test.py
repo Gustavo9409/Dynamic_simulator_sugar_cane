@@ -2,14 +2,13 @@
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import water_properties
 from physicochemical_properties import vapor_properties
-from heat_transfer import htc_shell_tube
-from heat_transfer import t_log
+from heaters import *
 
 liquor=liquor_properties()
 water=water_properties()
 vapor=vapor_properties()
 Ht=htc_shell_tube()
-Dt=t_log()
+
 
 
 print("\nPhysicochemical properties test")
@@ -212,9 +211,10 @@ print("Python vapor viscosity[Pa s]: "+str(vv))
 print("\n--------------------U COEFFICIENT-----------------------------")
 print("Disp[in]: 1.9055")
 print("Dosp[in]: 2.0")
-print("Aisc[m2]: 5.9939")
-print("Aosc[m2]: 6.2912")
 print("Np[]: 6.0")
+print("Nst[]: 2.0")
+print("Lp[m]: 6.5")
+print("Ip[mm]: 2.2")
 print("Ep[mm]: 0.090")
 print("Fjin[kg/s]: 0.0277")
 print("Pvin[Pa]: 134020")
@@ -235,13 +235,13 @@ print("Python internal U[W/(m2.K)]: "+str(Ui))
 print("\nTest Uo")
 print("---------------------")
 print("Matlab external U[W/(m2.K)]: "+"9.7742e+03")
-Uo=Ht.external_u(2.0,78.4456,108.0609,134020)
+Uo=Ht.external_u(2.0,108.0609,134020,78.4456)
 print("Python external U[W/(m2.K)]: "+str(Uo))
 
 print("\nTest U")
 print("---------------------")
-print("Matlab overall U[W/(m2.K)]: "+"1.7249e+03")
-U=Ht.overall_u(0.0277,0.15,0.87,77,78.4456,108.0609,134020,6.0,5.9939,6.2912,1.9055,2.0,0.090,100.0,0.8)
+print("Matlab overall U[W/(m2.K)]: "+"1.7994e+03") 
+U=Ht.overall_u(6.0,2.0,2.0,6.5,2.2,0.090,0.8,100.0,0.0277,77,0.15,0.87,108.0609,134020,78.4456)
 print("Python overall U[W/(m2.K)]: "+str(U))
 
 print("\n--------------------DELTA T LOGARITHMIC-----------------------")
@@ -251,7 +251,7 @@ print("Tvin[C]: 108.0609")
 print("\nTest DtLog")
 print("---------------------")
 print("Matlab dtLog: "+"30.5582")
-dt=Dt.deltatlog(77,78,108.0609)
+dt=deltatlog(77,78,108.0609)
 print("Python dtLog: "+str(dt))
 
 

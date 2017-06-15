@@ -42,6 +42,26 @@ class heater_shell_tube:
 		# External heat transfer area [m2]
 		self.Aosc=0.0254*math.pi*self.Dosp*self.Np*self.Lp*self.Nst
 
+		# Internal HTC
+		self.Ui=self.internal_u(self.Np, self.Dosp, self.Ip, self.Ep, 
+						self.Fjin,self.Tjin,self.Bjin,self.Zjin)
+
+		# External HTC
+		self.Uo=self.external_u(self.Dosp, self.Tvin, self.Pvin, self.Tjc)
+
+	def fluid_properties(self):
+
+		#Juice density
+		self.pjin = liquor.density(self.Tjin,self.Bjin,self.Zjin)
+
+		# Juice velocity
+		self.vj = (4*((self.Fjin*self.pjin)))/(self.Np*self.pjin*math.pi*((0.0254*self.Disp)**2))
+
+		#Scale resistance
+		self.Ri = ((3.5*10**-6)*(self.Op**self.Gf))*(1+(10.73/(self.vj**3)))
+
+
+
 	def update(self, Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op):
 		# Update hearer desing properties
 		self.Np = Np
@@ -89,12 +109,17 @@ class heater_shell_tube:
 		htc1=htc_shell_tube()
 		U = htc1.overall_u(Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op,
 					  			Fjin, Tjin, Bjin, Zjin, Tvin, Pvin, Tjc)
-
+		
 		delta_t = deltatlog(Tjin, Tjout, Tvin)
 		
-		dTjout = ((U*Ac*delta_t)+(pjc*Fjin*Cpjc*Tjin)-(pjc*Fjin*Cpjc*Tjout))/(0.5*mjc*Cpjc);
-		dy=dTjout
+		dTjout = ((U*Ac*delta_t)+(pjc*Fjin*Cpjc*Tjin)-(pjc*Fjin*Cpjc*Tjout))/(0.5*mjc*Cpjc)
+		if t>0.0:
+			dy=dTjout
+		else:
+			dy=0		
 		return dy
+
+
 
 class htc_shell_tube: #Heat Transfer Coefficient (HTC)
 	'''
@@ -128,6 +153,14 @@ class htc_shell_tube: #Heat Transfer Coefficient (HTC)
 	Aosc, External heat transfer area [m2]
 	Disp, Pipe internal diameter [in]
 	'''
+	def update_juice_properties(self):
+		self.Fjin = Fjin
+		self.Tjin = Tjin
+		self.Bjin = Bjin
+		self.Zjin = Zjin
+		self.Tvin = Tvin
+		self.Pvin = Pvin
+
 	
 	def internal_u(self, Np, Dosp, Ip, Ep, Fjin, Tjin, Bjin, Zjin):
 		self.Np = Np

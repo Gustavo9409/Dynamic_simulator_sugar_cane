@@ -7,15 +7,6 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-# from PyQt4 import QtCore, QtGui
-#from Run_heater_model import Simulation
-from matplotlib.backends import qt_compat
-# use_pyside = qt_compat.QT_API == qt_compat.QT_API_PYSIDE
-# if use_pyside:
-# 	from PySide import QtGui, QtCore
-# else:
-# 	from PyQt4 import QtGui, QtCore
-# import matplotlib.backends.backend_qt5_DynamicSim as backend
 import random
 import threading
 import re
@@ -26,8 +17,6 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from numpy import arange, sin, pi
 from decimal import Decimal
-# from matplotlib.backends.backend_qt4agg_DynamicSim import (FigureCanvasQTAgg as FigureCanvas, NavigationToolbar2QT )##as NavigationToolbar)
-# from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import vapor_properties
@@ -102,33 +91,17 @@ class calculated_properties():
 
 		Ac=0.0254*math.pi*Dosp*Np*Lp*Nst;
 		return Ac
-	def Scalling_r(self,Fj,Tj,Bj,Zj):
+	def Scalling_r(self,Fj,Tj,Bj,Zj,t):
 		vj=self.Juice_velocity(Fj,Tj,Bj,Zj)
 		Op=float(Time_Op.text())
 		Gf=float(Scalling_Coeff.text())
 
-		Ri=((3.5*10**-6)*(Op**Gf))*(1+(10.73/(vj**3)))
+		Ri=((3.5*10**-6)*((Op+(t/60))**Gf))*(1+(10.73/(vj**3)))
 		return Ri
 
 global heat_properties
 heat_properties=calculated_properties()
 
-# class NavigationToolbar(NavigationToolbar2QT):
-# 	def __init__(self, canvas_, parent_):
-# 		#backend.figureoptions = None  # Monkey patched to kill the figure options button on matplotlib toolbar
-# 		##Images: C:\Python27\Lib\site-packages\matplotlib\mpl-data\images
-# 		##Functions: C:\Python27\Lib\site-packages\matplotlib\backends\backend_qt5.py
-# 		self.toolitems = (
-# 			('Home', 'Regresar a la vista inicial', 'Home2', 'home'),
-# 			('Back', 'Regresar a la vista anterior', 'Row2L', 'back'),
-# 			('Forward', 'Dirigirse a la siguiente vista', 'Row2R', 'forward'),
-# 			(None, None, None, None),
-# 			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), 'move', 'pan'),
-# 			('Edit axis',_translate("Dialog",'Modificación de ejes', None), 'qt4_editor_options','Edit_axis'),
-# 			(None, None, None, None),
-# 			(None, None, None, None),)
-# 		NavigationToolbar2QT.__init__(self, canvas_, parent_)
-	
 
 ##Function for update data when inputs change
 def Update_data():
@@ -167,77 +140,111 @@ def Update_data():
 			Aosc=heat_properties.Heat_area()
 			Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
 			Tjc=(float(juice_data[1])+float(split_model_data_n1[1]))/2.0;
-			Fj=(float(juice_data[0])/3.6)/float(juice_data[8])
 			
+		##juice data
+			Mjin=float(juice_data[0])
+			Fjin=(Mjin/3.6)/float(juice_data[8])
+			Tjin=float(juice_data[1])
+			Bjin=float(juice_data[2])
+			Zjin=float(juice_data[3])
+			SolIn=float(juice_data[4])
+			pHin=float(juice_data[5])
+			Pjin=float(juice_data[6])
+			pjin=float(juice_data[8])
+			ujin=float(juice_data[9])
+		##vapor data 
+			Pvin=float(vapor_data[0])
+			Mvin=float(vapor_data[1])
+			Tvin=float(vapor_data[2])
+			Cpvin=float(vapor_data[3])
+			pvin=float(vapor_data[4])
+			uvin=float(vapor_data[5])
+			Hvin=float(vapor_data[6])
+			Hvwin=float(vapor_data[7])
+			Yvin=float(vapor_data[8])
+			sat=float(vapor_data[9])
+
+			time=float(split_model_data_n1[0])
+			Tjout=float(split_model_data_n1[1])
+
+
 			#Juice Velocity
-			Juice_vel=round(heat_properties.Juice_velocity(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3])),3)
+			Juice_vel=round(heat_properties.Juice_velocity(Fjin,Tjin,Bjin,Zjin),3)
 			Juice_Velocity.setText(str(Juice_vel))
 			#Heat Area
 			Heat_Area.setText(str(round(Aosc,3)))
 			#Scalling resistance
-			Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]))))
+			Scall_R="{:.3E}".format(Decimal(heat_properties.Scalling_r(Fjin,Tjin,Bjin,Zjin,time)))
 			Scalling_Resist.setText(str(Scall_R))
 			#Overall heat trasnfer coefficient
-			OvU=(Ht.overall_u(Np,Nst,Dosp,Lp,Ip,Ep,Gf,Op,Fj,float(juice_data[1]),float(juice_data[2]),
-				float(juice_data[3]),float(vapor_data[2]),float(vapor_data[0]),Tjc))
+			OvU=(Ht.overall_u(Np,Nst,Dosp,Lp,Ip,Ep,Gf,Op,Fjin,Tjin,Bjin,Zjin,Tvin,Pvin,Tjc))
 			OverallU="{:.3E}".format(Decimal(OvU))
 			Overall_U.setText(str(OverallU))
 			#Internal heat trasnfer coefficient
-			InternalU="{:.3E}".format(Decimal(Ht.internal_u(Np,Dosp,Ip,Ep,Fj,float(juice_data[1]),float(juice_data[2]),float(juice_data[3]))))
+			InternalU="{:.3E}".format(Decimal(Ht.internal_u(Np,Dosp,Ip,Ep,Fjin,Tjin,Bjin,Zjin)))
 			Inside_U.setText(str(InternalU))
 			#External heat trasnfer coefficient
-			ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,float(vapor_data[2]),float(vapor_data[0]),Tjc)))
+			ExternalU="{:.3E}".format(Decimal(Ht.external_u(Dosp,Tvin,Pvin,Tjc)))
 			Outside_U.setText(str(ExternalU))
 			#Reynolds number
-			Re=(4*((Fj*float(juice_data[8]))/Np))/(0.0254*math.pi*Disp*juice_data[9])
+			Re=(4*((Fjin*pjin)/Np))/(0.0254*math.pi*Disp*ujin)
 			#Moody Friction factor
 			f1=(1.4+2*math.log(Er))**-2
 			f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
 			#Viscosity of pipe fluid
-			up=liquor.viscosity(juice_data[1],float(juice_data[2]),float(juice_data[3]))
+			up=liquor.viscosity(Tjin,Bjin,Zjin)
 			#Viscosity of pipe fluid at wall temperature
-			up_tube_wall=liquor.viscosity(((Tjc+vapor_data[2])/2.0),float(juice_data[2]),float(juice_data[3]))
+			up_tube_wall=liquor.viscosity(((Tjc+Tvin)/2.0),Bjin,Zjin)
 			#Drop pressure pipe side (REIN)
-			Delta_drop_pressure=(Nst*f*Lp*(((float(juice_data[7]))*(Juice_vel**2.0))))/(2.0*Disp*((up/up_tube_wall)**0.14))
+			Delta_drop_pressure=(Nst*f*Lp*(((pjin)*(Juice_vel**2.0))))/(2.0*Disp*((up/up_tube_wall)**0.14))
 			
+			#Residence time
+			rsd_time=(Nst*Lp)/Juice_vel
+			##Loss saccharose
+			lss_sac=liquor.loss_saccharose(rsd_time,Tjin,Bjin,SolIn,Zjin,pHin)
+			#Loss Purity
+			Loss_purity=lss_sac/(Bjin*100.0)
+			# print (Loss_purity)
+
 			##Mass flow of vapor
-			DT=float(deltatlog(juice_data[3],float(split_model_data_n1[1]),vapor_data[2]))
+			DT=float(deltatlog(Zjin,Tjout,Tvin))		
+			Mv= ((OvU*Aosc*(DT))/Hvwin)*3.6
 			
-			Mv= ((OvU*Aosc*(DT))/vapor_data[7])*3.6
-			
-			x, y=update_data_txt(g_Vapor_in)
+			# x, y=update_DB(g_Vapor_in)
 			##Overwrite vapor flow value in DataBase
-			replace("Blocks_data.txt",y,g_Vapor_in+"\t"+str(vapor_data[0])+"\t"+str(Mv)+"\t"+str(vapor_data[2])+"\t"+str(vapor_data[3])+"\t"
-				+str(vapor_data[4])+"\t"+str(vapor_data[5])+"\t"+str(vapor_data[6])+"\t"+str(vapor_data[7])+"\t"+str(vapor_data[8])+"\t"+str(vapor_data[9]))
+			# replace("Blocks_data.txt",y,g_Vapor_in+"\t"+str(Pvin)+"\t"+str(Mv)+"\t"+str(Tvin)+"\t"+str(Cpvin)+"\t"
+			# 	+str(pvin)+"\t"+str(uvin)+"\t"+str(Hvin)+"\t"+str(Hvwin)+"\t"+str(Yvin)+"\t"+str(sat))
 		##Process values 
 		#Vapor
 			#input
-			InStm_Press.setText(str(round(float(vapor_data[0])/1000.0,2)))
+			InStm_Press.setText(str(round(Pvin/1000.0,2)))
 			InStm_Flow.setText(str(round(Mv,3)))
-			InStm_Temp.setText(str(round(vapor_data[2],2)))
+			InStm_Temp.setText(str(round(Tvin,2)))
 			#output
-			CondStm_Flow.setText(str(round(float(vapor_data[1]),3)))
-			CondStm_Temp.setText(str(round(vapor_data[2],2)))
-			#CondStm_Press.setText(str(round(float(vapor_data[0])/1000.0,1)))
+			CondStm_Flow.setText(str(round(Mvin,3)))
+			CondStm_Temp.setText(str(round(Tvin,2)))
+			#CondStm_Press.setText(str(round(Pvin/1000.0,1)))
 		#Juice
 			#input
-			InFluid_Temp.setText(str(juice_data[1]))
-			InFluid_Flow.setText(str(juice_data[0]))
-			InFluid_pH.setText(str(juice_data[5]))
-			InFluid_pressure.setText(str(round(float(juice_data[6])/1000.0,1)))
-			InFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
-			InFluid_Purity.setText(str(juice_data[3]*100.0))
-			InFluid_Brix.setText(str(float(juice_data[2])*100.0))
+			InFluid_Temp.setText(str(Tjin))
+			InFluid_Flow.setText(str(Mjin))
+			InFluid_pH.setText(str(pHin))
+			InFluid_pressure.setText(str(round(Pjin/1000.0,1)))
+			InFluid_InsolubleSolids.setText(str(SolIn*100.0))
+			InFluid_Purity.setText(str(Zjin*100.0))
+			InFluid_Brix.setText(str(Bjin*100.0))
 			#output
-			OutFluid_Temp.setText(str(round(float(split_model_data_n1[1]),3)))
-			OutFluid_Brix.setText(str(float(juice_data[2])*100.0))
-			OutFluid_Flow.setText(str(juice_data[0]))
-			OutFluid_pH.setText(str(juice_data[5]))
-			Out_pressure=float(((juice_data[6]))-Delta_drop_pressure)
+			OutFluid_Temp.setText(str(round(Tjout,3)))
+			OutFluid_Brix.setText(str(Bjin*100.0))
+			OutFluid_Flow.setText(str(Mjin))
+			OutFluid_pH.setText(str(pHin))
+			Out_pressure=Pjin-Delta_drop_pressure
 			OutFluid_pressure.setText(str(round((Out_pressure/1000.0),2)))
-			OutFluid_InsolubleSolids.setText(str(juice_data[4]*100.0))
-			OutFluid_Purity.setText(str(float(juice_data[3])*100.0))
+			OutFluid_InsolubleSolids.setText(str(SolIn*100.0))
+			Outpurity=(Zjin*100.0)-Loss_purity
+			OutFluid_Purity.setText(str(Outpurity)[:4])
 
+			
 ##Function for update window when closing
 def Update_window():
 	global num_window
@@ -307,116 +314,22 @@ def replace(path, pattern, subst):
 		filex.write(fileContents) 
 
 ##Function for update Blocks_data.txt for new parameters confirmation 
-def update_data_txt(dato):
+def update_DB(data):
 	flg=0
-	dats=""
-	input_heat = open('Blocks_data.txt', 'r+')
-	data=input_heat.readlines()
-	for i in data:
-		info=(i.strip()).split("\t")
-		if info[0]==dato:
-			flg=1
-			dats=(i.strip())
-		# else:
-		# 	flg=0
-		# 	dats=""
+	dats=[]
+
+	result=db.read_data(cursor_heater_properties,"id","Heaters","Name",data)
+	if len(result)>0:
+		for data in result:
+			id_heater=data[0]
+		flg=1
+		fields="id_Heater,Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_lenght,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
+		result=db.read_data(cursor_heater_properties,fields,"Physical_properties_heater","id_heater",id_heater)
+		for data in result:
+			for values in data:
+				dats.append(float(values))
+
 	return flg, dats	
-
-
-# #-- Class for graphic instantiation--## 
-# class MyMplCanvas(FigureCanvas):
-# 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-
-# 	def __init__(self, parent=None, width=4, height=4, dpi=100):
-# 		global mpl_toolbar
-# 		fig = Figure(figsize=[width, height], tight_layout = {'pad': 0}, dpi=dpi)
-# 		self.axes = fig.add_subplot(111)
-
-# 		self.compute_initial_figure()
-
-# 		FigureCanvas.__init__(self, fig)
-# 		self.setParent(parent)
-		
-# 		FigureCanvas.setSizePolicy(self,QtGui.QSizePolicy.Expanding,QtGui.QSizePolicy.Expanding)
-# 		mpl_toolbar = NavigationToolbar(self,Heat_tab_3)
-# 		#self.mpl_connect('key_press_event', self.on_key_press)
-# 		#FigureCanvas.updateGeometry(self)
-
-# 	def compute_initial_figure(self):
-# 		pass
-# 	def on_key_press(self, event):
-# 		print('you pressed', event.key)
-# 		# implement the default mpl key press events described at
-# 		# http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
-# 		key_press_handler(event, FigureCanvas, self.mpl_toolbar)
-
-# class MyDynamicMplCanvas(MyMplCanvas):
-# 	"""A canvas that updates itself every second with a new plot."""
-# 	def __init__(self, *args, **kwargs):
-# 		MyMplCanvas.__init__(self, *args, **kwargs)
-# 		#self.axes.yaxis.set_label_coords(0.0, 1.03)
-# 		#self.axes.xaxis.set_label_coords(1.03, 0.0)
-		
-# 		timer = QtCore.QTimer(self)
-# 		timer.timeout.connect(self.update_figure)
-# 		timer.start(Ts*1000)
-
-
-# 	def compute_initial_figure(self):
-# 		pass
-# 		#self.axes.plot([0, 1, 2, 3], [1, 2, 0, 4], 'r')
-
-# 	def update_figure(self):
-# 		print "YES"
-# 		global time_exec
-# 		global model_value
-# 		global split_model_data_n1
-# 		infile = open('time_exec.txt', 'r+')
-# 		data=infile.readlines()
-# 		if len(data)>1:
-# 			if data[-1]!="stop" and data[-2]!="stop":
-# 				model_data_n0=data[-2].strip()
-# 				model_data_n1=data[-1].strip()
-
-# 				split_model_data_n0=model_data_n0.split("\t")
-# 				split_model_data_n1=model_data_n1.split("\t")
-
-# 				time_exec.append(float(split_model_data_n0[0]))
-# 				model_value.append(round(float(split_model_data_n0[1]),3))
-
-# 				time_exec.append(float(split_model_data_n1[0]))
-# 				model_value.append(round(float(split_model_data_n1[1]),3))
-				
-# 				plot_time=time_exec[len(time_exec)-2:len(time_exec)]
-# 				plot_model=model_value[len(model_value)-2:len(model_value)]
-
-# 				#print(str(plot_time)+" -*- "+str(plot_model))
-
-# 				infile.close()
-# 				self.axes.set_xlabel('Time (min)',fontsize=11)
-# 				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-# 				self.axes.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-# 				self.axes.plot(plot_time,plot_model,'b-')
-# 				Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
-# 				self.draw()
-# 				Update_data()
-
-# 			else :
-# 				time_exec=[]
-# 				model_value=[]
-# 				self.axes.cla()
-# 				for values in data:
-# 					if values!="stop":
-# 						values.strip()
-# 						split_model_data=values.split("\t")
-# 						time_exec.append(float(split_model_data[0]))
-# 						model_value.append(round(float(split_model_data[1]),3))
-# 				self.axes.set_xlabel('Time (min)',fontsize=11)
-# 				self.axes.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-# 				self.axes.plot(time_exec,model_value,'b-')
-# 				Update_data()
-# 		# else:
-# 		# 	print "No hay datos para leer"
 
 
 def update_figure():
@@ -583,13 +496,30 @@ class window_confirm_param(QDialog):
 
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
 
-			upd, chang=update_data_txt("Ht"+flag)
+			upd, change_values=update_DB("Ht"+flag)
+			fields=["id_Heater","Pipe_x_Step","N_steps","Ext_pipe_diameter","Pipe_lenght","Pipe_thickness","Pipe_rough","Scalling_coeff","Operation_time"]
 			if upd==0:
 				outfile = open('Blocks_data.txt', 'a')
 				outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Dosp+"\t"+Lp+"\t"+Ip+"\t"+Ep+"\t"+Gf+"\t"+Op+"\t"+Tjout_ini+"\t"+str(SnT))
 				outfile.close()
+				
+
+				
+				db.insert_data(cursor_heater_properties,"Heaters",["Name","Type","Tjout_init"],["Ht"+flag,Heater_type,float(Tjout_ini)])
+				result=db.read_data(cursor_heater_properties,"id","Heaters","Name","Ht"+flag)
+				if len(result)>0:
+					for data in result:
+						id_heater=data[0]
+				values=[float(id_heater),float(Np),float(Nst),float(Dosp),float(Lp),float(Ip),float(Ep),float(Gf),float(Op)]
+				db.insert_data(cursor_heater_properties,"Physical_properties_heater",fields,values)
 			else:
-				replace("Blocks_data.txt",chang,"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Dosp+"\t"+Lp+"\t"+Ip+"\t"+Ep+"\t"+Gf+"\t"+Op+"\t"+Tjout_ini+"\t"+str(SnT))
+				result=db.read_data(cursor_heater_properties,"id","Heaters","Name","Ht"+flag)
+				if len(result)>0:
+					for data in result:
+						id_heater=data[0]
+				values=[float(id_heater),float(Np),float(Nst),float(Dosp),float(Lp),float(Ip),float(Ep),float(Gf),float(Op)]
+				db.update_data(cursor_heater_properties,"Physical_properties_heater",fields,values,change_values)
+
 			print "OK PARAMETERS"
 			self.close()
 			Resultado=QtGui.QDialog()
@@ -620,7 +550,7 @@ class Ui_Dialog(object):
 			'Advertencia',
 			"Falta por ingresar algun dato.",QtGui.QMessageBox.Ok)
 
-	def setupUi(self,name,ts,Juice_in,Vapor_in,Dialog):
+	def setupUi(self,name,ts,Juice_in,Vapor_in,Data_Base,Connection_DB,Dialog):
 		##Heater properties
 		#Physical properties
 		global Pipe_x_Step
@@ -676,14 +606,18 @@ class Ui_Dialog(object):
 		global verticalLayoutWidget
 		global g_Juice_in
 		global g_Vapor_in
+		global db
+		global cursor_heater_properties
 
 		nameDialog=name
 		Ts=ts
 		Dialog_window=Dialog
 		g_Juice_in=Juice_in
 		g_Vapor_in=Vapor_in
+		db=Data_Base
+		cursor_heater_properties=Connection_DB.cursor()
 
-		Vali = Validator()
+		Validation_text_field = Validator()
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(432, 355)
 
@@ -748,7 +682,7 @@ class Ui_Dialog(object):
 		Initial_Out_Temp.setReadOnly(False)
 		Initial_Out_Temp.setObjectName(_fromUtf8("Initial_Out_Temp"))
 		Initial_Out_Temp.setText("78.0")
-		Vali.NumValidator(Initial_Out_Temp)
+		Validation_text_field.NumValidator(Initial_Out_Temp)
 		sizePolicy.setHeightForWidth(Initial_Out_Temp.sizePolicy().hasHeightForWidth())
 		Initial_Out_Temp.setSizePolicy(sizePolicy)
 		#Label
@@ -899,7 +833,7 @@ class Ui_Dialog(object):
 		Ext_Pipe_Diameter.setGeometry(QtCore.QRect(143, 18, 41, 20))
 		Ext_Pipe_Diameter.setObjectName(_fromUtf8("Ext_Pipe_Diameter"))
 		Ext_Pipe_Diameter.setText("2.0")
-		Vali.NumValidator(Ext_Pipe_Diameter)
+		Validation_text_field.NumValidator(Ext_Pipe_Diameter)
 		sizePolicy.setHeightForWidth(Ext_Pipe_Diameter.sizePolicy().hasHeightForWidth())
 		Ext_Pipe_Diameter.setSizePolicy(sizePolicy)
 		#Lenght of pipes
@@ -912,7 +846,7 @@ class Ui_Dialog(object):
 		Lenght_Pipe.setGeometry(QtCore.QRect(143, 40, 41, 20))
 		Lenght_Pipe.setObjectName(_fromUtf8("Lenght_Pipe"))
 		Lenght_Pipe.setText("6.57")
-		Vali.NumValidator(Lenght_Pipe)
+		Validation_text_field.NumValidator(Lenght_Pipe)
 		sizePolicy.setHeightForWidth(Lenght_Pipe.sizePolicy().hasHeightForWidth())
 		Lenght_Pipe.setSizePolicy(sizePolicy)
 		#Pipes for steps
@@ -925,7 +859,7 @@ class Ui_Dialog(object):
 		Pipe_x_Step.setGeometry(QtCore.QRect(143, 106, 41, 20))
 		Pipe_x_Step.setObjectName(_fromUtf8("self.Pipe_x_Step"))
 		Pipe_x_Step.setText("6.0")
-		Vali.NumValidator(Pipe_x_Step)
+		Validation_text_field.NumValidator(Pipe_x_Step)
 		sizePolicy.setHeightForWidth(Pipe_x_Step.sizePolicy().hasHeightForWidth())
 		Pipe_x_Step.setSizePolicy(sizePolicy)
 		#Number of steps
@@ -938,7 +872,7 @@ class Ui_Dialog(object):
 		N_steps.setGeometry(QtCore.QRect(143, 128, 41, 20))
 		N_steps.setObjectName(_fromUtf8("N_steps"))
 		N_steps.setText("2.0")
-		Vali.NumValidator(N_steps)
+		Validation_text_field.NumValidator(N_steps)
 		sizePolicy.setHeightForWidth(N_steps.sizePolicy().hasHeightForWidth())
 		N_steps.setSizePolicy(sizePolicy)
 		#Operation time
@@ -951,7 +885,7 @@ class Ui_Dialog(object):
 		Time_Op.setGeometry(QtCore.QRect(143, 150, 41, 20))
 		Time_Op.setObjectName(_fromUtf8("Time_Op"))
 		Time_Op.setText("100.0")
-		Vali.NumValidator(Time_Op)
+		Validation_text_field.NumValidator(Time_Op)
 		sizePolicy.setHeightForWidth(Time_Op.sizePolicy().hasHeightForWidth())
 		Time_Op.setSizePolicy(sizePolicy)
 		#Rough of pipes
@@ -964,7 +898,7 @@ class Ui_Dialog(object):
 		Pipe_Rough.setGeometry(QtCore.QRect(143, 84, 41, 20))
 		Pipe_Rough.setObjectName(_fromUtf8("Pipe_Rough"))
 		Pipe_Rough.setText("0.090")
-		Vali.NumValidator(Pipe_Rough)
+		Validation_text_field.NumValidator(Pipe_Rough)
 		sizePolicy.setHeightForWidth(Pipe_Rough.sizePolicy().hasHeightForWidth())
 		Pipe_Rough.setSizePolicy(sizePolicy)
 		#Scalling coefficient
@@ -978,7 +912,7 @@ class Ui_Dialog(object):
 		Scalling_Coeff.setGeometry(QtCore.QRect(143, 172, 41, 20))
 		Scalling_Coeff.setObjectName(_fromUtf8("Scalling_Coeff"))
 		Scalling_Coeff.setText("0.8")
-		Vali.NumValidator(Scalling_Coeff)
+		Validation_text_field.NumValidator(Scalling_Coeff)
 		sizePolicy.setHeightForWidth(Scalling_Coeff.sizePolicy().hasHeightForWidth())
 		Scalling_Coeff.setSizePolicy(sizePolicy)
 		#Pipe thickness
@@ -991,7 +925,7 @@ class Ui_Dialog(object):
 		Pipe_Thickness.setGeometry(QtCore.QRect(143, 62, 41, 20))
 		Pipe_Thickness.setObjectName(_fromUtf8("Pipe_Thickness"))
 		Pipe_Thickness.setText("1.2")
-		Vali.NumValidator(Pipe_Thickness)
+		Validation_text_field.NumValidator(Pipe_Thickness)
 		sizePolicy.setHeightForWidth(Pipe_Thickness.sizePolicy().hasHeightForWidth())
 		Pipe_Thickness.setSizePolicy(sizePolicy)
 

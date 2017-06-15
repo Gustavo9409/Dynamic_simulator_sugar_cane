@@ -22,6 +22,14 @@ from Valve_properties import Ui_Dialog as Valve_properties
 from Flow_properties import Ui_Dialog as Flow_properties
 #Import simulation
 from run_heater_model import Simulation_heat
+#Instance Data Base
+from Data_base import data_base_instance
+global db
+global cursor_principal
+db=data_base_instance()
+connection_db=db.connect()
+cursor_principal=connection_db.cursor()
+db.clear_all()
 #
 
 dir_script=str(os.getcwd())
@@ -41,8 +49,10 @@ global Ts_value
 global Sim_time
 global array_connections
 global array_arrows
+global Tank_fluid_in
 Heater_juice_in=""
 Heater_vapor_in=""
+Tank_fluid_in=""
 Sim_time=0.5
 l=0
 i_ev=1
@@ -153,18 +163,18 @@ class ParameterDialog_Evaporator(QDialog):
 		self.Resultado.exec_()
 
 class ParameterDialog_Heater(QDialog):
-	def __init__(self,dat,time,jui_port,vap_port, parent):
+	def __init__(self,dat,time,jui_port,vap_port,db,connection_db, parent=None):
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = Heat_properties()
-		self.ui.setupUi(dat,time,jui_port,vap_port,self.Resultado)
+		self.ui.setupUi(dat,time,jui_port,vap_port,db,connection_db,self.Resultado)
 		self.Resultado.exec_()
 
 class ParameterDialog_Tank(QDialog):
-	def __init__(self,dat, parent=None):
+	def __init__(self,dat,time,fluid_port,parent=None):
 		self.Resultado=QtGui.QDialog()
 		self.ui = Tank_properties()
-		self.ui.setupUi(dat,self.Resultado)
+		self.ui.setupUi(dat,time,fluid_port,self.Resultado)
 		self.Resultado.exec_()
 
 class ParameterDialog_Valve(QDialog):
@@ -175,11 +185,11 @@ class ParameterDialog_Valve(QDialog):
 		self.Resultado.exec_()
 
 class ParameterDialog_Flow(QDialog):
-	def __init__(self,dat,time, parent=None):
+	def __init__(self,dat,time,db,connection_db,parent=None):
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = Flow_properties()
-		self.ui.setupUi(dat,time,self.Resultado)
+		self.ui.setupUi(dat,time,db,connection_db,self.Resultado)
 		self.Resultado.exec_()
 
 class DeleteDialog(QDialog):
@@ -244,21 +254,10 @@ class DeleteDialog(QDialog):
 					if int(aux3)==(i_fl-1):
 						i_fl=i_fl-1
 
-					input_flow = open('Blocks_data.txt', 'r+')
-					data=input_flow.readlines()
-					input_flow.close()
-					heater_data=[]
-					if len(data)>0:
-						for i in data:
-							info=(i.strip()).split("\t")
-							if len(info)>1:
-								flag=info[0]
-								if flag==("Fj"+str(aux3)):
-									self.replace("Blocks_data.txt",str(i.strip()),"")
-								elif flag==("Fv"+str(aux3)):
-									self.replace("Blocks_data.txt",str(i.strip()),"")
-								elif flag==("Fw"+str(aux3)):
-									self.replace("Blocks_data.txt",str(i.strip()),"")
+					self.delete_flow("Flow_inputs","Fj"+str(aux3))
+					self.delete_flow("Flow_inputs","Fv"+str(aux3))
+					self.delete_flow("Flow_inputs","Fw"+str(aux3))
+
 				if aux2=="Evaporador":
 					if len(array_connections)>0:
 						for k,par_data in enumerate(array_connections):
@@ -282,17 +281,8 @@ class DeleteDialog(QDialog):
 					if int(aux3)==(i_ht-1):
 						i_ht=i_ht-1
 
-					input_heat = open('Blocks_data.txt', 'r+')
-					data=input_heat.readlines()
-					input_heat.close()
-					heater_data=[]
-					if len(data)>0:
-						for i in data:
-							info=(i.strip()).split("\t")
-							if len(info)>1:
-								flag=info[0]
-								if flag==("Ht"+str(aux3)):
-									self.replace("Blocks_data.txt",str(i.strip()),"")
+					self.delete_device("Heaters","Ht"+str(aux3))
+
 				if aux2=="Divergencia":
 					if len(array_connections)>0:
 						for k,par_data in enumerate(array_connections):
@@ -319,15 +309,20 @@ class DeleteDialog(QDialog):
 		self.close()
 	def NO(self):
 		self.close()
-	def replace(self,path, pattern, subst):
-		flags=0
-		with open(path, "r+" ) as filex:
-			fileContents = filex.read()
-			textPattern = re.compile( re.escape( pattern ), flags )
-			fileContents = textPattern.sub( subst, fileContents )
-			filex.seek( 0 )
-			filex.truncate()
-			filex.write(fileContents) 
+
+	def delete_device(self,table,name_device):
+		result=db.read_data(cursor_principal,"id",table,"Name",name_device)
+		if len(result)>0:
+			for data in result:
+				id_device=data[0]
+			if table=="Heaters":
+				db.delete_data("Physical_properties_heater","id_heater",id_device)
+				db.delete_data("Outputs_heater","id_heater",id_device)
+				db.delete_data("Heaters","id",id_device)
+
+	def delete_flow(self,table,name_device):
+		db.delete_data(cursor_principal,table,"Name",name_device)
+	
 
 class PortItem(QGraphicsEllipseItem):
 	""" Represents a port to a subsystem """
@@ -464,7 +459,7 @@ class BlockItem_Heat(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Heater(self.name_block,Sim_time,Heater_juice_in,Heater_vapor_in,self.window())
+		pd = ParameterDialog_Heater(self.name_block,Sim_time,Heater_juice_in,Heater_vapor_in,db,connection_db,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -531,7 +526,7 @@ class BlockItem_Flow(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Flow(self.name_block,Sim_time,self.window())
+		pd = ParameterDialog_Flow(self.name_block,Sim_time,db,connection_db,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -664,7 +659,7 @@ class BlockItem_Convergence(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Flow(self.name_block,self.window())
+		pd = ParameterDialog_Flow(self.name_block,db,connection_db,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -731,7 +726,7 @@ class BlockItem_Divergence(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Flow(self.name_block,self.window())
+		pd = ParameterDialog_Flow(self.name_block,db,connection_db,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -800,7 +795,7 @@ class BlockItem_Tank(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Tank(self.name_block,self.window())
+		pd = ParameterDialog_Tank(self.name_block,Sim_time,Tank_fluid_in,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -1114,6 +1109,12 @@ class DiagramEditor(QWidget):
 								else:	
 									FLow_flag.append("Fv"+par_data[0][len(par_data[0])-1:])
 								b_ht=b_ht+1
+						elif par_data[1][:-1]=="Tanque":
+							Tank_flag.append("Tk"+par_data[1][len(par_data[1])-1:])
+							if par_data[0][:-1]=="Flujo":
+								if par_data[3]=="Fluido de entrada":
+									FLow_flag.append("Fj"+par_data[0][len(par_data[0])-1:])
+									
 					if b_ht==2:
 						print "cantidad de entradas bien en calentador"
 						print Heater_flag
@@ -1121,7 +1122,38 @@ class DiagramEditor(QWidget):
 					else:
 						print "faltan entradas a calentador"
 
+					heat_param2=[]
+					result=db.read_data(cursor_principal,"id,Tjout_init","Heaters","Name",Heater_flag[0])
+					if len(result)>0:
+						for data in result:
+							id_heater=data[0]
+							Tjout_ini=data[1]
+						print (Tjout_ini)
+						fields="Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_lenght,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
+						result=db.read_data(cursor_principal,fields,"Physical_properties_heater","id_heater",id_heater)
+						for data in result:
+							for values in data:
+								heat_param2.append(float(values))
+						heat_param2.append(float(Tjout_ini))
 
+					juice_data2=[]
+					vapor_data2=[]
+					for flag in FLow_flag:
+						fields="Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
+						result=db.read_data(cursor_principal,fields,"Flow_inputs","Name",flag)
+						if len(result)>0:
+							for data in result:
+								for i,values in enumerate(data):
+									if str(data[0])=="Juice":
+										if i>0:
+											juice_data2.append(str(values))
+									elif str(data[0])=="Vapor":
+										if i>0:
+											vapor_data2.append(str(values))
+					print "#-#-#-"
+					print vapor_data2
+					print juice_data2
+					print "#-#-#-"
 
 					file_heat = open('Blocks_data.txt', 'r+')
 					data=file_heat.readlines()
@@ -1158,7 +1190,7 @@ class DiagramEditor(QWidget):
 						sim_heat_data=np.append(sim_heat_data,vapor_data[0])
 						#print sim_heat_data
 						Sim_time=float(Ts_value.text())
-						sim=Simulation_heat("_",sim_heat_data,Sim_time)
+						sim=Simulation_heat("_",sim_heat_data,Sim_time,db,cursor_principal)
 						# timer = QtCore.QTimer(self)
 						# timer.timeout.connect(self.read_time)
 						# timer.start(float(sim.time_samp)*1000)
@@ -1252,13 +1284,13 @@ class DiagramEditor(QWidget):
 				if str(aux2)==str("Valvula"):
 					pd = ParameterDialog_Valve(aux,self.window())
 				if str(aux2)==str("Flujo"):
-					pd = ParameterDialog_Flow(aux,Sim_time,self.window())
+					pd = ParameterDialog_Flow(aux,Sim_time,db,connection_db,self.window())
 				if str(aux2)==str("Evaporador"):
 					pd = ParameterDialog_Evaporator(aux,self.window())
 				if str(aux2)==str("Calentador"):	
-					pd = ParameterDialog_Heater(aux,Sim_time,Heater_juice_in,Heater_vapor_in,self.window())
+					pd = ParameterDialog_Heater(aux,Sim_time,Heater_juice_in,Heater_vapor_in,db,connection_db,self.window())
 				if str(aux2)==str("Tanque"):
-					pd = ParameterDialog_Tank(aux,self.window())
+					pd = ParameterDialog_Tank(aux,Sim_time,Tank_fluid_in,self.window())
 		if self.startedConnection:
 			for item in items:
 				if type(item) is PortItem:

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import math
 
 class water_properties:
@@ -158,7 +160,29 @@ class liquor_properties:
 		tcl = (self.Brx*((5.466*(10**-6)*(self.Tmp**2))-(1.176*(10**-3)*self.Tmp)-0.3024))-(7.847*(10**-6)*(self.Tmp**2))+(1.976*(10**-3)*self.Tmp)+0.563
 		return tcl
 
+	def loss_saccharose(self,time,Temperature,Brix,SolIn,Purity,pH):
+		'''
+		Loss of saccharose in liquor
+		Based on Rein 2012, Ingenieria de la caña de ázucar
 
+		Parameters:
+		Residence time [min]
+		Mother liquor temperature [C]
+		Mother liquor brix [kg/kg]
+		Mother liquor insoluble solids [kg/kg]
+		Mother liquor purity [kg/kg]
+		Mother liquor pH []
+
+		Result:
+		Percentage of saccharose loss [%]
+		'''
+
+		cw=((100.0-(Brix*100.0)-(SolIn*100.0))*(self.density(Temperature,Brix,Purity)))*0.001
+		k=(8.12831)*(10**16)*cw*math.exp((-13055.7/(Temperature+273.15))-2.30259*pH)
+
+		lss_sac=(1-math.exp(-k*time))*100.0
+	
+		return lss_sac
 
 class vapor_properties:
 

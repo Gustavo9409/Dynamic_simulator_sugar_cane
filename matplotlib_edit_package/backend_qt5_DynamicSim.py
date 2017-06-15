@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from matplotlib.widgets import SubplotTool
-import matplotlib.backends.qt_editor.figureoptions_DynamicSim as figureoptions
+import matplotlib.backends.qt_editor.figureoptions as figureoptions
 
 from matplotlib.backends.qt_compat import (QtCore, QtGui, QtWidgets, _getSaveFileName,
 						__version__, is_pyqt5)

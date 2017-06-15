@@ -16,6 +16,7 @@ global texc
 
 global a
 global ts
+global liquor
 
 global yout
 global yb
@@ -30,7 +31,21 @@ ts=0.5
 time_1=0.0
 outout_1=0.0
 
+liquor=liquor_properties()
 
+class calculated_properties():
+	def Juice_velocity(self,Fj,Tj,Bj,Zj,Dosp,Np,Ip):
+		pjin=liquor.density(Tj,Bj,Zj)
+		Disp=Dosp-(2*(Ip)/25.4)
+
+		vj=(4*((Fj*pjin)))/(Np*pjin*math.pi*((0.0254*Disp)**2));
+		return vj
+
+	def round_rsd_time(self,time,ts):
+		A=time/ts
+		B=math.ceil(A)
+		round_time=B*ts
+		return round_time
 
 def Thread_time(output_time,output_model_value):
 	global a
@@ -41,6 +56,8 @@ def Thread_time(output_time,output_model_value):
 	global yout
 	global Time_exec_thread
 	global u
+	global db 
+
 	band=1
 	tt= [0.0,0.0]
 	yt=[0.0,0.0]
@@ -59,7 +76,12 @@ def Thread_time(output_time,output_model_value):
 		if b - a > Ts_2:
 			texc=texc+Ts_2
 			tt.append(texc)
-			end_tt=[tt[-2],tt[-1]]
+			Prop=calculated_properties()
+			lst = list(u)
+			vj=Prop.Juice_velocity(lst[8],lst[9],lst[10],lst[11],lst[2],lst[0],lst[4])
+			rsd_time=(lst[1]*lst[3])/vj
+			rsd_time=Prop.round_rsd_time(rsd_time,Ts_2)
+			end_tt=[tt[-2]-rsd_time,tt[-1]-rsd_time]
 
 			yout = odeint(heater_shell_tube.model_temperature,yb_l,end_tt,u)
 			yb_l=[yout[1,0]]
@@ -70,13 +92,16 @@ def Thread_time(output_time,output_model_value):
 			
 			infile = open('time_exec.txt', 'r')
 			data=infile.readlines()
-			
+			x=db.read_data(cursor_simulation,"TIME","TIME_EXEC",None,None)
+			if len(x)>0:
+				x2=list(x[-1])
+				# print("HILO: "+str(x2[0]))
 			if len(data)>0:
 				time_exec=data[-1].strip()
 				infile.close()
 				info=time_exec.split("\t")
 
-				print ("HILO:"+str(time_exec))
+				# print ("HILO:"+str(time_exec))
 				if time_exec=="stop":
 					texc=0.0
 					break					
@@ -84,7 +109,10 @@ def Thread_time(output_time,output_model_value):
 			outfile = open('time_exec.txt', 'a')
 			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\n")
 			outfile.close()
-
+			w=["TS","TIME"]
+			h=[Ts_2,output_time]
+			db.insert_data(cursor_simulation,"TIME_EXEC",w,h)
+			db.insert_data(cursor_simulation,"OUTPUTS_HEATER",["Out_fluid_temperature"],[output_model_value])
 			#print("t="+str(output_time)+" ,Tjout="+str(output_model_value))	
 			a = b
 		
@@ -120,7 +148,7 @@ def Thread_time(output_time,output_model_value):
 # ============================================================================================
 '''
 class Simulation_heat:
-	def __init__(self,name,param,Ts):
+	def __init__(self,name,param,Ts,Data_Base,Connection_DB):
 		global Tjout
 		global yb
 		global u
@@ -134,8 +162,11 @@ class Simulation_heat:
 		global yout
 		global Time_exec_thread
 		global u
+		global db
+		global cursor_simulation
+		db=Data_Base
+		cursor_simulation=Connection_DB.cursor()
 
-		liquor=liquor_properties()
 		self.name=name
 		self.time_samp=Ts
 		Ts_2=Ts
