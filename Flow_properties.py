@@ -6,26 +6,29 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+import fileinput
+import sys
+import os
+import re
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from decimal import Decimal
-import re
 
 from tempfile import mkstemp
 from shutil import move
 from os import remove, close
 
-import fileinput
-import sys
+# from physicochemical_properties import liquor_properties, water_properties, vapor_properties
+# liquor=liquor_properties()
+# # water=water_properties()
+# # vapor=vapor_properties()
 
-from physicochemical_properties import liquor_properties, water_properties, vapor_properties
-liquor=liquor_properties()
-water=water_properties()
-vapor=vapor_properties()
+dir_script=str(os.getcwd())
 
-from Flow_inputs import *
-flow_data=update_flow_data()
+from streams import *
+# flow_data=update_flow_data()
 
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
@@ -52,7 +55,12 @@ global num_window
 global vapor_data
 global juice_data
 global water_data
-global name_flow_object
+
+global id_time
+global juice
+global vapor
+global water
+
 vapor_data=[]
 juice_data=[]
 water_data=[]
@@ -61,7 +69,10 @@ update=0
 confirm=False
 Type_flow_selec=""
 saturado=1.0
-name_flow_object=None
+
+id_time=0
+
+
 
 VariableInput=_translate("Dialog", "Flujo másico [t/h]", None)
 
@@ -78,16 +89,23 @@ def call_timer(objectq):
 
 ## Update vapor flow value ##
 def update_Fv_value():
-	input_heat = open('Blocks_data.txt', 'r+')
-	data=input_heat.readlines()
-	input_heat.close()
-	if len(data)>0:
-		for i in data:
-			info=(i.strip()).split("\t")
-			flag=info[0]
-			if flag==("Fv"+str(num_window)):
-				Flow.setText(str(round(float(info[2]),3)))
-				#break
+	# input_heat = open('Blocks_data.txt', 'r+')
+	# data=input_heat.readlines()
+	# input_heat.close()
+	# if len(data)>0:
+	# 	for i in data:
+	# 		info=(i.strip()).split("\t")
+	# 		flag=info[0]
+	# 		if flag==("Fv"+str(num_window)):
+	# 			Flow.setText(str(round(float(info[2]),3)))
+	# 			#break
+
+	fields="Flow"
+	result=db.read_data("Flow_inputs",fields,"Name","Fv"+str(num_window))
+	if len(result)>0:
+		for data in result:
+			Flow.setText(str(round(float(str(data[0])),3)))
+
 
 ## -- Function to update window when is close -- ##
 def Update_window():
@@ -102,6 +120,8 @@ def Update_window():
 	global water_data
 	global saturado
 	global VariableInput
+	global Type_flow_selec
+
 	num_window=re.sub('([a-zA-Z]+)', "", nameDialog)
 	input_heat = open('Blocks_data.txt', 'r+')
 	data=input_heat.readlines()
@@ -114,8 +134,8 @@ def Update_window():
 	vapor_data2=[]
 	juice_data2=[]
 	water_data2=[]
-	fields="Name,Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
-	result=db.read_data(cursor_flow_properties,fields,"Flow_inputs",None,None)
+	fields="Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
+	result=db.read_data("Flow_inputs",fields,None,None)
 	if len(result)>0:
 		for data in result:
 			for i,values in enumerate(data):
@@ -130,6 +150,7 @@ def Update_window():
 						water_data2.append(str(values))
 
 	if len(vapor_data2)>0:
+		Type_flow_selec="Vapor"
 		comBox_Type_Flow.setDisabled(1)
 		Flow_tabWidget.setCurrentIndex(0)
 		update=1
@@ -178,6 +199,7 @@ def Update_window():
 			comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 			comBox_VariableInput.addItem(_translate("Dialog", "Temperatura [°C]", None))
 	elif len(juice_data2)>0:
+		Type_flow_selec="Jugo"
 		comBox_Type_Flow.setDisabled(1)
 		Flow_tabWidget.setCurrentIndex(0)
 		update=1
@@ -226,6 +248,7 @@ def Update_window():
 		comBox_VariableInput.addItem(_translate("Dialog", "Presión [kPa]", None))
 
 	elif len(water_data2)>0:
+		Type_flow_selec="Agua"
 		comBox_Type_Flow.setDisabled(1)
 		Flow_tabWidget.setCurrentIndex(0)
 		update=1
@@ -409,20 +432,25 @@ class window_confirm_inputs(QDialog):
 			global juice
 			global vapor
 			global water
-			global name_flow_object
 
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
 			# -- If select water flow -- ##
 			if Type_flow_selec=="Vapor":
+				
+				item_flow.icon.load(dir_script+"\Images\_flow_vapor.png")
+				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
 				if saturado==1.0:
 				##Get inputs
 					Mvin=00.00
 					Pvin=(float(Pressure.text()))*1000.0
 				##Update steam flow info 
-					vapor=vapor(Mvin,Pvin,None)
+					if hasattr(vapor, 'Mv'):
+						vapor.update(Mvin,Pvin,None)
+					else:
+						vapor=vapor(Mvin,Pvin,None)
 					# Tvin,pv,uv,Hv,Yv,Cpv,Hvw=flow_data.update_vapor(Pvin)
 				##Set data in text field
-					Flow.setText(str(vapor.mv))
+					Flow.setText(str(vapor.Mv))
 					Temp.setText(str(round(vapor.Tv,3)))
 					Density.setText(str(round(vapor.pv,3)))
 					Viscosity.setText(str("{:.3E}".format(Decimal(vapor.uv))))
@@ -432,8 +460,8 @@ class window_confirm_inputs(QDialog):
 					Evaporation_Enthalpy.setText(str("{:.3E}".format(Decimal(vapor.Hvw))))
 				##Prepare frame to data base
 					flag0="Fv"
-					dato=str(vapor.Pv)+"\t"+str(vapor.mv)+"\t"+str(vapor.Tv)+"\t"+str(vapor.Cpv)+"\t"+str(vapor.pv)+"\t"+str(vapor.uv)+"\t"+str(vapor.Hv)+"\t"+str(vapor.Hvw)+"\t"+str(vapor.Yv)+"\t"+str(saturado)
-					values=[1,"Fv"+flag,"Vapor",vapor.mv,vapor.Tv,"","","","",vapor.Pv,saturado]
+					dato=str(vapor.Pv)+"\t"+str(vapor.Mv)+"\t"+str(vapor.Tv)+"\t"+str(vapor.Cpv)+"\t"+str(vapor.pv)+"\t"+str(vapor.uv)+"\t"+str(vapor.Hv)+"\t"+str(vapor.Hvw)+"\t"+str(vapor.Yv)+"\t"+str(saturado)
+					values=[1,"Fv"+flag,"Vapor",vapor.Mv,vapor.Tv,"","","","",vapor.Pv,saturado]
 				else :
 					Mvin=00.00
 					Pvin=(float(Pressure.text()))*1000.0
@@ -443,6 +471,8 @@ class window_confirm_inputs(QDialog):
 
 			# -- If select juice flow -- ##
 			elif Type_flow_selec=="Jugo":
+				item_flow.icon.load(dir_script+"\Images\_flow_juice.png")
+				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
 			##Get inputs
 				Mjin=float(Flow.text())
 				Bjin=float(Brix.text())/100.0
@@ -452,7 +482,13 @@ class window_confirm_inputs(QDialog):
 				pHj=float(pH.text())
 				Pj=(float(Pressure.text()))*1000.0
 			##Update juice flow info
-				juice=juice(Mjin,Pj,Tjin,Bjin,Zjin,SolIn,pHj)
+				# if juice is not None:
+				# 	juice.update(Mjin,Pj,Tjin,Bjin,Zjin,SolIn,pHj)
+				# else:
+				if hasattr(juice, 'Mj'):
+					juice.update(Mjin,Pj,Tjin,Bjin,Zjin,SolIn,pHj)
+				else:
+					juice=juice(Mjin,Pj,Tjin,Bjin,Zjin,SolIn,pHj)
 				# Cpj,pj,uj,Hj,Yj=flow_data.update_juice(Bjin,Zjin,Tjin)
 			##Set data in text field	
 				Specific_Heat.setText(str("{:.3E}".format(Decimal(juice.Cpj))))
@@ -462,45 +498,54 @@ class window_confirm_inputs(QDialog):
 				Conductivity.setText(str(round(juice.Yj,3)))
 			##Prepare frame to data base
 				flag0="Fj"
-				dato=str(juice.mj)+"\t"+str(juice.Tj)+"\t"+str(juice.Bj)+"\t"+str(juice.Zj)+"\t"+str(juice.Ij)+"\t"+str(juice.pHj)+"\t"+str(juice.Pj)+"\t"+str(juice.Cpj)+"\t"+str(juice.pj)+"\t"+str(juice.uj)+"\t"+str(juice.Hj)+"\t"+str(juice.Yj)
-				values=[1,"Fj"+flag,"Juice",juice.mj,juice.Tj,juice.Bj,juice.Zj,juice.Ij,juice.pHj,juice.Pj,""]
+				dato=str(juice.Mj)+"\t"+str(juice.Tj)+"\t"+str(juice.Bj)+"\t"+str(juice.Zj)+"\t"+str(juice.Ij)+"\t"+str(juice.pHj)+"\t"+str(juice.Pj)+"\t"+str(juice.Cpj)+"\t"+str(juice.pj)+"\t"+str(juice.uj)+"\t"+str(juice.Hj)+"\t"+str(juice.Yj)
+				values=[1,"Fj"+flag,"Juice",juice.Mj,juice.Tj,juice.Bj,juice.Zj,juice.Ij,juice.pHj,juice.Pj,""]
 
 			# -- If select water flow -- ##
 			elif Type_flow_selec=="Agua":
+				item_flow.icon.load(dir_script+"\Images\_flow_water.png")
+				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
 			##Get inputs
 				Mw=float(Flow.text())
 				Tw=float(Temp.text())
 				pHw=float(pH.text())
 				Pw=(float(Pressure.text()))*1000.0
 			##Update water flow info
-				water=water(Mw,Pw,Tw,pHw)
+				# if water is not None:
+				# 	water.update(Mw,Pw,Tw,pHw)
+				# else:
+				if hasattr(water, 'Mw'):
+					water.update(Mw,Pw,Tw,pHw)
+				else:
+					water=water(Mw,Pw,Tw,pHw)
 				# pw,Hw=flow_data.update_water(Tw)
 			##Set data in text field
 				Density.setText(str(round(water.pw,3)))
 				Enthalpy.setText(str("{:.3E}".format(Decimal(water.Hw))))
 			##Prepare frame to data base
 				flag0="Fw"
-				dato=str(water.mw)+"\t"+str(water.Tw)+"\t"+str(water.pHw)+"\t"+str(water.Pw)+"\t"+str(water.pw)+"\t"+str(water.Hw)
-				values=[1,"Fw"+flag,"Water",water.mw,water.Tw,"","","",water.pHw,water.Pw,""]
+				dato=str(water.Mw)+"\t"+str(water.Tw)+"\t"+str(water.pHw)+"\t"+str(water.Pw)+"\t"+str(water.pw)+"\t"+str(water.Hw)
+				values=[1,"Fw"+flag,"Water",water.Mw,water.Tw,"","","",water.pHw,water.Pw,""]
 			##New changes in data base
 			
 			upd, change_values=update_DB(flag0+flag)
-			name_flow_object=flag0+flag
-			fields=["id_Time_exec","Name","Type","Flow","Temperature","Brix","Purity","Insoluble_solids","pH","Pressure","Saturated_vapor"]
+			
+			fields="Time_exec_id,Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
 			##First data instance
 			if upd==0:
 				outfile = open('Blocks_data.txt', 'a')
 				outfile.write("\n"+flag0+flag+"\t"+dato)
 				outfile.close()
 
-				db.insert_data(cursor_flow_properties,"Flow_inputs",fields,values)
+				db.insert_data("Flow_inputs",fields,values)
 				
 			else:
 				#Overwrite data instance
 				fields=["Flow","Temperature","Brix","Purity","Insoluble_solids","pH","Pressure","Saturated_vapor"]
-				values=values[3:]
+				values_change=values[3:]
 
-				db.update_data(cursor_flow_properties,"Flow_inputs",fields,values,change_values)
+				db.update_data("Flow_inputs",fields,values_change,"Name",values[1])
+
 
 			##Information message and close window
 			self.close()
@@ -527,7 +572,7 @@ def update_DB(data):
 	dats=[]
 	
 	fields="Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
-	result=db.read_data(cursor_flow_properties,fields,"Flow_inputs","Name",data)
+	result=db.read_data("Flow_inputs",fields,"Name",data)
 	if len(result)>0:
 		flg=1
 		for data in result:
@@ -539,26 +584,26 @@ def update_DB(data):
 
 	return flg, dats
 def write_DB(Names=[],Types=[]):
-
-	time_exec=db.read_data(cursor_flow_properties,"id,TIME","TIME_EXEC",None,None)
+	global id_time
+	time_exec=db.read_data("TIME_EXEC","id,TIME",None,None)
 	if len(time_exec)>0:
-		id_time=list(time_exec[-1])[0]
-		time=list(time_exec[-1])[1]
-		print(str(id_time)+" ** "+time)
-		if id_time==1:
+		id_time=str(list(time_exec[-1])[0])
+		time=str(list(time_exec[-1])[1])
+		# print(str(id_time)+" ** "+time)
+		# if id_time==1:
 			
-			fields="Name,Type"
-			flow_instance=db.read_data(cursor_flow_properties,fields,"Flow_inputs","id_Time_exec","1")
-			for result in flow_instance:
-				Names.append(str(list(result)[0]))
-				Types.append(str(list(result)[1]))
-			print Names
-			print Types
-		else:
-			for data_name,data_type in zip(Names,Types):
-				fields=["Name","Type","id_Time_exec"]
-				values=[data_name,data_type,id_time]
-				db.insert_data(cursor_flow_properties,"Flow_inputs",fields,values)
+		# 	fields="Name,Type"
+		# 	flow_instance=db.read_data(cursor_flow_properties,fields,"Flow_inputs","id_Time_exec","1")
+		# 	for result in flow_instance:
+		# 		Names.append(str(list(result)[0]))
+		# 		Types.append(str(list(result)[1]))
+		# 	print Names
+		# 	print Types
+		# else:
+		# 	for data_name,data_type in zip(Names,Types):
+		# 		fields=["Name","Type","id_Time_exec"]
+		# 		values=[data_name,data_type,id_time]
+		# 		db.insert_data(cursor_flow_properties,"Flow_inputs",fields,values)
 
 class Ui_Dialog(object):
 ## -- Function to confirm all data is complete for each type of flow -- ##
@@ -588,7 +633,7 @@ class Ui_Dialog(object):
 			"Falta por ingresar algun dato.",QtGui.QMessageBox.Ok)
 
 ## -- Initialization window interface --- ##
-	def setupUi(self,name,ts,Data_Base,Connection_DB,Dialog):
+	def setupUi(self,name,ts,item,Data_Base,Dialog):
 		#Global input
 		global Flow
 		global Brix
@@ -614,17 +659,20 @@ class Ui_Dialog(object):
 		global Conductivity
 		#Global others
 		global Dialog_window
+		global title_name
 		global nameDialog
 		global Ts
 		global db
-		global cursor_flow_properties
-
+		global item_flow
+		
 		Vali = Validator()
 		Ts=ts
 		Dialog_window=Dialog
 		nameDialog=name
 		db=Data_Base
-		cursor_flow_properties=Connection_DB.cursor()
+		title_name=str(item.label.toPlainText())
+		item_flow=item
+		
 
 		Dialog.setObjectName(_fromUtf8("Dialog"))
 		Dialog.resize(444, 319)
@@ -831,91 +879,191 @@ class Ui_Dialog(object):
 		Kj=False
 		valor=SpinBox_VariableInput.value()
 		if(VariableInput==(_translate("Dialog", "Flujo másico [t/h]", None))):
+			if Flow.text()!=str(valor):
+				Kj=True
 			Flow.setText(str(valor))
 		elif(VariableInput==("Brix [%]")):
+			if Brix.text()!=str(valor):
+				Kj=True
 			Brix.setText(str(valor))
 		elif(VariableInput==(_translate("Dialog", "Sólidos insolubles [%]", None))):
+			if Insoluble_Solids.text()!=str(valor):
+				Kj=True
 			Insoluble_Solids.setText(str(valor))
 		elif(VariableInput==(_translate("Dialog", "Temperatura [°C]", None))):
+			if Temp.text()!=str(valor):
+				Kj=True
 			Temp.setText(str(valor))
 		elif(VariableInput==("Pureza [%]")):
+			if Purity.text()!=str(valor):
+				Kj=True
 			Purity.setText(str(valor))
 		elif(VariableInput==(_translate("Dialog", "Presión [kPa]", None))):
+			if Pressure.text()!=str(valor):
+				Kj=True
 			Pressure.setText(str(valor))
 		elif(VariableInput==("pH")):
+			if pH.text()!=str(valor):
+				Kj=True
 			pH.setText(str(valor))
-		if len(data)>0:
-			for i in data:
-				info=(i.strip()).split("\t")
-				if len(info)>1:
-					flag=info[0]
 
-					## -- If the change is realized in a vapor flow -- ##
-					if flag==("Fv"+str(num_window)):
-						dato1=str(i.strip())
-						Kj=True
-						if saturado==1.0:
-						##Get inputs
-							Pvin=(float(Pressure.text()))*1000.0
-						##Update steam flow info 
-							Tvin,pv,uv,Hv,Yv,Cpv,Hvw=flow_data.update_vapor(Pvin)
-						##Set data in text field
-							Temp.setText(str(round(Tvin,3)))
-							Density.setText(str(round(pv,3)))
-							Viscosity.setText(str("{:.3E}".format(Decimal(uv))))
-							Enthalpy.setText(str("{:.3E}".format(Decimal(Hv))))
-							Conductivity.setText(str(round(Yv,3)))
-							Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpv))))
-							Evaporation_Enthalpy.setText(str("{:.3E}".format(Decimal(Hvw))))
-						##Prepare frame to data base
-							dato2=(flag+"\t"+str(Pvin)+"\t"+Flow.text()+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Hvw)+"\t"+str(Yv)+"\t"+"1")
-						else:
-							pass
 
-					## -- If the change is realized in a juice flow -- ##
-					elif flag==("Fj"+str(num_window)):
-						dato1=str(i.strip())
-						Kj=True
-					##Get inputs
-						Mjin=float(Flow.text())
-						Bjin=float(Brix.text())/100.0
-						SolIn=float(Insoluble_Solids.text())/100.0
-						Tjin=float(Temp.text())
-						Zjin=float(Purity.text())/100.0
-						pHj=float(pH.text())
-						Pj=(float(Pressure.text()))*1000.0
-					##Update juice flow info 
-						Cpj,pj,uj,Hj,Yj=flow_data.update_juice(Bjin,Zjin,Tjin)		
-					##Set data in text field	
-						Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpj))))
-						Density.setText(str(round(pj,3)))
-						Viscosity.setText(str("{:.3E}".format(Decimal(uj))))
-						Enthalpy.setText(str("{:.3E}".format(Decimal(Hj))))
-						Conductivity.setText(str(round(Yj,3)))
-					##Prepare frame to data base
-						dato2=(flag+"\t"+str(Mjin)+"\t"+str(Tjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
-						# dato2=(flag+"\t"+str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"
-						# 	+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
+		flag=re.sub('([a-zA-Z]+)', "", nameDialog)
 
-					## -- If the change is realized in a water flow -- ##
-					elif flag==("Fw"+str(num_window)):
-						dato1=str(i.strip())
-						Kj=True
-					##Get inputs
-						Mw=float(Flow.text())
-						Tw=float(Temp.text())
-						pHw=float(pH.text())
-						Pw=(float(Pressure.text()))*1000.0
-					##Update water flow info 
-						pw,Hw=flow_data.update_water(Tw)
-					##Set data in text field
-						Density.setText(str(round(pw,3)))
-						Enthalpy.setText(str("{:.3E}".format(Decimal(Hw))))
-					##Prepare frame to data base
-						dato2=flag+"\t"+str(Mw)+"\t"+str(Tw)+"\t"+str(pHw)+"\t"+str(Pw)+"\t"+str(pw)+"\t"+str(Hw)
-		if Kj==True:
+		Type_flow=comBox_Type_Flow.currentText()
+		if Type_flow=="Vapor":
+			# Kj=True
+			if saturado==1.0:
+			##Get inputs
+				Mvin=(float(Flow.text()))
+				Pvin=(float(Pressure.text()))*1000.0
+			##Update steam flow info 
+				vapor.update(Mvin,Pvin,None)
+				# Tvin,pv,uv,Hv,Yv,Cpv,Hvw=flow_data.update_vapor(Pvin)
+			##Set data in text field
+				Flow.setText(str(vapor.Mv))
+				Temp.setText(str(round(vapor.Tv,3)))
+				Density.setText(str(round(vapor.pv,3)))
+				Viscosity.setText(str("{:.3E}".format(Decimal(vapor.uv))))
+				Enthalpy.setText(str("{:.3E}".format(Decimal(vapor.Hv))))
+				Conductivity.setText(str(round(vapor.Yv,3)))
+				Specific_Heat.setText(str("{:.3E}".format(Decimal(vapor.Cpv))))
+				Evaporation_Enthalpy.setText(str("{:.3E}".format(Decimal(vapor.Hvw))))
+			##Prepare frame to data base
+				flag0="Fv"
+				dato=str(vapor.Pv)+"\t"+str(vapor.Mv)+"\t"+str(vapor.Tv)+"\t"+str(vapor.Cpv)+"\t"+str(vapor.pv)+"\t"+str(vapor.uv)+"\t"+str(vapor.Hv)+"\t"+str(vapor.Hvw)+"\t"+str(vapor.Yv)+"\t"+str(saturado)
+				values=[id_time,"Fv"+flag,"Vapor",vapor.Mv,vapor.Tv,"","","","",vapor.Pv,saturado]
+			else :
+				Mvin=00.00
+				Pvin=(float(Pressure.text()))*1000.0
+				Tvin=float(Temp.text())
+				##
+				#....¿?
+
+		# -- If select juice flow -- ##
+		elif Type_flow=="Jugo":
+			# Kj=True
+		##Get inputs
+			Mjin=float(Flow.text())
+			Bjin=float(Brix.text())/100.0
+			SolIn=float(Insoluble_Solids.text())/100.0
+			Tjin=float(Temp.text())
+			Zjin=float(Purity.text())/100.0
+			pHj=float(pH.text())
+			Pj=(float(Pressure.text()))*1000.0
+		##Update juice flow info
+			juice.update(Mjin,Pj,Tjin,Bjin,Zjin,SolIn,pHj)
+			# Cpj,pj,uj,Hj,Yj=flow_data.update_juice(Bjin,Zjin,Tjin)
+		##Set data in text field	
+			Specific_Heat.setText(str("{:.3E}".format(Decimal(juice.Cpj))))
+			Density.setText(str(round(juice.pj,3)))
+			Viscosity.setText(str("{:.3E}".format(Decimal(juice.uj))))
+			Enthalpy.setText(str("{:.3E}".format(Decimal(juice.Hj))))
+			Conductivity.setText(str(round(juice.Yj,3)))
+		##Prepare frame to data base
+			flag0="Fj"
+			dato=str(juice.Mj)+"\t"+str(juice.Tj)+"\t"+str(juice.Bj)+"\t"+str(juice.Zj)+"\t"+str(juice.Ij)+"\t"+str(juice.pHj)+"\t"+str(juice.Pj)+"\t"+str(juice.Cpj)+"\t"+str(juice.pj)+"\t"+str(juice.uj)+"\t"+str(juice.Hj)+"\t"+str(juice.Yj)
+			values=[id_time,"Fj"+flag,"Juice",juice.Mj,juice.Tj,juice.Bj,juice.Zj,juice.Ij,juice.pHj,juice.Pj,""]
+
+		# -- If select water flow -- ##
+		elif Type_flow=="Agua":
+			# Kj=True
+		##Get inputs
+			Mw=float(Flow.text())
+			Tw=float(Temp.text())
+			pHw=float(pH.text())
+			Pw=(float(Pressure.text()))*1000.0
+		##Update water flow info
+			water.update(Mw,Pw,Tw,pHw)
+			# pw,Hw=flow_data.update_water(Tw)
+		##Set data in text field
+			Density.setText(str(round(water.pw,3)))
+			Enthalpy.setText(str("{:.3E}".format(Decimal(water.Hw))))
+		##Prepare frame to data base
+			flag0="Fw"
+			dato=str(water.Mw)+"\t"+str(water.Tw)+"\t"+str(water.pHw)+"\t"+str(water.Pw)+"\t"+str(water.pw)+"\t"+str(water.Hw)
+			values=[id_time,"Fw"+flag,"Water",water.Mw,water.Tw,"","","",water.pHw,water.Pw,""]
+
+
+
+		# if len(data)>0:
+		# 	for i in data:
+		# 		info=(i.strip()).split("\t")
+		# 		if len(info)>1:
+		# 			flag=info[0]
+
+		# 			## -- If the change is realized in a vapor flow -- ##
+		# 			if flag==("Fv"+str(num_window)):
+		# 				dato1=str(i.strip())
+		# 				Kj=True
+		# 				if saturado==1.0:
+		# 				##Get inputs
+		# 					Pvin=(float(Pressure.text()))*1000.0
+		# 				##Update steam flow info 
+		# 					Tvin,pv,uv,Hv,Yv,Cpv,Hvw=flow_data.update_vapor(Pvin)
+		# 				##Set data in text field
+		# 					Temp.setText(str(round(Tvin,3)))
+		# 					Density.setText(str(round(pv,3)))
+		# 					Viscosity.setText(str("{:.3E}".format(Decimal(uv))))
+		# 					Enthalpy.setText(str("{:.3E}".format(Decimal(Hv))))
+		# 					Conductivity.setText(str(round(Yv,3)))
+		# 					Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpv))))
+		# 					Evaporation_Enthalpy.setText(str("{:.3E}".format(Decimal(Hvw))))
+		# 				##Prepare frame to data base
+		# 					dato2=(flag+"\t"+str(Pvin)+"\t"+Flow.text()+"\t"+str(Tvin)+"\t"+str(Cpv)+"\t"+str(pv)+"\t"+str(uv)+"\t"+str(Hv)+"\t"+str(Hvw)+"\t"+str(Yv)+"\t"+"1")
+		# 					values=[id_time,"Fv"+flag,"Vapor",vapor.Mv,vapor.Tv,"","","","",vapor.Pv,saturado]
+		# 				else:
+		# 					pass
+
+		# 			## -- If the change is realized in a juice flow -- ##
+		# 			elif flag==("Fj"+str(num_window)):
+		# 				dato1=str(i.strip())
+		# 				Kj=True
+		# 			##Get inputs
+		# 				Mjin=float(Flow.text())
+		# 				Bjin=float(Brix.text())/100.0
+		# 				SolIn=float(Insoluble_Solids.text())/100.0
+		# 				Tjin=float(Temp.text())
+		# 				Zjin=float(Purity.text())/100.0
+		# 				pHj=float(pH.text())
+		# 				Pj=(float(Pressure.text()))*1000.0
+		# 			##Update juice flow info 
+		# 				Cpj,pj,uj,Hj,Yj=flow_data.update_juice(Bjin,Zjin,Tjin)		
+		# 			##Set data in text field	
+		# 				Specific_Heat.setText(str("{:.3E}".format(Decimal(Cpj))))
+		# 				Density.setText(str(round(pj,3)))
+		# 				Viscosity.setText(str("{:.3E}".format(Decimal(uj))))
+		# 				Enthalpy.setText(str("{:.3E}".format(Decimal(Hj))))
+		# 				Conductivity.setText(str(round(Yj,3)))
+		# 			##Prepare frame to data base
+		# 				values=[id_time,"Fj"+flag,"Juice",juice.Mj,juice.Tj,juice.Bj,juice.Zj,juice.Ij,juice.pHj,juice.Pj,""]
+		# 				dato2=(flag+"\t"+str(Mjin)+"\t"+str(Tjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
+		# 				# dato2=(flag+"\t"+str(Mjin)+"\t"+str(Bjin)+"\t"+str(Zjin)+"\t"+str(Tjin)+"\t"+str(SolIn)+"\t"+str(pHj)+"\t"+str(Pj)+"\t"
+		# 				# 	+str(Cpj)+"\t"+str(pj)+"\t"+str(uj)+"\t"+str(Hj)+"\t"+str(Yj))
+
+		# 			## -- If the change is realized in a water flow -- ##
+		# 			elif flag==("Fw"+str(num_window)):
+		# 				dato1=str(i.strip())
+		# 				Kj=True
+		# 			##Get inputs
+		# 				Mw=float(Flow.text())
+		# 				Tw=float(Temp.text())
+		# 				pHw=float(pH.text())
+		# 				Pw=(float(Pressure.text()))*1000.0
+		# 			##Update water flow info 
+		# 				pw,Hw=flow_data.update_water(Tw)
+		# 			##Set data in text field
+		# 				Density.setText(str(round(pw,3)))
+		# 				Enthalpy.setText(str("{:.3E}".format(Decimal(Hw))))
+		# 			##Prepare frame to data base
+		# 				values=[id_time,"Fw"+flag,"Water",water.Mw,water.Tw,"","","",water.pHw,water.Pw,""]
+		# 				dato2=flag+"\t"+str(Mw)+"\t"+str(Tw)+"\t"+str(pHw)+"\t"+str(Pw)+"\t"+str(pw)+"\t"+str(Hw)
+		if Kj==True and id_time>0:
 			##-- Overwrite flow data with changes --##
-			replace("Blocks_data.txt",dato1,dato2)
+			# replace("Blocks_data.txt",dato1,dato2)
+			fields="Time_exec_id,Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
+			db.insert_data("Flow_inputs",fields,values)
+			
 
 ## -- Function to update text field with Spinbox value when Tab change -- ##	
 	def TabChange(self):
@@ -1089,7 +1237,7 @@ class Ui_Dialog(object):
 
 ## -- Complete label texts -- ##		
 	def retranslateUi(self, Dialog):
-		Dialog.setWindowTitle(_translate("Dialog", "Datos "+str(nameDialog), None))
+		Dialog.setWindowTitle(_translate("Dialog", "Datos "+title_name, None))
 		self.label_Mas_Flow.setText(_translate("Dialog", "Flujo másico [t/h]", None))
 		self.label_Brix.setText(_translate("Dialog", "Brix [%]", None))
 		self.label_Insoluble_Solids.setText(_translate("Dialog", "Sólidos insolubles [%]", None))

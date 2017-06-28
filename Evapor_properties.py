@@ -28,10 +28,13 @@ class Validator(object):
         LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
 class Ui_Dialog(object):
-    def setupUi(self,name, Dialog):
+    def setupUi(self,name,item,Dialog):
         global nameDialog
+        global title_name
+
         Vali = Validator()
         nameDialog=name
+        title_name=str(item.label.toPlainText())
         
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(465, 398)
@@ -378,7 +381,7 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(_translate("Dialog", "Propiedades de evaporador", None))
+        Dialog.setWindowTitle(_translate("Dialog", "Parametros "+title_name, None))
         self.Evapor_propert_GrBx.setTitle(_translate("Dialog", "Propiedades físicas", None))
         self.label_Heat_Area.setText(_translate("Dialog", "Área de calentamiento [m2]", None))
         self.label_Cross_Sectional_Area.setText(_translate("Dialog", "Área transversal [m2]", None))

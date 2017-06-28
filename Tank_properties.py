@@ -161,22 +161,25 @@ class Ui_Dialog(object):
 			'Advertencia',
 			"Falta por ingresar algun dato.",QtGui.QMessageBox.Ok)
 
-	def setupUi(self,name,ts,fluid_in,Dialog):
+	def setupUi(self,name,ts,item,fluid_in,Dialog):
 		
 		global nameDialog
 		global Ts
 		global Dialog_window
+		global title_name
 		global Objct_fluid_in
 
 		global Volumen
 		global Cross_Sectional_Area
 		global Initial_Level
 
+
 		Validation_text_field = Validator()
 
 		nameDialog=name
 		Ts=ts
 		Dialog_window=Dialog
+		title_name=str(item.label.toPlainText())
 		Objct_fluid_in=fluid_in
 
 
@@ -550,7 +553,7 @@ class Ui_Dialog(object):
 		Update_window()
 
 	def retranslateUi(self, Dialog):
-		Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
+		Dialog.setWindowTitle(_translate("Dialog", "Parametros "+title_name, None))
 		self.Physical_properties_GrBx.setTitle(_translate("Dialog", "Propiedades físicas", None))
 		self.label_Volumen.setText(_translate("Dialog", "Volumen [m3]", None))
 		self.label_Cross_Sectional_Area.setText(_translate("Dialog", "Área transversal [m2]", None))

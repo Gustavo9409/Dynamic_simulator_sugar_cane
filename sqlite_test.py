@@ -1,4 +1,5 @@
-import sqlite3 as sqlite
+import mysql.connector
+from mysql.connector import errorcode
 import os
 global cursor
 global con
@@ -20,28 +21,36 @@ def Thread_time():
 	global cerrado
 	global stop
 	flag2=0
-	
+	print("ACA223")
 	while True:
 		# sleep(1)
 		
 		if stop==True:
-			x=db.read_data("TS","TIME_EXEC",None,None)
-			for data in x:
+			# x=db.read_data("TIME_EXEC","TS",None,None)
+			fields="TS"
+			table="TIME_EXEC"
+			query="SELECT "+fields+" FROM "+table
+			db.cursor.execute(query)
+			reader=db.cursor.fetchall()
+			result=[]
+			for data in reader:
+				result.append(data)
+			for data in result:
 				print ("Ts: "+data[0])
 				if data[0]=='1.8':
 					print ("FINAL")
 					# db.disconnect()
 					flag2=1
 					# break
-			# if flag2==1:
-				# break
+			if flag2==1:
+				break
 
 			flag=flag+1
 		else:
 			print"ACA"
 		# con.close()
 
-s=["TS"]
+s="TS"
 c=[1.8]
 d=[3,4]
 db.connect()
@@ -52,8 +61,26 @@ db.connect()
 # s1t=x[0]
 # s2t=x[1]
 # print (x)
-db.clear_all()
-db.insert_data("TIME_EXEC",s,[1.7])
+
+db.cursor.execute("SELECT table_name FROM information_schema.tables where table_schema='Dynamic_sim_DB';")
+tables = db.cursor.fetchall()
+for table_name in tables:
+	db.cursor.execute("DELETE FROM "+str(table_name[0])+" WHERE 1=1")
+	db.connection.commit()
+	db.cursor.execute("ALTER TABLE "+str(table_name[0])+" AUTO_INCREMENT = 1")
+	db.connection.commit()
+
+table="TIME_EXEC"
+fields="TS"
+valus=[1.7]
+values=str(valus)[1:-1]
+query="INSERT INTO "+table+"("+fields+") VALUES ("+values+")"
+db.cursor.execute(query)
+db.connection.commit()
+# db.clear_all()
+# print("ACA")
+# db.insert_data("TIME_EXEC",s,[1.7])
+# print("ACA")
 # db.disconnect()
 
 # dir_script=str(os.getcwd())
@@ -72,11 +99,21 @@ Time_exec_thread.start()
 
 while True:
 	print ("principal "+str(flag))
+	# sleep(1)
 	if flag>=10000:
 		# stop=False
 		print ("AJAM")
 		# sleep(0.05)
-		db.insert_data("TIME_EXEC",s,c)
+		table="TIME_EXEC"
+		fields="TS"
+		valus=[1.8]
+		values=str(valus)[1:-1]
+		query="INSERT INTO "+table+"("+fields+") VALUES ("+values+")"
+		db.cursor.execute(query)
+		db.connection.commit()
+		# db.insert_data("TIME_EXEC","TS",[1.8])
+		
 		# sleep(0.05)
 		# stop=True
+		break
 	

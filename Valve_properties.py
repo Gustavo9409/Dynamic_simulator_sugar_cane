@@ -27,11 +27,12 @@ class Validator(object):
         LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
 class Ui_Dialog(object):
-    def setupUi(self,name,Dialog):
+    def setupUi(self,name,time,item,Dialog):
         global nameDialog
         Vali = Validator()
 
         nameDialog=name
+        title_name=str(item.label.toPlainText())
         
         Dialog.setObjectName(_fromUtf8("Dialog"))
         Dialog.resize(415, 308)

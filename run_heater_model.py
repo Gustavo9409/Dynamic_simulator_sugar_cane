@@ -56,11 +56,12 @@ def Thread_time(output_time,output_model_value):
 	global yout
 	global Time_exec_thread
 	global u
-	global db 
+	global db
 
 	band=1
 	tt= [0.0,0.0]
 	yt=[0.0,0.0]
+	db.clear_table("Time_exec")
 	outfile=open('time_exec.txt', 'w') ##Para cuando no sea pausa sino detenimiento
 	outfile.close()
 	plt.ion()
@@ -69,11 +70,20 @@ def Thread_time(output_time,output_model_value):
 	end_tt=[0.0,Ts_2]
 	inf2=[0.0,0.0,0.0]
 	fl=0
+	id_time=0
+	time=""
 
 	while True:
 		b = clock()
+
+		
 		#print Ts_2
 		if b - a > Ts_2:
+			# print(time)
+			if time=="stop":
+				texc=0.0
+				break	
+
 			texc=texc+Ts_2
 			tt.append(texc)
 			Prop=calculated_properties()
@@ -83,16 +93,16 @@ def Thread_time(output_time,output_model_value):
 			rsd_time=Prop.round_rsd_time(rsd_time,Ts_2)
 			end_tt=[tt[-2]-rsd_time,tt[-1]-rsd_time]
 
-			yout = odeint(heater_shell_tube.model_temperature,yb_l,end_tt,u)
-			yb_l=[yout[1,0]]
-			yt.append(yout[1,0])
+			# yout = odeint(heater_shell_tube.model_temperature,yb_l,end_tt,u)
+			# yb_l=[yout[1,0]]
+			# yt.append(yout[1,0])
 
 			output_time=tt[len(tt)-1]
-			output_model_value=yt[len(tt)-1]
+			# output_model_value=yt[len(tt)-1]
 			
 			infile = open('time_exec.txt', 'r')
 			data=infile.readlines()
-			x=db.read_data(cursor_simulation,"TIME","TIME_EXEC",None,None)
+			x=db.read_data("TIME_EXEC","TIME",None,None)
 			if len(x)>0:
 				x2=list(x[-1])
 				# print("HILO: "+str(x2[0]))
@@ -106,13 +116,23 @@ def Thread_time(output_time,output_model_value):
 					texc=0.0
 					break					
 				
-			outfile = open('time_exec.txt', 'a')
-			outfile.write(str(output_time)+"\t"+str(output_model_value)+"\n")
-			outfile.close()
-			w=["TS","TIME"]
+			# outfile = open('time_exec.txt', 'a')
+			# outfile.write(str(output_time)+"\t"+str(output_model_value)+"\n")
+			# outfile.close()
+			w="TS,TIME"
 			h=[Ts_2,output_time]
-			db.insert_data(cursor_simulation,"TIME_EXEC",w,h)
-			db.insert_data(cursor_simulation,"OUTPUTS_HEATER",["Out_fluid_temperature"],[output_model_value])
+			
+			x=db.read_data("TIME_EXEC","id,TIME",None,None)
+			
+			if len(x)>0:
+				id_time=str(list(x[-1])[0])
+				time=str(list(x[-1])[1])
+				
+			if time!="stop":
+				db.insert_data("TIME_EXEC",w,h)
+			# print id_time
+			# db.insert_data("OUTPUTS_HEATER","Out_fluid_temperature,id_Time_exec",[output_model_value,id_time])
+			
 			#print("t="+str(output_time)+" ,Tjout="+str(output_model_value))	
 			a = b
 		
@@ -148,7 +168,7 @@ def Thread_time(output_time,output_model_value):
 # ============================================================================================
 '''
 class Simulation_heat:
-	def __init__(self,name,param,Ts,Data_Base,Connection_DB):
+	def __init__(self,name,param,Ts,Data_Base):
 		global Tjout
 		global yb
 		global u
@@ -163,9 +183,9 @@ class Simulation_heat:
 		global Time_exec_thread
 		global u
 		global db
-		global cursor_simulation
+
 		db=Data_Base
-		cursor_simulation=Connection_DB.cursor()
+
 
 		self.name=name
 		self.time_samp=Ts
