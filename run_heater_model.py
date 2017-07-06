@@ -11,6 +11,7 @@ import math
 import sys
 import matplotlib.pyplot as plt
 import threading
+from Devices_connections import *
 
 global texc
 
@@ -102,9 +103,9 @@ def Thread_time(output_time,output_model_value):
 			
 			infile = open('time_exec.txt', 'r')
 			data=infile.readlines()
-			x=db.read_data("TIME_EXEC","TIME",None,None)
-			if len(x)>0:
-				x2=list(x[-1])
+			# x=db.read_data("TIME_EXEC","TIME",None,None)
+			# if len(x)>0:
+			# 	x2=list(x[-1])
 				# print("HILO: "+str(x2[0]))
 			if len(data)>0:
 				time_exec=data[-1].strip()
@@ -127,9 +128,13 @@ def Thread_time(output_time,output_model_value):
 			if len(x)>0:
 				id_time=str(list(x[-1])[0])
 				time=str(list(x[-1])[1])
-				
+				# print(str(id_time)+" -!- "+str(time))
 			if time!="stop":
 				db.insert_data("TIME_EXEC",w,h)
+				
+				 
+			
+				
 			# print id_time
 			# db.insert_data("OUTPUTS_HEATER","Out_fluid_temperature,id_Time_exec",[output_model_value,id_time])
 			

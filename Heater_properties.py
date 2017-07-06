@@ -49,9 +49,11 @@ global g_Juice_in
 global time
 global id_time
 global id_Heater 
+global id_time_2
 id_Heater=""
 time=""
 id_time=0
+id_time_2=0
 
 
 split_model_data_n1=None
@@ -261,7 +263,7 @@ def Update_data(run_time):
 			condition1="Name"
 			condition2=g_Vapor_in
 
-			db.update_data("Flow_inputs",field,value,condition1,condition2)
+			
 
 		
 		##Process values 
@@ -298,6 +300,9 @@ def Update_data(run_time):
 				db.insert_data("OUTPUTS_HEATER","Heaters_id,Out_fluid_temperature,Out_fluid_brix,Out_fluid_flow,Out_fluid_pH,Out_fluid_pressure"
 				",Out_fluid_insoluble_solids,Out_fluid_purity,Condensed_vapor_flow,Condensed_vapor_temperature,Condensed_vapor_pressure,Time_exec_id",
 				[id_Heater,Tjout,Bjin*100.0,Mjin,pHjin,Out_pressure/1000.0,SolIn*100.0,Outpurity,Mvin,Tvin,"",id_time])
+				# print(id_time)
+
+			db.update_data("Flow_inputs",field,value,condition1,condition2)
 
 			db.update_data("Physical_properties_heater",["Heat_area","Scalling_resistance","Juice_velocity","Inside_U","Outside_U","Overall_U"]
 			,[Aosc,Scall_R,Juice_vel,InU,ExtU,OvU],"Heaters_id",id_Heater)
@@ -461,10 +466,29 @@ def update_figure():
 	global g_Juice_in
 	global g_Vapor_in
 	global id_time
+	global id_time_2
 	vapor_data=[]
 	juice_data=[]
 
+	# ax=Graph.figure.get_axes()
+
+	# ax[0].plot([0.5,1.0,1.5,2.0,2.5],[78.0,78.5,79.0,79.5,80.0],'r-',label="Tjout")
+	# Graph.draw()
+	# for x,line in enumerate(ax[0].lines): 
+	# 	del ax[0].lines[x]
+	# 	print(len(ax[0].lines))
+	# del ax[0].lines[0]
+
+
 	# print("VVGG: "+str(id_Heater))
+	# if hasattr(device_connections, 'time_id'):
+	# 	new_id=False
+	# 	if int(device_connections.time_id)>int(id_time_2):
+	# 		new_id=True
+	# 	if new_id==True:
+	# 		id_time_2=device_connections.time_id
+	# 		print("**|** : "+str(id_time_2))
+		# time_exec=db.read_data("TIME_EXEC","id,TIME",None,None)
 
 	if hasattr(device_connections, 'array_connections'):
 		g_Juice_in=""
@@ -501,6 +525,7 @@ def update_figure():
 			new_id=True
 		id_time=int(list(time_exec[-1])[0])
 		time=str(list(time_exec[-1])[1])
+		
 
 		if time!="stop" and new_id==True:
 			print (str(id_time)+" *---* "+time)
@@ -542,93 +567,121 @@ def update_figure():
 			u_mod[11]=juice.Zj
 			u_mod[12]=vapor.Pv
 
-			# print(u_mod[9])
+	# 		# print(u_mod[9])
 			tt.append(float(time))
+			
 			ht_model.update_model([tt[-2],tt[-1]],u_mod)
+
 			model_value.append(ht_model.Tjout)
+			
 			split_model_data_n1=[tt[-1],model_value[-1]]
 
-			Graph.axes.cla()
-			for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-				if ax_i==0:
-					ax.grid(True)
-					gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-					for line in gridlines:
-						line.set_linestyle('-.')
-					ax.set_xlabel('Time (min)',fontsize=11)
-					ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-					ax.plot(tt,model_value,'r-',label="Tjout")
-					Graph.set_legends()
-					Graph.draw()
-					Update_data(True)
+			Update_data(True)
 
+			ax=Graph.figure.get_axes()
+			ax[0].plot(tt,model_value,'r-',label="Tjout")
+			Graph.set_legends()
+			Graph.draw()
 
-
-	# if len(data)>1 and g_Juice_in!="":
-	# 	if data[-1]!="stop" and data[-2]!="stop":
-			# if one_reload==1:
-			# 	Graph.reload_toolbar(False)
-			# 	print"Ajam"
-			# 	one_reload=0
+			# ax[0].legend_.remove()
+			for x,line in enumerate(ax[0].lines): 
+				del ax[0].lines[x]
 				
-			# # model_data_n0=data[-2].strip()
-			# # split_model_data_n0=model_data_n0.split("\t")
-			# # time_exec.append(float(split_model_data_n0[0]))
-			# # model_value.append(round(float(split_model_data_n0[1]),3))
-
-			# ##Opcion1 de lectura de tiempo
-			# model_data_n1=data[-1].strip()
-			# split_model_data_n1=model_data_n1.split("\t")
-			# time_exec.append(float(time))
-
-			# output_time=tt[len(tt)-1]
-			# output_model_value=yt[len(tt)-1]
-			# db.insert_data(cursor_model,"OUTPUTS_HEATER",["Out_fluid_temperature","id_Time_exec"],[output_model_value,id_time])
-
-			# # model_value.append(round(float(split_model_data_n1[1]),3))
-			# model_value=yt
-
-			# ##Opcion2 de lectura de tiempo
-			# # time_exec=[]
-			# # model_value=[]
-
-
-			# plot_time=time_exec[len(time_exec)-2:len(time_exec)]
-			# plot_model=model_value[len(model_value)-2:len(model_value)]
-			
-			# if InFluid_Flow.text()!='':
-			
-			# Graph.plot_select_signal()
-			#print(str(plot_time)+" -*- "+str(plot_model))
-
 			# Graph.axes.cla()
-			# for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-			# 	if ax_i==0:
-			# 		ax.grid(True)
-			# 		gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-			# 		for line in gridlines:
-			# 			line.set_linestyle('-.')
-			# 		ax.set_xlabel('Time (min)',fontsize=11)
-			# 		ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-			# 		ax.plot(time_exec,model_value,'r-',label="Tjout")
-			# 		Graph.set_legends()
-			# 		Graph.draw()
-			# 		Update_data(True)
+			
+			# ax=Graph.figure.get_axes()
+			# ax[0].plot.cla()
+			# ax[0].plot([0.5,1.0,1.5,2.0,2.5],[78.0,78.5,79.0,79.5,80.0],'r-',label="Tjout")
+			# print(str(len(ax)))
+			# ax[0].grid(True)
+			# gridlines = ax[0].get_xgridlines() + ax[0].get_ygridlines()
+			# for line in gridlines:
+			# 	line.set_linestyle('-.')
+			# ax[0].set_xlabel('Time (min)',fontsize=11)
+			# ax[0].set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
 
-			# input_heat = open('Blocks_data.txt', 'r+')
-			# dts=input_heat.readlines()
-			# input_heat.close()
-			# for i in dts:
-			# 	info=(i.strip()).split("\t")
-			# 	if len(info)>1:
-			# 		flag=info[0]
-			# 		if flag[:3]==g_Juice_in:
-			# 			Flow_in_array.append(float(info[1]))
+	# 		for ax_i,ax in enumerate(Graph.figure.get_axes()): 
+	# 			if ax_i==0:
+	# 				ax.grid(True)
+	# 				gridlines = ax.get_xgridlines() + ax.get_ygridlines()
+	# 				for line in gridlines:
+	# 					line.set_linestyle('-.')
+	# 				ax.set_xlabel('Time (min)',fontsize=11)
+	# 				ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+					
+	# 				ax.plot(tt,model_value,'r-',label="Tjout")
+	# 				Graph.set_legends()
+	# 				Graph.draw()
 
-			# extra_signals=[]
-			# extra_signals.append(Flow_in_array)
+	# 				break
 
-			# Graph.update_table_signals(time_exec,extra_signals)
+
+
+	# # if len(data)>1 and g_Juice_in!="":
+	# # 	if data[-1]!="stop" and data[-2]!="stop":
+	# 		# if one_reload==1:
+	# 		# 	Graph.reload_toolbar(False)
+	# 		# 	print"Ajam"
+	# 		# 	one_reload=0
+				
+	# 		# # model_data_n0=data[-2].strip()
+	# 		# # split_model_data_n0=model_data_n0.split("\t")
+	# 		# # time_exec.append(float(split_model_data_n0[0]))
+	# 		# # model_value.append(round(float(split_model_data_n0[1]),3))
+
+	# 		# ##Opcion1 de lectura de tiempo
+	# 		# model_data_n1=data[-1].strip()
+	# 		# split_model_data_n1=model_data_n1.split("\t")
+	# 		# time_exec.append(float(time))
+
+	# 		# output_time=tt[len(tt)-1]
+	# 		# output_model_value=yt[len(tt)-1]
+	# 		# db.insert_data(cursor_model,"OUTPUTS_HEATER",["Out_fluid_temperature","id_Time_exec"],[output_model_value,id_time])
+
+	# 		# # model_value.append(round(float(split_model_data_n1[1]),3))
+	# 		# model_value=yt
+
+	# 		# ##Opcion2 de lectura de tiempo
+	# 		# # time_exec=[]
+	# 		# # model_value=[]
+
+
+	# 		# plot_time=time_exec[len(time_exec)-2:len(time_exec)]
+	# 		# plot_model=model_value[len(model_value)-2:len(model_value)]
+			
+	# 		# if InFluid_Flow.text()!='':
+			
+	# 		# Graph.plot_select_signal()
+	# 		#print(str(plot_time)+" -*- "+str(plot_model))
+
+	# 		# Graph.axes.cla()
+	# 		# for ax_i,ax in enumerate(Graph.figure.get_axes()): 
+	# 		# 	if ax_i==0:
+	# 		# 		ax.grid(True)
+	# 		# 		gridlines = ax.get_xgridlines() + ax.get_ygridlines()
+	# 		# 		for line in gridlines:
+	# 		# 			line.set_linestyle('-.')
+	# 		# 		ax.set_xlabel('Time (min)',fontsize=11)
+	# 		# 		ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+	# 		# 		ax.plot(time_exec,model_value,'r-',label="Tjout")
+	# 		# 		Graph.set_legends()
+	# 		# 		Graph.draw()
+	# 		# 		Update_data(True)
+
+	# 		# input_heat = open('Blocks_data.txt', 'r+')
+	# 		# dts=input_heat.readlines()
+	# 		# input_heat.close()
+	# 		# for i in dts:
+	# 		# 	info=(i.strip()).split("\t")
+	# 		# 	if len(info)>1:
+	# 		# 		flag=info[0]
+	# 		# 		if flag[:3]==g_Juice_in:
+	# 		# 			Flow_in_array.append(float(info[1]))
+
+	# 		# extra_signals=[]
+	# 		# extra_signals.append(Flow_in_array)
+
+	# 		# Graph.update_table_signals(time_exec,extra_signals)
 
 		elif one_time==1 and time=="stop":
 			print("AQQQQQQQQQQQQQUUIIII")
@@ -636,7 +689,7 @@ def update_figure():
 			tt=[]
 			model_value=[]
 			# Flow_in_array=[]
-			Graph.axes.cla()
+			# Graph.axes.cla()
 			
 			# infile = open('time_exec.txt', 'r+')
 			# data=infile.readlines()
@@ -660,15 +713,18 @@ def update_figure():
 			print (str(len(tt)))
 			print (str(len(model_value)))
 
-			for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-				if ax_i==0:
-					ax.grid(True)
-					gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-					for line in gridlines:
-						line.set_linestyle('-.')
-					ax.set_xlabel('Time (min)',fontsize=11)
-					ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-					ax.plot(tt,model_value,'r-',label="Tjout")
+			ax=Graph.figure.get_axes()
+			ax[0].plot(tt,model_value,'r-',label="Tjout")
+			
+			# for ax_i,ax in enumerate(Graph.figure.get_axes()): 
+			# 	if ax_i==0:
+			# 		ax.grid(True)
+			# 		gridlines = ax.get_xgridlines() + ax.get_ygridlines()
+			# 		for line in gridlines:
+			# 			line.set_linestyle('-.')
+			# 		ax.set_xlabel('Time (min)',fontsize=11)
+			# 		ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+			# 		ax.plot(tt,model_value,'r-',label="Tjout")
 
 			
 
@@ -700,7 +756,7 @@ def update_figure():
 
 			Graph.set_legends()
 			Graph.draw()
-				# 
+				
 
 
 
@@ -1699,10 +1755,10 @@ class Ui_Dialog(object):
 		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(Heat_tab_3), _translate("Dialog", "Gráfica", None))
 
 	def Timer_graph(self):
-		global timer
-		timer = QtCore.QTimer(Heat_tab_3)
-		timer.timeout.connect(update_figure)
-		timer.start(50)#Ts*1000-300)
+		# global timer
+		self.timer = QtCore.QTimer(Dialog_window)
+		self.timer.timeout.connect(update_figure)
+		self.timer.start(Ts*100)#Ts*1000-300)
 
 	def closeEvent(self, event):
 		box = QtGui.QMessageBox()

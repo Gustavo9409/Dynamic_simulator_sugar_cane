@@ -439,6 +439,10 @@ class window_confirm_inputs(QDialog):
 				
 				item_flow.icon.load(dir_script+"\Images\_flow_vapor.png")
 				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
+				item_flow.outputs[0].typ="vapor"
+				item_flow.outputs[0].port_color=Qt.green
+				item_flow.outputs[0].setBrush(QBrush(Qt.green))
+			
 				if saturado==1.0:
 				##Get inputs
 					Mvin=00.00
@@ -473,6 +477,9 @@ class window_confirm_inputs(QDialog):
 			elif Type_flow_selec=="Jugo":
 				item_flow.icon.load(dir_script+"\Images\_flow_juice.png")
 				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
+				item_flow.outputs[0].typ="juice"
+				item_flow.outputs[0].port_color=QColor(215, 125, 0)
+				item_flow.outputs[0].setBrush(QBrush(QColor(215, 125, 0)))
 			##Get inputs
 				Mjin=float(Flow.text())
 				Bjin=float(Brix.text())/100.0
@@ -505,6 +512,9 @@ class window_confirm_inputs(QDialog):
 			elif Type_flow_selec=="Agua":
 				item_flow.icon.load(dir_script+"\Images\_flow_water.png")
 				item_flow.setBrush(QtGui.QBrush(item_flow.icon))
+				item_flow.outputs[0].typ="water"
+				item_flow.outputs[0].port_color=Qt.blue
+				item_flow.outputs[0].setBrush(QBrush(Qt.blue))
 			##Get inputs
 				Mw=float(Flow.text())
 				Tw=float(Temp.text())

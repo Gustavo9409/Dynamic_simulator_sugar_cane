@@ -20,6 +20,7 @@ from Heater_properties import Ui_Dialog as Heat_properties
 from Tank_properties import Ui_Dialog as Tank_properties
 from Valve_properties import Ui_Dialog as Valve_properties
 from Flow_properties import Ui_Dialog as Flow_properties
+from PID_properties import Ui_Dialog as PID_properties
 #Import simulation
 from run_heater_model import Simulation_heat
 #Instance Data Base
@@ -197,6 +198,14 @@ class ParameterDialog_Flow(QDialog):
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = Flow_properties()
 		self.ui.setupUi(dat,time,item,db,self.Resultado)
+		self.Resultado.exec_()
+
+class ParameterDialog_Controller(QDialog):
+	def __init__(self,dat,time,item,parent=None):
+		self.Resultado=QtGui.QDialog()
+		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
+		self.ui = PID_properties()
+		self.ui.setupUi(dat,time,item,self.Resultado)
 		self.Resultado.exec_()
 
 class DeleteDialog(QDialog):
@@ -383,12 +392,16 @@ class PortItem(QGraphicsEllipseItem):
 		self.in_out=in_out
 
 		if self.typ=='juice':
+			self.port_color=QColor(215, 125, 0)
 			self.setBrush(QBrush(QColor(215, 125, 0)))
 		elif self.typ=='vapor':
+			self.port_color=Qt.green
 			self.setBrush(QBrush(Qt.green))
-		elif self.typ=='condensed':
+		elif self.typ=='condensed' or self.typ=='water':
+			self.port_color=Qt.blue
 			self.setBrush(QBrush(Qt.blue))
 		elif self.typ=='electric':
+			self.port_color=Qt.gray
 			self.setBrush(QBrush(Qt.gray))
 
 		# Name:
@@ -490,8 +503,8 @@ class BlockItem_Heat(QGraphicsRectItem):
 	"""
 	def __init__(self, name_block='Untitled', parent=None):
 		super(BlockItem_Heat, self).__init__(parent)
-		w = 100.0
-		h = 100.0
+		w = 165.0
+		h = 161.0
 		# Properties of the rectangle:
 		#self.setPen(QtGui.QPen(QtCore.Qt.blue, 2))
 		Img= QtGui.QImage(dir_script+"\Images\Heater_SnT.png");
@@ -542,7 +555,7 @@ class BlockItem_Heat(QGraphicsRectItem):
 		self.label.setPos(lx, ly)
 		# Update port positions:
 		self.inputs[0].setPos(0, h/2 )
-		self.inputs[1].setPos((w/2)+1, 0)
+		self.inputs[1].setPos((w/2), 0)
 		self.outputs[0].setPos(w+2, h/2)
 		self.outputs[1].setPos((w/2)+1, h+2)
 
@@ -830,8 +843,8 @@ class BlockItem_Tank(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled', parent=None):
 		super(BlockItem_Tank, self).__init__(parent)
 
-		w = 176.0
-		h = 128.0
+		w = 201.0
+		h = 146.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\_Tank.png"); 
@@ -878,8 +891,8 @@ class BlockItem_Tank(QGraphicsRectItem):
 		ly = 2*(h - lh) / 3
 		self.label.setPos(lx+13, ly-5)
 		# Update port positions:
-		self.inputs[0].setPos((w/2)-10, 0)
-		self.outputs[0].setPos(w, h-11)
+		self.inputs[0].setPos((w/2)-11, 0)
+		self.outputs[0].setPos(w, h-12)
 		return w, h
 
 
@@ -939,7 +952,7 @@ class BlockItem_Controller(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Tank(self.name_block,Sim_time,self,Tank_fluid_in,self.window())
+		pd = ParameterDialog_Controller(self.name_block,Sim_time,self,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		pd = DeleteDialog(self.window())
@@ -1096,7 +1109,7 @@ class BlockItem_tag_output(QGraphicsRectItem):
 
 		return w, h
 	  
-class EditorGraphicsView(QGraphicsView):
+class EditorGraphicsView(QGraphicsView): #Edition panel, drop, drag and connect devices
 	def __init__(self, scene, parent=None):
 		QGraphicsView.__init__(self, scene, parent)
 	def dragEnterEvent(self, event):
@@ -1198,7 +1211,7 @@ class DiagramScene(QGraphicsScene):
 		super(DiagramScene, self).mouseReleaseEvent(mouseEvent)
 	pass
 
-class DiagramEditor(QWidget):
+class DiagramEditor(QWidget): 
 	def __init__(self, parent=None):
 		QtGui.QWidget.__init__(self, parent)
 		global indicator
@@ -1206,7 +1219,7 @@ class DiagramEditor(QWidget):
 		global Ts_value
 		Vali = Validator()
 
-		self.generalayout = QtGui.QGridLayout(self)
+		self.generalayout = QtGui.QGridLayout(self) #General Panel. Entire GUI
 		self.generalayout.setSpacing(0)
 		self.generalayout.setContentsMargins(0,0,0,0);
 
@@ -1224,13 +1237,13 @@ class DiagramEditor(QWidget):
 		self.horizontalLayoutWidget = QtGui.QWidget(self)
 		self.horizontalLayoutWidget.setGeometry(QtCore.QRect(0, 0, 1002, 770))
 		
-		self.buttonsLayoutWidget=  QtGui.QWidget(self)
+		self.buttonsLayoutWidget=  QtGui.QWidget(self) 
 		self.buttonsLayoutWidget.setGeometry(QtCore.QRect(0, 30, 1002, 26))
 
-		self.buttonsHorizontalLayout = QtGui.QHBoxLayout(self.buttonsLayoutWidget)
+		self.buttonsHorizontalLayout = QtGui.QHBoxLayout(self.buttonsLayoutWidget) #Simulation Buttons Panel
 		self.buttonsHorizontalLayout.setGeometry(QtCore.QRect(0, 30,970, 26))
 
-		self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget)
+		self.horizontalLayout = QtGui.QHBoxLayout(self.horizontalLayoutWidget) #Selection Panel. Tools and elements to be added to the edition panel
 		self.horizontalLayout.setGeometry(QtCore.QRect(0, 0, 970, 800))
 		self.buttonRun = QtGui.QPushButton(self)
 		self.buttonRun.setGeometry(QtCore.QRect(940, 9, 24, 24))
@@ -1277,7 +1290,7 @@ class DiagramEditor(QWidget):
 
 
 		self.generalayout.addWidget(self.buttonsLayoutWidget,0,0)
-		self.generalayout.addWidget(self.horizontalLayoutWidget,1,0)
+		self.generalayout.addWidget(self.horizontalLayoutWidget,1,0) 
 		
 
 		# self.libraryBrowserView = QtGui.QListView(self)
@@ -1311,6 +1324,7 @@ class DiagramEditor(QWidget):
 		self.PID_controller=QtGui.QStandardItem(self.iconPID, 'PID') 
 		self.Tag_input=QtGui.QStandardItem(self.iconTagIn, 'TAG(Entrada)') 
 		self.Tag_output=QtGui.QStandardItem(self.iconTagOut, 'TAG(Salida)') 
+
 		self.libItems.append(self.EvaporItem)
 		self.libItems.append(self.HeaterItem)
 		self.libItems.append(self.Valve)
@@ -1329,30 +1343,29 @@ class DiagramEditor(QWidget):
 		self.libraryBrowserView_TREE = QtGui.QTreeView(self)
 		self.libraryBrowserView_TREE.setIconSize(QtCore.QSize(60,60))
 		self.libraryBrowserView_TREE.setModel(self.libraryModel)
-		parent1 = QStandardItem('Equipos')
+
+		parent1 = QStandardItem('Entradas')
 		parent1.setEditable(0)
 		parent1.setSelectable(0)
-		parent1.appendRow(self.libItems[0])
-		parent1.appendRow(self.libItems[1])
-		parent1.appendRow(self.libItems[2])
-		parent1.appendRow(self.libItems[3])
+		parent1.appendRow(self.libItems[4])
 		self.libraryModel.appendRow(parent1)
-		
-		parent2 = QStandardItem('Entradas de flujo')
+
+		parent2 = QStandardItem('Equipos')
 		parent2.setEditable(0)
 		parent2.setSelectable(0)
-		parent2.appendRow(self.libItems[4])
+		parent2.appendRow(self.libItems[0])
+		parent2.appendRow(self.libItems[1])
+		parent2.appendRow(self.libItems[2])
+		parent2.appendRow(self.libItems[3])
 		self.libraryModel.appendRow(parent2)
 		
-		
-
 		parent3 = QStandardItem('Controladores')
 		parent3.setEditable(0)
 		parent3.setSelectable(0)
 		parent3.appendRow(self.libItems[7])
 		self.libraryModel.appendRow(parent3)	
 
-		parent4 = QStandardItem('Otros')
+		parent4 = QStandardItem('Conexiones')
 		parent4.setEditable(0)
 		parent4.setSelectable(0)
 		parent4.appendRow(self.libItems[5])
@@ -1607,6 +1620,8 @@ class DiagramEditor(QWidget):
 					pd = ParameterDialog_Heater(aux,Sim_time,item,Heater_juice_in,Heater_vapor_in,db,self.window())
 				if str(aux2)==str("Tanque"):
 					pd = ParameterDialog_Tank(aux,Sim_time,item,Tank_fluid_in,self.window())
+				if str(aux2)==str("PID"):
+					pd = ParameterDialog_Controller(aux,Sim_time,item,self.window())
 		if self.startedConnection:
 			for item in items:
 				if type(item) is PortItem:
@@ -1619,12 +1634,72 @@ class DiagramEditor(QWidget):
 							connections=[itemname1, itemname2,str(port_item1.name),str(port_item2.name)]
 							array_connections.append(connections)
 							device_connections.array_connections=array_connections
+														
+							if port_item1.typ!="none" and port_item2.typ=="none":
+								self.startedConnection.arrow.setPen(QtGui.QPen(port_item1.port_color,3))
+								if port_item1.typ=="juice":
+									port_item2.setBrush(QBrush(QColor(215, 125, 0)))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QColor(215, 125, 0),3))
+								elif port_item1.typ=="vapor":
+									port_item2.setBrush(QBrush(Qt.green))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.green,3))
+								elif port_item1.typ=="condensed" or port_item1.typ=="water":
+									port_item2.setBrush(QBrush(Qt.blue))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.blue,3))
+								elif port_item1.typ=="electric":
+									port_item2.setBrush(QBrush(Qt.gray))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.gray,3))
+							
+							elif port_item2.typ!="none" and port_item1.typ=="none":
+								self.startedConnection.arrow.setPen(QtGui.QPen(port_item2.port_color,3))
+								if port_item2.typ=="juice":
+									port_item1.setBrush(QBrush(QColor(215, 125, 0)))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QColor(215, 125, 0),3))
+								elif port_item2.typ=="vapor":
+									port_item1.setBrush(QBrush(Qt.green))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.green,3))
+								elif port_item2.typ=="condensed" or port_item2.typ=="water":
+									port_item1.setBrush(QBrush(Qt.blue))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.blue,3))
+								elif port_item2.typ=="electric":
+									port_item1.setBrush(QBrush(Qt.gray))
+									# self.startedConnection.arrow.setPen(QtGui.QPen(QtCore.Qt.gray,3))
+
+							elif port_item2.typ!="none" and port_item1.typ!="none":
+								self.startedConnection.arrow.setPen(QtGui.QPen(port_item1.port_color,3))
+
 							print array_connections
 						elif prt1=="in" and prt2=='out':
 							self.startedConnection.setToPort(item)
 							connections=[itemname2,itemname1,str(port_item2.name),str(port_item1.name)]
 							array_connections.append(connections)
 							device_connections.array_connections=array_connections
+
+							if port_item2.typ!="none" and port_item1.typ=="none":
+								self.startedConnection.arrow.setPen(QtGui.QPen(port_item2.port_color,3))
+								if port_item2.typ=="juice":
+									port_item1.setBrush(QBrush(QColor(215, 125, 0)))
+								elif port_item2.typ=="vapor":
+									port_item1.setBrush(QBrush(Qt.green))
+								elif port_item2.typ=="condensed" or port_item1.typ=="water":
+									port_item1.setBrush(QBrush(Qt.blue))
+								elif port_item2.typ=="electric":
+									port_item1.setBrush(QBrush(Qt.gray))
+
+							elif port_item1.typ!="none" and port_item2.typ=="none":
+								self.startedConnection.arrow.setPen(QtGui.QPen(port_item1.port_color,3))
+								if port_item1.typ=="juice":
+									port_item2.setBrush(QBrush(QColor(215, 125, 0)))
+								elif port_item1.typ=="vapor":
+									port_item2.setBrush(QBrush(Qt.green))
+								elif port_item1.typ=="condensed" or port_item1.typ=="water":
+									port_item2.setBrush(QBrush(Qt.blue))
+								elif port_item1.typ=="electric":
+									port_item2.setBrush(QBrush(Qt.gray))
+
+							elif port_item1.typ!="none" and port_item2.typ!="none":
+							 	self.startedConnection.arrow.setPen(QtGui.QPen(port_item2.port_color,3))
+
 							print array_connections
 					# else:
 						#self.startedConnection.delete()

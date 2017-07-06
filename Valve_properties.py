@@ -29,6 +29,8 @@ class Validator(object):
 class Ui_Dialog(object):
     def setupUi(self,name,time,item,Dialog):
         global nameDialog
+        global title_name
+        
         Vali = Validator()
 
         nameDialog=name
@@ -146,7 +148,7 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog", None))
+        Dialog.setWindowTitle(_translate("Dialog", "Datos "+title_name, None))
         self.Phisycal_Properties_GrBx.setTitle(_translate("Dialog", "Propiedades físicas", None))
         self.label_Valve_Diameter.setText(_translate("Dialog", "Diámetro[in]", None))
         self.label_Min_Coeff_Flow.setText(_translate("Dialog", "Coeficiente de flujo mínimo\n"
