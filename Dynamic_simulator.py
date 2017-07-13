@@ -146,7 +146,7 @@ class Connection:
 		self.arrows=[self.arrow,self.arrow2,self.arrow3,self.arrow4,self.arrow5]
 		editor.array_arrows.append(self.arrows)
 	def setEndPos(self, endpos):
-
+		# print("Muevo1")
 		self.posf=endpos
 
 	##When the port is in the lateral side
@@ -167,14 +167,6 @@ class Connection:
 					self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()+(self.from_port_pos[2]-self.from_port_pos[3]))+10)
 				self.pos4=QtCore.QPointF(self.pos2.x(),self.pos3.y())
 
-				# if self.toPort is not None:
-				# 	if self.to_port_pos[3]>-10 and self.to_port_pos[3]<+10:
-				# 		self.pos2=QtCore.QPointF(self.posf.x(),self.posf.y()-10)
-				# 		if float(self.posi.y())>float(self.posf.y()):
-				# 			self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()-(self.from_port_pos[3]))-10)
-				# 		elif float(self.posi.y())<float(self.posf.y()):
-				# 			self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()+(self.from_port_pos[2]-self.from_port_pos[3]))+10)
-				# 		self.pos4=QtCore.QPointF(self.pos2.x(),self.pos3.y())
 
 				self.arrow.setLine(QLineF(self.posi, self.pos1))
 				self.arrow2.setLine(QLineF(self.pos2, self.posf))
@@ -183,20 +175,32 @@ class Connection:
 				self.arrow5.setLine(QLineF(self.pos1, self.pos3))	
 
 			elif float(self.posi.x())<float(self.posf.x()):
+
 				self.pos1=QtCore.QPointF(self.posi.x()+((self.from_port_pos[0]-self.from_port_pos[1])+20),self.posi.y())
-				self.pos2=QtCore.QPointF(self.posf.x()-20,self.posf.y())
+				if self.toPort is not None:
+					self.pos2=QtCore.QPointF(self.posf.x()-(self.to_port_pos[1]+20),self.posf.y())
+				else:
+					self.pos2=QtCore.QPointF(self.posf.x()-20,self.posf.y())
+
 				self.pos3=QtCore.QPointF(self.pos2.x(),self.pos2.y())
 				self.pos4=QtCore.QPointF(self.pos1.x(),self.pos3.y())
 
 				if self.toPort is not None and self.pos4.x()<self.pos3.x():
 					if self.to_port_pos[3]>-10 and self.to_port_pos[3]<+10:
-						self.pos2=QtCore.QPointF(self.posf.x()-(self.to_port_pos[1]+20),self.posf.y()+10)
-						# self.pos2=QtCore.QPointF(self.posf.x(),self.posf.y()+10)
+						self.pos2=QtCore.QPointF(self.posf.x(),self.posf.y()-10)
 						if float(self.posi.y())>float(self.posf.y()):
-							self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()-(self.from_port_pos[3]))-10)
+							self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos2.y()))
 						elif float(self.posi.y())<float(self.posf.y()):
-							self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()+(self.from_port_pos[2]-self.from_port_pos[3]))+10)
-						self.pos4=QtCore.QPointF(self.pos2.x(),self.pos3.y())
+							self.pos3=QtCore.QPointF(self.pos1.x(),self.pos2.y())
+
+						self.pos4=QtCore.QPointF(self.pos1.x(),self.pos3.y())
+						
+
+						# if float(self.posi.y())>float(self.posf.y()):
+						# 	self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()-(self.from_port_pos[3]))-10)
+						# elif float(self.posi.y())<float(self.posf.y()):
+						# 	self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()+(self.from_port_pos[2]-self.from_port_pos[3]))+10)
+						# self.pos4=QtCore.QPointF(self.pos2.x(),self.pos3.y())
 
 				if self.pos4.x()>self.pos3.x():
 					self.pos2=QtCore.QPointF(self.pos4.x(),self.posf.y())
@@ -247,15 +251,20 @@ class Connection:
 				self.arrow3.setLine(QLineF(self.pos3, self.pos4))
 				self.arrow4.setLine(QLineF(self.pos2, self.pos3))
 				self.arrow5.setLine(QLineF(self.pos1, self.pos4))
-		
+	
 	def setBeginPos(self, pos1):
 		self.posi = pos1
-		
+
+	##When the port is in the lateral side
 		if self.type_fromPort=="out" and self.from_port_pos[1]>self.from_port_pos[0]-10 and self.from_port_pos[1]<self.from_port_pos[0]+10:
 			if float(self.posi.x())>float(self.posf.x()):
 
 				self.pos1=QtCore.QPointF(self.posi.x()+((self.from_port_pos[0]-self.from_port_pos[1])+20),self.posi.y())
-				self.pos2=QtCore.QPointF(self.posf.x()-20,self.posf.y())
+				if self.toPort is not None:
+					self.pos2=QtCore.QPointF(self.posf.x()-(self.to_port_pos[1]+20),self.posf.y())
+				else:
+					self.pos2=QtCore.QPointF(self.posf.x()-20,self.posf.y())
+
 				if float(self.posi.y())>float(self.posf.y()):
 					self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos1.y()-(self.from_port_pos[3]))-10)
 				elif float(self.posi.y())<float(self.posf.y()):
@@ -275,6 +284,16 @@ class Connection:
 				self.pos3=QtCore.QPointF(self.pos2.x(),self.pos2.y())
 				self.pos4=QtCore.QPointF(self.pos1.x(),self.pos3.y())
 
+				if self.toPort is not None and self.pos4.x()<self.pos3.x():
+					if self.to_port_pos[3]>-10 and self.to_port_pos[3]<+10:
+						self.pos2=QtCore.QPointF(self.posf.x(),self.posf.y()-10)
+						if float(self.posi.y())>float(self.posf.y()):
+							self.pos3=QtCore.QPointF(self.pos1.x(),(self.pos2.y()))
+						elif float(self.posi.y())<float(self.posf.y()):
+							self.pos3=QtCore.QPointF(self.pos1.x(),self.pos2.y())
+
+						self.pos4=QtCore.QPointF(self.pos1.x(),self.pos3.y())
+
 				if self.pos4.x()>self.pos3.x():
 					self.pos2=QtCore.QPointF(self.pos4.x(),self.posf.y())
 					self.pos3=self.pos2
@@ -289,7 +308,7 @@ class Connection:
 				self.arrow3.setLine(QLineF(self.pos3, self.pos4))
 				self.arrow4.setLine(QLineF(self.pos2, self.pos3))
 				self.arrow5.setLine(QLineF(self.pos1, self.pos4))
-
+	##When the port is in the hight side
 		elif self.type_fromPort=="out" and self.from_port_pos[3]>self.from_port_pos[2]-10 and self.from_port_pos[3]<self.from_port_pos[2]+10:
 			if float(self.posi.x())>float(self.posf.x()):
 				
@@ -325,6 +344,7 @@ class Connection:
 				self.arrow5.setLine(QLineF(self.pos1, self.pos4))
 
 		# print("HH")
+	
 	def delete(self):
 		editor.diagramScene.removeItem(self.arrow)
 		editor.diagramScene.removeItem(self.arrow2)

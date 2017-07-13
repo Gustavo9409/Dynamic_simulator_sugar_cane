@@ -21,10 +21,6 @@ class data_base_instance:
 		# self.cursor = self.connection.cursor()
 		# return connection
 
-	def disconnect(self):
-		connection.close()
-		# return connection
-
 	def read_data(self,table,fields,condition1,condition2):
 		global read_data
 		result=[]
@@ -33,6 +29,12 @@ class data_base_instance:
 			query="SELECT "+fields+" FROM "+table
 		else:
 			query="SELECT "+fields+" FROM "+table+" WHERE "+str(condition1)+"='"+str(condition2)+"'"
+
+		if condition1=="LAST":
+			query="SELECT "+fields+" FROM "+table+" WHERE id in (SELECT MAX(id) from "+table+" GROUP BY "+condition2+")"
+
+			# query="SELECT "+fields+" FROM "+table+" WHERE id=(SELECT max(id) FROM "+table+")"+" GROUP BY "+condition2
+			# query="SELECT * FROM "+table+" ORDER BY "+condition2+" DESC LIMIT 1"
 		try:
 			connection = mysql.connector.connect(**self.config)
 			cursor2 = connection.cursor()
@@ -160,6 +162,22 @@ class data_base_instance:
 
 # db=data_base_instance()
 # db.connect()
+# fields="Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
+# result=db.read_data("Flow_inputs",fields,"LAST","Name")
+# vapor_data=[]
+# juice_data=[]
+# if len(result)>0:	
+# 	for data in result:
+# 		for i,values in enumerate(data):
+# 			if  str(data[0])=="Fj1" and str(data[1])=="Juice":
+# 				if i>1:
+# 					juice_data.append(str(values))
+# 			elif str(data[0])=="Fv2" and str(data[1])=="Vapor":
+# 				if i>1:
+# 					vapor_data.append(str(values))
+# print (vapor_data)
+# print (juice_data)
+
 # tt=[]
 # model_value=[]
 # time_exec=db.read_data("TIME_EXEC","TIME",None,None)
