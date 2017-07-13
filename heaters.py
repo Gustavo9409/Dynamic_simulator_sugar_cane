@@ -43,7 +43,7 @@ class heater_shell_tube:
 		self.time=time
 		self.u=tuple(u)
 		self.initial_condition=[init_cond]
-		self.solve_model()
+		# self.solve_model()
 
 	def properties(self):
 		# Compute heater design properties

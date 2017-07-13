@@ -33,7 +33,7 @@ import matplotlib.backends.qt_editor.figureoptions as figureoptions
 from matplotlib.backends.qt_compat import (QtCore, QtGui, QtWidgets, _getSaveFileName,
 						__version__, is_pyqt5)
 from matplotlib.backends.qt_editor.formsubplottool import UiSubplotTool
-from Axis_options import Ui_Dialog as Axis_options
+from axis_options import Ui_Dialog as axis_options
 
 backend_version = __version__
 
@@ -762,7 +762,7 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
-		self.ui = Axis_options()
+		self.ui = axis_options()
 		self.ui.setupUi(axes,Edit_axis_args[1],Edit_axis_args[0],self.Resultado)
 		self.Resultado.exec_()
 

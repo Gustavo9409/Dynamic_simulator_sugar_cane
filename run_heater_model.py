@@ -11,7 +11,7 @@ import math
 import sys
 import matplotlib.pyplot as plt
 import threading
-from Devices_connections import *
+from global_data import *
 
 global texc
 
@@ -58,6 +58,7 @@ def Thread_time(output_time,output_model_value):
 	global Time_exec_thread
 	global u
 	global db
+	global cnt_id
 
 	band=1
 	tt= [0.0,0.0]
@@ -73,6 +74,7 @@ def Thread_time(output_time,output_model_value):
 	fl=0
 	id_time=0
 	time=""
+	cnt_id=0
 
 	while True:
 		b = clock()
@@ -82,6 +84,7 @@ def Thread_time(output_time,output_model_value):
 		if b - a > Ts_2:
 			# print(time)
 			if time=="stop":
+				Db_data.time="stop"
 				texc=0.0
 				break	
 
@@ -114,6 +117,7 @@ def Thread_time(output_time,output_model_value):
 
 				# print ("HILO:"+str(time_exec))
 				if time_exec=="stop":
+					Db_data.time="stop"
 					texc=0.0
 					break					
 				
@@ -128,9 +132,14 @@ def Thread_time(output_time,output_model_value):
 			if len(x)>0:
 				id_time=str(list(x[-1])[0])
 				time=str(list(x[-1])[1])
+				
 				# print(str(id_time)+" -!- "+str(time))
 			if time!="stop":
 				db.insert_data("TIME_EXEC",w,h)
+				cnt_id=cnt_id+1
+				Db_data.time_id=str(cnt_id)
+				Db_data.time=str(output_time)
+				
 				
 				 
 			
