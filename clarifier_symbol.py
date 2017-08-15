@@ -24,8 +24,8 @@ class BlockItem_Clarifier(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Clarifier, self).__init__(parent)
 		self.editor=edit
-		w = 150.0
-		h = 169.0
+		w = 192.0
+		h = 168.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\Clarifier.png"); 
@@ -78,13 +78,13 @@ class BlockItem_Clarifier(QGraphicsRectItem):
 		self.label.setPos(lx, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(19, 0)
-		self.inputs[0].block_pos=[w,19,h,0]
+		self.inputs[0].setPos(23, 0)
+		self.inputs[0].block_pos=[w,23,h,0]
 
 		self.outputs[0].setPos(w, 43)
 		self.outputs[0].block_pos=[w,w,h,43]
 
-		self.outputs[1].setPos((w/2)-12, h)
-		self.outputs[1].block_pos=[w,(w/2)-12,h,h]
+		self.outputs[1].setPos((w/2)-16, h)
+		self.outputs[1].block_pos=[w,(w/2)-16,h,h]
 
 		return w, h

@@ -1,14 +1,15 @@
+
+# Installed Libs
 import math
 
 from scipy import *
 from scipy.integrate import odeint
 from scipy.integrate import ode
 
+# Local Libs
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import water_properties
 from physicochemical_properties import vapor_properties
-
-
 
 liquor_prpty=liquor_properties()
 water_prpty=water_properties()
@@ -28,34 +29,134 @@ class heater_shell_tube:
 	Op, Operation hours [h]
 	'''
 
-	# def __init__(self, Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op):
-	# 	self.Np = Np
-	# 	self.Nst = Nst
-	# 	self.Dosp = Dosp
-	# 	self.Lp = Lp
-	# 	self.Ip = Ip
-	# 	self.Ep = Ep
-	# 	self.Gf = Gf
-	# 	self.Op = Op
-	# 	self.properties()
+	def __init__(self, Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op,Tjout):
+		self.Np = Np
+		self.Nst = Nst
+		self.Dosp = Dosp
+		self.Lp = Lp
+		self.Ip = Ip
+		self.Ep = Ep
+		self.Gf = Gf
+		self.Op = Op
+		self.Tjout=Tjout
+		self.properties()
+		self.Ht=htc_shell_tube()
 
-	def __init__(self, time,u,init_cond):
-		self.time=time
-		self.u=tuple(u)
-		self.initial_condition=[init_cond]
-		# self.solve_model()
+	# def __init__(self, time,u,init_cond):
+	# 	self.time=time
+	# 	self.u=tuple(u)
+	# 	self.initial_condition=[init_cond]
+		
 
 	def properties(self):
 		# Compute heater design properties
 
 		# Pipe internal diameter [in]
-		self.Disp = Dosp - (2*(Ip/25.4))
+		self.Disp = self.Dosp - (2*(self.Ip/25.4))
 
 		# Internal heat transfer area [m2]
 		self.Aisc=0.0254*math.pi*self.Disp*self.Np*self.Lp*self.Nst
 
 		# External heat transfer area [m2]
 		self.Aosc=0.0254*math.pi*self.Dosp*self.Np*self.Lp*self.Nst
+
+
+	def in_out(self, fluid_in, fluid_out, vapor_in, vapor_out):
+		self.fluid_in = fluid_in
+		self.fluid_out = fluid_out
+
+		self.vapor_in=vapor_in
+		self.vapor_out=vapor_out
+
+		self.Tjout0 = self.Tjout
+		# self.Tjout = Tjout
+
+	def solve(self, time):
+		fluid_in = self.fluid_in
+		fluid_out = self.fluid_out
+
+		vapor_in=self.vapor_in
+		vapor_out=self.vapor_out
+
+		# Init condition
+		x0 = self.Tjout0
+		# Model parmeters
+		u =(self.Np, self.Nst, self.Dosp, self.Lp, self.Ip, self.Ep, self.Gf, self.Op, fluid_in.Fj, fluid_in.Tj, fluid_in.Bj, fluid_in.Zj, vapor_in.Pv)
+
+		# Solve temperature model
+		sol = odeint(self.model_temperature, x0, time, args=u)
+		self.Tjout = sol[1,0]
+		self.Tjout0 = [sol[1,0]]		
+
+		fluid_out.Tj=self.Tjout
+		fluid_out.Zj=self.fluid_purity_loss()
+		fluid_out.Pj=self.fluid_pressure_loss()
+		fluid_out.update_()
+
+		vapor_in.Mv=self.vapor_mass_flow()
+		vapor_in.update_()
+
+		vapor_out.Mv=vapor_in.Mv
+		vapor_out.update_()
+
+		return fluid_in, fluid_out, vapor_in, vapor_out
+
+	def vapor_mass_flow(self):
+		# Vapor flow consumed for heater
+
+		fluid_in = self.fluid_in
+		fluid_out = self.fluid_out
+
+		vapor_in=self.vapor_in
+		vapor_out=self.vapor_out
+
+		Tjc=(fluid_in.Tj+fluid_out.Tj)/2.0
+
+		OvU=self.Ht.overall_u(self.Np, self.Nst, self.Dosp, self.Lp, self.Ip, self.Ep, self.Gf, self.Op,
+		fluid_in.Fj, fluid_in.Tj, fluid_in.Bj, fluid_in.Zj, vapor_in.Tv, vapor_in.Pv,Tjc)
+
+
+		DT=float(deltatlog(self.fluid_in.Tj,self.fluid_out.Tj,self.vapor_in.Tv))		
+		
+		Mv= (OvU*self.Aosc*(DT))/self.vapor_in.Hvw #kg/s
+
+		return Mv
+
+	def fluid_pressure_loss(self):
+		# Pressure losses in fluid 
+
+		fluid_in = self.fluid_in
+		vapor_in = self.vapor_in
+
+		Er=self.Ep/self.Dosp
+		Tjc=(fluid_in.Tj+self.Tjout)/2.0
+
+		#Moody Friction factor
+		f1=(1.4+2*math.log(Er))**-2
+		f=((-2*math.log((Er/3.7)+(2.51/(self.htc.Re*(f1**0.5)))))**-2.0)
+
+		#Viscosity of pipe fluid at wall temperature
+		up_tube_wall=liquor_prpty.viscosity(((Tjc+vapor_in.Tv)/2.0),fluid_in.Bj,fluid_in.Zj)
+
+		#Drop pressure pipe side (REIN)
+		Delta_drop_pressure=(self.Nst*f*self.Lp*(((fluid_in.pj)*(self.htc.vj**2.0))))/(2.0*self.Disp*((fluid_in.uj/up_tube_wall)**0.14))
+
+		Out_pressure=fluid_in.Pj-Delta_drop_pressure
+		
+		return Out_pressure
+
+	def fluid_purity_loss(self):
+		# Purity losses in fluid for residence time
+
+		fluid_in = self.fluid_in
+
+		self.rsd_time=(self.Nst*self.Lp)/self.htc.vj
+
+		lss_sac=liquor_prpty.sucrose_losses(self.rsd_time,fluid_in.Tj,fluid_in.Bj,fluid_in.Ij,fluid_in.Zj,fluid_in.pHj)
+		Loss_purity=(lss_sac/100.0)/(fluid_in.Bj)
+		Outpurity=(fluid_in.Zj)-Loss_purity
+		
+		return Outpurity
 
 	def update_model(self,time,u):
 		#Update parameters to solve model
@@ -121,15 +222,15 @@ class heater_shell_tube:
 		mjc = pjc*Np*Nst*(math.pi*(((0.0254*Disp)/2.0)**2.0))*Lp
 
 		# Heat Transfer Coefficient
-		htc1=htc_shell_tube()
-		U = htc1.overall_u(Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op,
+		self.htc=htc_shell_tube()
+		self.U = self.htc.overall_u(Np, Nst, Dosp, Lp, Ip, Ep, Gf, Op,
 					  			Fjin, Tjin, Bjin, Zjin, Tvin, Pvin, Tjc)
 
 		# Logarithmic delta of temperature
 		delta_t = deltatlog(Tjin, Tjout, Tvin)
 		
 		# Differential equation modeling temperature
-		dTjout_dt = ( (U*Ac*delta_t) + (pjin*Fjin*Cpjin*Tjin) - (pjout*Fjin*Cpjout*Tjout) )/(0.5*mjc*Cpjc)
+		dTjout_dt = ( (self.U*Ac*delta_t) + (pjin*Fjin*Cpjin*Tjin) - (pjout*Fjin*Cpjout*Tjout) )/(0.5*mjc*Cpjc)
 
 		if t>0.0:
 			dy = dTjout_dt
@@ -204,13 +305,13 @@ class htc_shell_tube: #Heat Transfer Coefficient (HTC)
 		# Relative roughness
 		Er = self.Ep/(25.4*self.Disp)
 		# Reynolds
-		Re = (4*((self.Fjin*self.pjin)/self.Np))/(0.0254*math.pi*self.Disp*self.ujin)
+		self.Re = (4*((self.Fjin*self.pjin)/self.Np))/(0.0254*math.pi*self.Disp*self.ujin)
 		# Friction factor
-		f = 0.25/((math.log((Er/3.7)+(5.74/(Re**0.9))))**2.0)
+		f = 0.25/((math.log((Er/3.7)+(5.74/(self.Re**0.9))))**2.0)
 		# Prandlt
 		Pr = (self.Cpjin*self.ujin)/self.Yjin
 		# Nusselt-Gnilinski
-		Nu = ((f/8.0)*(Re-1000.0)*Pr)/(1+(12.7*((f/8.0)**0.5)*((Pr**(2.0/3.0))-1.0)))
+		Nu = ((f/8.0)*(self.Re-1000.0)*Pr)/(1+(12.7*((f/8.0)**0.5)*((Pr**(2.0/3.0))-1.0)))
 
 		# Internal HTC
 		Ui = (Nu*self.Yjin)/((25.4*self.Disp)/1000)
@@ -272,11 +373,11 @@ class htc_shell_tube: #Heat Transfer Coefficient (HTC)
 		self.Aosc=0.0254*math.pi*self.Dosp*self.Np*self.Lp*self.Nst
 
 		# Internal HTC
-		Ui=self.internal_u(self.Np, self.Dosp, self.Ip, self.Ep, 
+		self.Ui=self.internal_u(self.Np, self.Dosp, self.Ip, self.Ep, 
 						self.Fjin,self.Tjin,self.Bjin,self.Zjin)
 
 		# External HTC
-		Uo=self.external_u(self.Dosp, self.Tvin, self.Pvin, self.Tjc)
+		self.Uo=self.external_u(self.Dosp, self.Tvin, self.Pvin, self.Tjc)
 
 		#Juice density
 		self.pjin = liquor_prpty.density(self.Tjin,self.Bjin,self.Zjin)
@@ -288,7 +389,7 @@ class htc_shell_tube: #Heat Transfer Coefficient (HTC)
 		self.Ri = ((3.5*10**-6)*(self.Op**self.Gf))*(1+(10.73/(self.vj**3)))
 
 		#Overall HTC
-		U = (self.Aisc*Ui*Uo)/((self.Aisc*Ui)+(self.Aosc*Uo*((Ui*self.Ri)+1)))
+		U = (self.Aisc*self.Ui*self.Uo)/((self.Aisc*self.Ui)+(self.Aosc*self.Uo*((self.Ui*self.Ri)+1)))
 		return U
 
 def deltatlog(Tjin, Tjout, Tvin):

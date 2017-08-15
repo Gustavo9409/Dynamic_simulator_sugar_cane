@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+
+# Installed Libs
 import sys
 import os
 directory=str(os.getcwd())
+images_directory=directory+"\Images"
 sys.path.insert(0, directory+'\matplotlib_edit_package')
 import matplotlib.pyplot as plt
 import backend_qt5_DynamicSim as backend
@@ -15,13 +18,15 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.patches as mpatches
 
-
+#global values
 global time_exec
 global model_value
 model_value=[]
 time_exec=[]
 
 
+
+## Translate to utf format
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -36,10 +41,12 @@ except AttributeError:
 	def _translate(context, text, disambig):
 		return QtGui.QApplication.translate(context, text, disambig)
 
+## Class number validation
 class Validator(object):
 	def NumValidator(self,LineEdit):
 		LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
+## Toolbar functions
 class NavigationToolbar(NavigationToolbar2QT):
 	def __init__(self, Enable,canvas_, parent_):
 		#backend.figureoptions = None  # Monkey patched to kill the figure options button on matplotlib toolbar
@@ -47,15 +54,17 @@ class NavigationToolbar(NavigationToolbar2QT):
 		##Functions: C:\Python27\Lib\site-packages\matplotlib\backends\backend_qt5.py
 		self.toolitems = (
 			(None, None, None, None,None),
-			('V_cursor', 'Cursores', 'haircross', 'V_cursor',Enable),
+			('V_cursor', 'Cursores', images_directory+'\haircross','V_cursor',Enable),
 			(None, None, None, None,None),
-			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), 'move', 'pan',None),
+			('Pan', _translate("Dialog", "Mover la gráfica (Click izquierdo) / Zoom (Click derecho)", None), images_directory+'\move', 'pan',None),
 			(None, None, None, None,None),
-			('Edit axis',_translate("Dialog",'Modificación de ejes', None), 'qt4_editor_options','Edit_axis',[Ts,g_Widget]),
-			(None, None, None, None,None),)
+			('Edit axis',_translate("Dialog",'Modificación de ejes', None), images_directory+'\qt4_editor_options','Edit_axis',[Ts,g_Widget]),
+			('Save',_translate("Dialog",'Guardar gráfica', None), images_directory+'\_filesave','save_figure',None),
+			)
 		NavigationToolbar2QT.__init__(self, canvas_, parent_)
 
 
+#Dynamic graphic class
 class DynamicGraphic(FigureCanvas):
 	"""Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
@@ -140,7 +149,7 @@ class DynamicGraphic(FigureCanvas):
 
 		self.colors=['b','g','c','y','m','k']
 		
-
+	## Set legends for signals plotting
 	def set_legends(self):
 		self.all_handles=[]
 		self.all_labels=[]
@@ -159,25 +168,27 @@ class DynamicGraphic(FigureCanvas):
 		
 		self.axes.legend(self.all_handles, self.all_labels)
 		
-
+	## Reload toolbar with disabled/enabled functions
 	def reload_toolbar(self,enable_cursor_a):
 		self.mpl_toolbar.setParent(None)
 		self.mpl_toolbar = NavigationToolbar(enable_cursor_a,self,g_Widget)
 		self.dynamic_graph.addWidget(self.mpl_toolbar, 1, 0)
 		self.dynamic_graph.setRowStretch(1, 1)
 
-
+	## Add principal signal to graph
 	def add_principal_signal_options(self,label_signals):
 		self.principal_labels=label_signals
 		for label in label_signals:
 			self.principal_signal_selector.addItem(_translate("Dialog",label,None))
 
+	## Default principal signal to plot
 	def default_principal_signal(self,signal,time,label):
 		self.axes.plot(time,signal, color='r',label=label)
 		self.axes.set_xlabel('Time (min)',fontsize=11)
 		self.axes.set_ylabel(label,fontsize=11)
 		self.draw()
 
+	## Plot principal signal
 	def principal_signal_plot(self):
 		signal_selected=self.principal_signal_selector.currentText()
 		for k,signals in enumerate(self.principal_signals):
@@ -195,7 +206,7 @@ class DynamicGraphic(FigureCanvas):
 						self.set_legends()
 						self.draw()
 						
-
+	## Update values to principal signal
 	def update_principal_signal(self,principal_signals,time):
 		if len(self.id_principal_selector_connect)>0:
 			self.principal_signal_selector.currentIndexChanged.disconnect()
@@ -216,12 +227,14 @@ class DynamicGraphic(FigureCanvas):
 						self.set_legends()
 						self.draw()
 
+	## Stop mode for principal signal
 	def update_principal_signal_stop_mode(self,signals,time):
 		self.principal_signals=signals
 		self.principal_time=time
 		self.id_connect=self.principal_signal_selector.currentIndexChanged.connect(self.principal_signal_plot)
 		self.id_principal_selector_connect.append(self.id_connect)
 
+	## Add other signals to plot in other axis with scale factors
 	def add_plot(self,time,signals,labels,min_factor,max_factor):
 		if self.ax2 is not None:
 			self.ax2.cla()
@@ -261,11 +274,11 @@ class DynamicGraphic(FigureCanvas):
 			self.set_legends()
 		self.draw()
 	
+	# Add auxiliar signals to select in table 
 	def add_table_signals(self,labels,groups):
 		self.signals_table_checkboxs=[]
 		self.signals_min_factor=[]
 		self.signals_max_factor=[]
-		
 		
 		self.labels_in_table=labels
 
@@ -303,6 +316,7 @@ class DynamicGraphic(FigureCanvas):
 			self.signals_table.setCellWidget(rowPosition, 3, LineEdit_min)
 			self.signals_table.setCellWidget(rowPosition, 4, LineEdit_max)
 
+	## Update values of signals in table
 	def update_table_signals(self,time,signals):
 		if len(self.ids_connect)>0:
 			for k,chkbox in enumerate(self.signals_table_checkboxs):
@@ -333,6 +347,7 @@ class DynamicGraphic(FigureCanvas):
 		# if some_check==True:
 		self.add_plot(self.time_in_table,signals_to_plot,labels_to_plot,min_factors_to_plot,max_factors_to_plot)
 
+	## Stop mode to signals in table
 	def update_table_signals_stop_mode(self,time,signals):
 		self.signals_in_table=signals
 		self.time_in_table=time
@@ -342,6 +357,7 @@ class DynamicGraphic(FigureCanvas):
 			self.ids_connect.append(id_connect)
 			# print (self.ids_connect)
 
+	## Plot signals selected in table
 	def plot_select_signal(self):
 		if self.time_in_table is not None and self.signals_in_table is not None:
 			signals_to_plot=[]
@@ -383,53 +399,3 @@ class DynamicGraphic(FigureCanvas):
 
 
 
-class Ui_Dialog(object):
-	def setupUi(self,Dialog):
-
-		xs=0.5
-		SS=[]
-
-		Dialog.setObjectName(_fromUtf8("Dialog"))
-		Dialog.resize(950, 670)
-		self.verticalLayoutWidget = QtGui.QWidget(Dialog)
-		self.verticalLayoutWidget.setGeometry(QtCore.QRect(15, 35, 900,600))
-		self.verticalLayoutWidget.setObjectName(_fromUtf8("verticalLayoutWidget"))
-
-
-		dc = DynamicGraphic(Dialog,xs,True,True,True,self.verticalLayoutWidget,width=4, height=3, dpi=85)
-		self.verticalLayoutWidget.setLayout(dc.dynamic_graph)
-		t=[0.32,0.64,0.96,1.28,1.6,1.92,2.24,2.56,2.88,3.2]
-		S0=[10, 20,20,20,20,20,7,5,5, 15]
-		S0p=[21, 31,31,31,31,31,18,16,16,26]
-
-		dc.default_principal_signal(S0,t,"Principal")
-		dc.add_principal_signal_options(["principal","principal2"])
-		dc.update_principal_signal_stop_mode([S0,S0p],t)
-	
-
-		S1=[5, 10,10,10,10,10,10,7, 2, 6]
-		S2=[20, 40,40,40,40,40,30,27,10, 30]
-		SS.append(S1)
-		SS.append(S2)
-		factors=[150,60]
-		labels=["S1","S2"]
-		groups=["tipo1","tipo2"]
-		dc.add_table_signals(labels,groups)
-		dc.update_table_signals_stop_mode(t,SS)
-		dc.set_legends()
-
-		self.retranslateUi(Dialog)
-		QtCore.QMetaObject.connectSlotsByName(Dialog)
-
-	def retranslateUi(self, Dialog):
-		Dialog.setWindowTitle(_translate("Dialog", "Prueba Diagramas", None))
-
-if __name__ == "__main__":
-	##TEST##
-	import sys
-	app = QtGui.QApplication(sys.argv)
-	Dialog = QtGui.QWidget()
-	ui = Ui_Dialog()
-	ui.setupUi(Dialog)
-	Dialog.show()
-	sys.exit(app.exec_())

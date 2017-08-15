@@ -3245,8 +3245,14 @@ class NavigationToolbar2(object):
 		# 	for ball in self.ballons:
 		# 		ball.remove(self)	
 		if 	event.button==1:
-			x_up=float(x)+0.1
-			x_dwn=float(x)-0.1
+			ax=self.canvas.figure.get_axes()
+			line_signal = ax[0].lines
+		
+			x_data_arr=line_signal[0].get_xdata()
+			last_x_data=x_data_arr[len(x_data_arr)-1]
+
+			x_up=float(x)+(float(last_x_data)*0.04)
+			x_dwn=float(x)-(float(last_x_data)*0.04)
 			if float(self.vertical_line.get_data()[0])>x_dwn and float(self.vertical_line.get_data()[0])<x_up:
 				self.actual_line=self.vertical_line
 				self.cidrelease = self.canvas.mpl_connect('button_release_event', self.release_cursor)
@@ -3275,30 +3281,6 @@ class NavigationToolbar2(object):
 					self.lines_cnt=self.lines_cnt+1
 					self.draw()
 
-
-		# 'on button press we will see if the mouse is over us and store some data'
-		# if event.inaxes != self.vertical_line.axes: return
-		# # if DraggableLine.lock is not None: return
-		# contains, attrd = self.vertical_line.contains(event)
-		# if not contains: return
-		
-		# print('event contains', self.vertical_line.xy)
-		# x0, y0 = self.vertical_line.xy
-		# self.press = x0, y0, event.xdata, event.ydata
-		# # DraggableLine.lock = self
-
-		# # draw everything but the selected line and store the pixel buffer
-		# canvas = self.vertical_line.figure.canvas
-		# axes = self.vertical_line.axes
-		# self.vertical_line.set_animated(True)
-		# canvas.draw()
-		# self.background = canvas.copy_from_bbox(self.vertical_line.axes.bbox)
-
-		# # now redraw just the line
-		# axes.draw_artist(self.vertical_line)
-
-		# # and blit just the redrawn area
-		# canvas.blit(axes.bbox)
 
 	def on_release_cursor(self, event):
 		'on release we reset the press data'

@@ -1,13 +1,19 @@
-import math
 
+# Installed Libs
+import math
+import numpy as np
+
+from scipy.integrate import odeint
+
+# Local Libs
 from physicochemical_properties import liquor_properties
 from physicochemical_properties import water_properties
 from physicochemical_properties import vapor_properties
+from global_data import *
 
 liquor=liquor_properties()
 water=water_properties()
 vapor=vapor_properties()
-
 
 
 class tank:
@@ -18,7 +24,7 @@ class tank:
 	V, Tank volume [m3]
 
 	'''
-	def __init__(self, Dp, A, V,):
+	def __init__(self, Dp, A, V):
 		self.Dp=Dp
 		self.A=A
 		self.V=V
@@ -28,9 +34,14 @@ class tank:
 		self.fluid_in = fluid_in
 		self.fluid_out = fluid_out
 
-	def round_rsd_time(self,time,ts):
-		A=time/ts
+	def round_rsd_time(self,rsd_time):
+		## Round residence time according to sample time
+		
+		ts=Db_data.ts
+
+		A=rsd_time/ts
 		B=math.ceil(A)
+
 		round_time=B*ts
 		return round_time
 

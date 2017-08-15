@@ -39,6 +39,8 @@ class BlockItem_Valve(QGraphicsRectItem):
 		self.label = QGraphicsTextItem(self.name_block, self)
 		self.label.setDefaultTextColor(QtGui.QColor('red'))
 		self.label.setTextInteractionFlags((QtCore.Qt.TextEditable))
+		self.label_Ap =QGraphicsTextItem("Ap:", self)
+		self.label_Ap.setDefaultTextColor(QtGui.QColor('green'))
 		# Inputs and outputs of the block:
 		from Dynamic_simulator import PortItem
 		
@@ -50,7 +52,7 @@ class BlockItem_Valve(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Valve(self.name_block,Sim_time,self,self.window())
+		pd = ParameterDialog_Valve(self.name_block,self.editor.Sim_time,self.editor.db,self,self.window())
 		#pd.exec_()
 	def deleteBlock(self):
 		from Dynamic_simulator import DeleteDialog
@@ -76,8 +78,9 @@ class BlockItem_Valve(QGraphicsRectItem):
 		rect = self.label.boundingRect()
 		lw, lh = rect.width(), rect.height()
 		lx = (w - lw) / 2
-		ly = (h-10)
+		ly = (h)
 		self.label.setPos(lx+2, ly)
+		self.label_Ap.setPos(w-30,1)
 		# Update port positions:
 		
 		self.inputs[0].setPos(0, h-15)
@@ -92,8 +95,9 @@ class BlockItem_Valve(QGraphicsRectItem):
 		return w, h
 
 class ParameterDialog_Valve(QDialog):
-	def __init__(self,dat,time,item, parent=None):
+	def __init__(self,dat,time,db,item, parent=None):
 		self.Resultado=QtGui.QDialog()
+		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = valve_dialogbox()
-		self.ui.setupUi(dat,time,item,self.Resultado)
+		self.ui.setupUi(dat,time,db,item,self.Resultado)
 		self.Resultado.exec_()

@@ -53,7 +53,7 @@ class BlockItem_Evap(QGraphicsRectItem):
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Evaporator(self.name_block,self,self.window())
+		pd = ParameterDialog_Evaporator(self.name_block,self.editor.Sim_time,self,self.editor.db,self.window())
 		#pd.exec_()
 	def deleteBlock(self):
 		from Dynamic_simulator import DeleteDialog
@@ -101,8 +101,9 @@ class BlockItem_Evap(QGraphicsRectItem):
 		return w, h
 
 class ParameterDialog_Evaporator(QDialog):
-	def __init__(self,dat,item, parent=None):
+	def __init__(self,dat,time,item,Data_base, parent=None):
 		self.Resultado=QtGui.QDialog()
+		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = evaporator_dialogbox()
-		self.ui.setupUi(dat,item,self.Resultado)
+		self.ui.setupUi(dat,time,item,Data_base,self.Resultado)
 		self.Resultado.exec_()

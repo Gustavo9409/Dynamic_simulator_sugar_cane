@@ -24,8 +24,8 @@ class BlockItem_Mill(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Mill, self).__init__(parent)
 		self.editor=edit
-		w = 107.0
-		h = 164.0
+		w = 132.0
+		h = 199.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\Mill.png"); 
@@ -78,13 +78,13 @@ class BlockItem_Mill(QGraphicsRectItem):
 		self.label.setPos(lx+2, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(4, 22)
-		self.inputs[0].block_pos=[w,4,h, 22]
+		self.inputs[0].setPos(4, 25)
+		self.inputs[0].block_pos=[w,4,h, 25]
 
 		self.outputs[0].setPos((w/2)+3, h)
 		self.outputs[0].block_pos=[w,(w/2)+3,h, h]
 
-		self.outputs[1].setPos(w+3, h-54)
-		self.outputs[1].block_pos=[w,w+3,h, h-54]
+		self.outputs[1].setPos(w+3, h-66)
+		self.outputs[1].block_pos=[w,w+3,h, h-66]
 
 		return w, h

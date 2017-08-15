@@ -1,15 +1,15 @@
+# Installed Libs
 import mysql.connector
 import datetime;
 from mysql.connector import errorcode
-
 from time import sleep, clock
 
- 
+#Database class
 class data_base_instance:
-
+	
+	# Parameters for acces to data base
 	def connect(self):
 		
-
 		self.config = {
 			'user': 'root',
 			'password': '1234',
@@ -17,12 +17,8 @@ class data_base_instance:
 			'database': 'Dynamic_sim_DB',
 			}
 
-		# self.connection = mysql.connector.connect(**self.config)
-		# self.cursor = self.connection.cursor()
-		# return connection
-
+	# Read data to data base with search conditions
 	def read_data(self,table,fields,condition1,condition2):
-		global read_data
 		result=[]
 
 		if condition1==None or condition2==None:
@@ -33,81 +29,53 @@ class data_base_instance:
 		if condition1=="LAST":
 			query="SELECT "+fields+" FROM "+table+" WHERE id in (SELECT MAX(id) from "+table+" GROUP BY "+condition2+")"
 
-			# query="SELECT "+fields+" FROM "+table+" WHERE id=(SELECT max(id) FROM "+table+")"+" GROUP BY "+condition2
-			# query="SELECT * FROM "+table+" ORDER BY "+condition2+" DESC LIMIT 1"
 		try:
 			connection = mysql.connector.connect(**self.config)
-			cursor2 = connection.cursor()
-			cursor2.execute(query)
+			cursor = connection.cursor()
+			cursor.execute(query)
 
 
-			reader=cursor2.fetchall()
+			reader=cursor.fetchall()
 			for data in reader:
 				result.append(data)
 
-			cursor2.close()
+			cursor.close()
 			connection.close()
 
-			# cursor2.close()
 		except mysql.connector.Error as e:
 			print "ERROR %d IN connection: %s" % (e.args[0], e.args[1])
-			# connection.close()
-			# connection = mysql.connector.connect(**self.config)
-			# cursor2 = connection.cursor()
-			# cursor2.execute(query)
-
-
-			# reader=cursor2.fetchall()
-			# for data in reader:
-			# 	result.append(data)
-
-			# cursor2.close()
-
 
 		return result
 
+
+	# Insert data to data base 
 	def insert_data(self,table,fields,value):
-		global insert_data
-
-
-		insert_data=True
 
 		values=str(value)[1:-1]
 
 		query="INSERT INTO "+table+"("+fields+") VALUES ("+values+")"
-		# sleep(0.0005)
+
 		try:
 			connection = mysql.connector.connect(**self.config)
-			cursor2 = connection.cursor()
-			cursor2.execute(query)		
+			cursor = connection.cursor()
+			cursor.execute(query)		
 			connection.commit()
-			cursor2.close()
+			cursor.close()
 			connection.close()
-			# cursor2.close()
+			
 		except mysql.connector.Error as e:
 			print "ERROR %d IN connection: %s" % (e.args[0], e.args[1])
-			# connection.close()
-			# connection = mysql.connector.connect(**self.config)
-			# cursor2 = connection.cursor()
-			# cursor2.execute(query)		
-			# connection.commit()
-			# cursor2.close()
-
-		
-	def update_data_run_time(self,table,fields,values,condition1,condition2):
-		connection = mysql.connector.connect(**self.config)
-		cursor2 = connection.cursor()
-		cursor2.execute("UPDATE "+table+" SET "+fields+"= '"+str(values)+"' WHERE "+str(condition1)+"='"+str(condition2)+"'")
-		connection.commit()
-		# cursor2.close()
-		
 
 
+	# Update table data in the data base
 	def update_data(self,table,fields,values,condition1,condition2):
 		connection = mysql.connector.connect(**self.config)
 		query="UPDATE "+table+" SET "
 		query2=""
-		query3=" WHERE "+str(condition1)+"='"+str(condition2)+"'"
+		if len(condition1)>1:
+			query3=" WHERE ("+str(condition1[0])+"='"+str(condition2[0])+"' and "+str(condition1[1])+"='"+str(condition2[1])+"')"
+		else:
+			query3=" WHERE "+str(condition1[0])+"='"+str(condition2[0])+"'"
 		for k,field_data in enumerate(fields):
 			if k<(len(fields)-1):
 				
@@ -117,18 +85,15 @@ class data_base_instance:
 
 				query2=query2+field_data+"='"+str(values[k])+"'"
 
-		queryT=query + query2+query3
-		# print(queryT)
-		cursor2 = connection.cursor()
-		cursor2.execute(queryT)
-		connection.commit()
-		cursor2.close()
-		connection.close()
-		# cursor2.close()
-		# for field_data,value_data,condition_data in zip(field,value,condition):
-		# 	cursor.execute("UPDATE "+table+" SET "+str(field_data)+"= '"+str(value_data)+"' WHERE "+str(field_data)+"='"+str(condition_data)+"'")
-		# 	connection.commit()
+		queryT=query+query2+query3
 
+		cursor = connection.cursor()
+		cursor.execute(queryT)
+		connection.commit()
+		cursor.close()
+		connection.close()
+
+	# Delete table data in the data base with a condition
 	def delete_data(self,table,field,condition):
 		connection = mysql.connector.connect(**self.config)
 		cursor =connection.cursor()
@@ -137,6 +102,7 @@ class data_base_instance:
 		cursor.close()
 		connection.close()
 
+	# Clear data for specific table
 	def clear_table(self,table):
 		connection = mysql.connector.connect(**self.config)
 		cursor_table = connection.cursor()
@@ -147,6 +113,7 @@ class data_base_instance:
 		cursor_table.close()
 		connection.close()
 
+	# Clear data for all tables
 	def clear_all(self):
 		connection = mysql.connector.connect(**self.config)
 		cursor = connection.cursor()
@@ -159,64 +126,3 @@ class data_base_instance:
 			connection.commit()
 		cursor.close()
 		connection.close()
-
-# db=data_base_instance()
-# db.connect()
-# fields="Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
-# result=db.read_data("Flow_inputs",fields,"LAST","Name")
-# vapor_data=[]
-# juice_data=[]
-# if len(result)>0:	
-# 	for data in result:
-# 		for i,values in enumerate(data):
-# 			if  str(data[0])=="Fj1" and str(data[1])=="Juice":
-# 				if i>1:
-# 					juice_data.append(str(values))
-# 			elif str(data[0])=="Fv2" and str(data[1])=="Vapor":
-# 				if i>1:
-# 					vapor_data.append(str(values))
-# print (vapor_data)
-# print (juice_data)
-
-# tt=[]
-# model_value=[]
-# time_exec=db.read_data("TIME_EXEC","TIME",None,None)
-# time=list(time_exec)
-# for data in time:
-# 	if data[0]!="stop":
-# 		tt.append(float(data[0]))
-# output=db.read_data("OUTPUTS_HEATER","Time_exec_id,Out_fluid_temperature","Heaters_id",1)
-# Tout=list(output)
-# time_array=[]
-# for data in Tout:
-# 	time_array.append(float(data[0]))
-# for data in Tout:
-# 	if time_array[0]!=time_array[1]:
-# 		model_value.append(float(data[1]))
-
-# print (str(len(tt)))
-# print (str(len(model_value)))
-# try:
-# 	c = a.cursor()
-# except mysql.connector.Error as e:
-#     print "ERROR %d IN connection: %s" % (e.args[0], e.args[1])
-# else:
-# 	print("connect")
-# b=db.disconnect()
-# try:
-# 	c = a.cursor()
-# except mysql.connector.Error as e:
-#     print "ERROR %d IN connection: %s" % (e.args[0], e.args[1])
-# else:
-# 	print("connect")
-# # fields="Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
-# result=db.read_data("Flow_inputs",fields,None,None)
-# if len(result)>0:
-# 		for data in result:
-# 			for i,values in enumerate(data):
-# 				print values
-# db.insert_data("TIME_EXEC","Ts",[0.5])
-# db.update_data("TIME_EXEC",["Ts","time"],[0.87,90],"id",1)
-# res=db.read_data("TIME_EXEC","Ts,time",None,None)
-# print (res)
-# db.clear_all()

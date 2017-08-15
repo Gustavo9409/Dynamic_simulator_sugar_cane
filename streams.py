@@ -14,7 +14,7 @@ class juice():
 	Juice calculations and properties
 
 	Parameters:
-	Mj 	: Juice mass flow [t/h]
+	Mj 	: Juice mass flow [kg/s]
 	Pj 	: Juice pressure [Pa]
 	Tj 	: Juice temperature [C]
 	Bj	: Juice brix [kg/kg]
@@ -35,10 +35,22 @@ class juice():
 		#Instance properties
 		self.properties()
 		#Volumetric flow [m3/s]
-		self.Fj = (self.Mj/3.6)/self.pj
+		self.Fj = (self.Mj)/self.pj
 		#Instance mass components
 		self.mass()
+	
+	def comparation(self, juice_data):
+
 		
+		result =(self.Mj !=float(juice_data[0]) or
+			self.Tj !=float(juice_data[1]) or
+			self.Bj !=float(juice_data[2]) or
+			self.Zj !=float(juice_data[3]) or
+			self.Ij !=float(juice_data[4]) or
+			self.pHj !=float(juice_data[5]) or
+			self.Pj !=float(juice_data[6]) )
+
+		return result
 
 	def update(self, Mj, Pj, Tj, Bj, Zj, Ij, pHj):
 		''' Update class parameters '''
@@ -54,10 +66,17 @@ class juice():
 		#Instance properties
 		self.properties()
 		#Volumetric flow [m3/s]
-		self.Fj = (self.Mj/3.6)/self.pj
+		self.Fj = (self.Mj)/self.pj
 		#Instance mass components
 		self.mass()
-		pass
+
+	def update_(self):
+		#Instance properties
+		self.properties()
+		#Volumetric flow [m3/s]
+		self.Fj = (self.Mj)/self.pj
+		#Instance mass components
+		self.mass()
 
 	def properties(self):
 		''' Calculate juice properties'''
@@ -148,7 +167,7 @@ class water(juice):
 	Water calculations and properties
 
 	Parameters:
-	Mw 	: Water mass flow [t/h]
+	Mw 	: Water mass flow [kg/s]
 	Pw 	: Water pressure [Pa]
 	Tw 	: Water temperature [C]
 	pHw : Water pH
@@ -175,6 +194,7 @@ class water(juice):
 		self.Hw = self.Hj
 		self.pw = self.pj
 		self.Cpw = self.Cpj
+
 
 	def properties_calc(self,Tw):
 		''' Calculate water properties without update class parameters'''
@@ -211,7 +231,7 @@ class vapor():
 	Vapor calculations and properties
 
 	Parameters:
-	mv 	: Vapor mass flow [t/h]
+	mv 	: Vapor mass flow [kg/s]
 	Pv 	: Vapor pressure [Pa]
 	Tv 	: Vapor temperature [C]
 
@@ -225,7 +245,7 @@ class vapor():
 			#Instance properties of saturated vapor
 			self.saturated_properties()
 			#Volumetric flow [m3/s]
-			self.Fv = (self.Mv/3.6)/self.pv
+			self.Fv = (self.Mv)/self.pv
 		
 
 	def update(self, Mv, Pv, Tv):
@@ -238,7 +258,22 @@ class vapor():
 			#Instance properties of saturated vapor
 			self.saturated_properties()
 			#Volumetric flow [m3/s]
-			self.Fv = (self.Mv/3.6)/self.pv
+			self.Fv = (self.Mv)/self.pv
+
+	def update_(self):
+		if self.Tv==None:
+			#Instance properties of saturated vapor
+			self.saturated_properties()
+			#Volumetric flow [m3/s]
+			self.Fv = (self.Mv)/self.pv
+
+	def comparation(self, vapor_data):
+			
+		result =(round(self.Mv,4) !=round(float(vapor_data[0]),4) or
+			self.Pv !=float(vapor_data[6]) )
+
+		return result
+
 
 	def saturated_properties(self):
 		''' Calculate vapor properties'''

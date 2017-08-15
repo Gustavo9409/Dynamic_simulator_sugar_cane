@@ -1,35 +1,31 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*- 
 
-# Form implementation generated from reading ui file 'Heater_properties.ui'
+# Form implementation generated from reading ui file 'Heater_properties.ui'.
 #
 # Created: Thu Apr 27 15:14:40 2017
 #      by: PyQt4 UI code generator 4.10.2
-#
-# WARNING! All changes made in this file will be lost!
 
+# Installed Libs
 import random
 import threading
 import re
 import math
 
+from collections import defaultdict
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from numpy import arange, sin, pi
 from decimal import Decimal
 from matplotlib.ticker import FormatStrFormatter
-from physicochemical_properties import liquor_properties
-from physicochemical_properties import vapor_properties
+
+# Local Libs
 from heaters import *
 from dynamic_diagrams import DynamicGraphic
 from streams import *
 from global_data import *
 
-
-from scipy import *
-from scipy.integrate import odeint
-from scipy.integrate import ode
-
+#global values
 global time_1
 global outout_1
 global one_time
@@ -38,24 +34,23 @@ global ts
 global time_exec
 global model_value
 global Heater_type
-global liquor
-global Ht
 global SnT
 global Enable_cursor
 global split_model_data
 global Flow_in_array
-global g_Vapor_in
-global g_Juice_in
+global flag_vapor_in
+global flag_juice_in
 global time
 global id_time
-global id_Heater 
-global id_time_2
+global id_Heater
+global juice_data
+global vapor_data
+
+juice_data=[]
+vapor_data=[]
 id_Heater=""
 time=""
 id_time=0
-id_time_2=0
-
-
 split_model_data_n1=None
 Enable_cursor=False
 Heater_type="Carcaza y tubos"
@@ -68,18 +63,15 @@ outout_1=0.0
 SnT=1.0
 one_time=1
 one_reload=0
-g_Juice_in=""
-g_Vapor_in=""
+flag_juice_in=""
+flag_vapor_in=""
 
-liquor=liquor_properties()
-Ht=htc_shell_tube()
-
+## Translate to utf format
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
 	def _fromUtf8(s):
 		return s
-
 try:
 	_encoding = QtGui.QApplication.UnicodeUTF8
 	def _translate(context, text, disambig):
@@ -93,221 +85,83 @@ class Validator(object):
 	def NumValidator(self,LineEdit):
 		LineEdit.setValidator(QtGui.QDoubleValidator(0,100000,2,LineEdit))
 
-## Class for calculated heater properties
-class calculated_properties():
-	def Juice_velocity(self,Fj,Tj,Bj,Zj):
-		pjin=liquor.density(Tj,Bj,Zj)
-		Np=float(Pipe_x_Step.text())
-		Disp=float(Ext_Pipe_Diameter.text())-(2*(float(Pipe_Thickness.text())/25.4));
+##Function for update database info 
+def write_outputs_heater():
+	global ht_model
+	global flag_vapor_in
 
-		vj=(4*((Fj*pjin)))/(Np*pjin*math.pi*((0.0254*Disp)**2));
-		return vj
-	def Heat_area(self):
-		Dosp=float(Ext_Pipe_Diameter.text())
-		Np=float(Pipe_x_Step.text())
-		Lp=float(Lenght_Pipe.text())
-		Nst=float(N_steps.text())
+	global fluid_in
+	global fluid_out
+	global vapor_in
+	global vapor_out
 
-		Ac=0.0254*math.pi*Dosp*Np*Lp*Nst;
-		return Ac
-	def Scalling_r(self,Fj,Tj,Bj,Zj,t):
-		vj=self.Juice_velocity(Fj,Tj,Bj,Zj)
-		Op=float(Time_Op.text())
-		Gf=float(Scalling_Coeff.text())
+	global id_heater 
+	global id_time
 
-		Ri=((3.5*10**-6)*((Op+(t/60))**Gf))*(1+(10.73/(vj**3)))
-		return Ri
-
-global heat_properties
-heat_properties=calculated_properties()
-
-
-##Function for update data when inputs change
-def Update_data(run_time):
-	global id_Heater
-	vapor_data=[]
-	juice_data=[]
-
+	if flag_vapor_in[:-1]=="Fv":
+		field=["Flow"]
+		db.update_data("Flow_inputs",field,[vapor_in.Mv],["Name"],[flag_vapor_in])
 	
+	elif flag_vapor_in[:-1]=="Vlv":
+		field=["In_flow"]
+		db.update_data("Valves",field,[vapor_in.Mv],["Name"],[flag_vapor_in])
 
-	fields="Name,_Type,Flow,Temperature,Brix,Purity,Insoluble_solids,pH,Pressure,Saturated_vapor"
-	result=db.read_data("Flow_inputs",fields,None,None)
-	if len(result)>0:
-		for data in result:
-			for i,values in enumerate(data):
-				if  str(data[0])==g_Juice_in and str(data[1])=="Juice":
-					if i>1:
-						juice_data.append(str(values))
-				elif str(data[0])==g_Vapor_in and str(data[1])=="Vapor":
-					if i>1:
-						vapor_data.append(str(values))
-	# print vapor_data
-	# print juice_data
-	# vapor_data=[]
-	# juice_data=[]
+	elif flag_vapor_in[:-1]=="Evp":
+		field=["Out_vapor_flow"]
+		db.update_data("Outputs_evaporator",field,[vapor_in.Mv],["Name","Time_exec_id"],[flag_vapor_in,id_time])
 
 
-
-	# input_heat = open('Blocks_data.txt', 'r+')
-	# data=input_heat.readlines()
+	db.insert_data("OUTPUTS_HEATER","Heaters_id,Out_fluid_temperature,Out_fluid_brix,Out_fluid_flow,Out_fluid_pH,Out_fluid_pressure"
+	",Out_fluid_insoluble_solids,Out_fluid_purity,Condensed_vapor_flow,Condensed_vapor_temperature,Condensed_vapor_pressure,Time_exec_id",
+	[id_Heater,fluid_out.Tj,fluid_out.Bj*100.0,fluid_out.Mj,fluid_out.pHj,fluid_out.Pj/1000.0,fluid_out.Ij*100.0,fluid_out.Zj,vapor_out.Mv,vapor_out.Tv,"",id_time])
 	
-	# for i in data:
-	# 	info=(i.strip()).split("\t")
-	# 	if len(info)>1:
-	# 		flag=info[0]
-	# 		#print ("Flag "+flag+" "+flag[:2])
-	# 		if flag[:3]==g_Vapor_in:
-	# 			for k in range(1,len(info)):
-	# 				vapor_data.append(float(info[k]))
-	# 		elif flag[:3]==g_Juice_in:
-	# 			for k in range(1,len(info)):
-	# 				juice_data.append(float(info[k]))
-	# input_heat.close()
+	db.update_data("Physical_properties_heater",["Heat_area","Scalling_resistance","Juice_velocity","Inside_U","Outside_U","Overall_U"]
+	,[ht_model.Aosc,ht_model.htc.Ri,ht_model.htc.vj,ht_model.htc.Ui,ht_model.htc.Uo,ht_model.U],["Heaters_id"],[id_Heater])
 
-	if confirm==True and len(juice_data)>0 and len(vapor_data)>0:
-		if split_model_data_n1 is not None:
-			Temp_Output_variable.setText(str(round(float(split_model_data_n1[1]),3)))
-		## Calculated heater properties
-			Dosp=float(Ext_Pipe_Diameter.text())
-			Disp=float(Ext_Pipe_Diameter.text())-(2*(float(Pipe_Thickness.text())/25.4))
-			Np=float(Pipe_x_Step.text())
-			Ep=float(Pipe_Rough.text())
-			Er=Ep/Dosp
-			Lp=float(Lenght_Pipe.text())
-			Ip=float(Pipe_Thickness.text()) 
-			Nst=float(N_steps.text())
-			Op=float(Time_Op.text())
-			Gf=float(Scalling_Coeff.text())
-			Aosc=heat_properties.Heat_area()
-			Aisc=0.0254*math.pi*Disp*Np*Lp*Nst
-			Tjc=(float(juice_data[1])+float(split_model_data_n1[1]))/2.0;
-			
-		##juice data
-			Mjin=float(juice_data[0])
-			
-			Tjin=float(juice_data[1])
-			Bjin=float(juice_data[2])
-			Zjin=float(juice_data[3])
-			SolIn=float(juice_data[4])
-			pHjin=float(juice_data[5])
-			Pjin=float(juice_data[6])
-			juice.update(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
-			pjin=juice.pj
-			ujin=juice.uj
-			Fjin=(Mjin/3.6)/pjin
+##Function for update process values
+def write_process_values():
+	global ht_model
 
-		##vapor data
-			Mvin=float(vapor_data[0])
-			Tvin=float(vapor_data[1])
-			Pvin=float(vapor_data[6])
-			sat=float(vapor_data[7])
-			if sat==1.0:
-				vapor.update(Mvin,Pvin,None)
-			Cpvin=vapor.Cpv
-			pvin=vapor.pv
-			uvin=vapor.uv
-			Hvin=vapor.Hv
-			Hvwin=vapor.Hvw
-			Yvin=vapor.Yv
-			
+	global fluid_in
+	global fluid_out
+	global vapor_in
+	global vapor_out
 
-			time=float(split_model_data_n1[0])
-			Tjout=float(split_model_data_n1[1])
+	Temp_Output_variable.setText(str(round(fluid_out.Tj,3)))
 
-			#Juice Velocity
-			Juice_vel=round(heat_properties.Juice_velocity(Fjin,Tjin,Bjin,Zjin),3)
-			Juice_Velocity.setText(str(Juice_vel))
-			#Heat Area
-			Heat_Area.setText(str(round(Aosc,3)))
-			#Scalling resistance
-			Scall_R=heat_properties.Scalling_r(Fjin,Tjin,Bjin,Zjin,time)
-			Scall_resistance="{:.3E}".format(Decimal(Scall_R))
-			Scalling_Resist.setText(str(Scall_resistance))
-			#Overall heat trasnfer coefficient
-			OvU=(Ht.overall_u(Np,Nst,Dosp,Lp,Ip,Ep,Gf,Op,Fjin,Tjin,Bjin,Zjin,Tvin,Pvin,Tjc))
-			OverallU="{:.3E}".format(Decimal(OvU))
-			Overall_U.setText(str(OverallU))
-			#Internal heat trasnfer coefficient
-			InU=Ht.internal_u(Np,Dosp,Ip,Ep,Fjin,Tjin,Bjin,Zjin)
-			InternalU="{:.3E}".format(Decimal(InU))
-			Inside_U.setText(str(InternalU))
-			#External heat trasnfer coefficient
-			ExtU=Ht.external_u(Dosp,Tvin,Pvin,Tjc)
-			ExternalU="{:.3E}".format(Decimal(ExtU))
-			Outside_U.setText(str(ExternalU))
-			#Reynolds number
-			Re=(4*((Fjin*pjin)/Np))/(0.0254*math.pi*Disp*ujin)
-			#Moody Friction factor
-			f1=(1.4+2*math.log(Er))**-2
-			f=((-2*math.log((Er/3.7)+(2.51/(Re*(f1**0.5)))))**-2.0)
-			#Viscosity of pipe fluid
-			up=liquor.viscosity(Tjin,Bjin,Zjin)
-			#Viscosity of pipe fluid at wall temperature
-			up_tube_wall=liquor.viscosity(((Tjc+Tvin)/2.0),Bjin,Zjin)
-			#Drop pressure pipe side (REIN)
-			Delta_drop_pressure=(Nst*f*Lp*(((pjin)*(Juice_vel**2.0))))/(2.0*Disp*((up/up_tube_wall)**0.14))
-			
-			#Residence time
-			rsd_time=(Nst*Lp)/Juice_vel
-			##Loss saccharose
-			lss_sac=liquor.loss_saccharose(rsd_time,Tjin,Bjin,SolIn,Zjin,pHjin)
-			#Loss Purity
-			Loss_purity=lss_sac/(Bjin*100.0)
-			# print (Loss_purity)
-
-			##Mass flow of vapor
-			DT=float(deltatlog(Zjin,Tjout,Tvin))		
-			Mv= ((OvU*Aosc*(DT))/Hvwin)*3.6
-			field=["Flow"]
-			value=[Mv]
-			condition1="Name"
-			condition2=g_Vapor_in
-
-			
-
-		
-		##Process values 
-		#Vapor
-			#input
-			InStm_Press.setText(str(round(Pvin/1000.0,2)))
-			InStm_Flow.setText(str(round(Mv,3)))
-			InStm_Temp.setText(str(round(Tvin,2)))
-			#output
-			CondStm_Flow.setText(str(round(Mvin,3)))
-			CondStm_Temp.setText(str(round(Tvin,2)))
-			#CondStm_Press.setText(str(round(Pvin/1000.0,1)))
-		#Juice
-			#input
-			InFluid_Temp.setText(str(Tjin))
-			InFluid_Flow.setText(str(Mjin))
-			InFluid_pH.setText(str(pHjin))
-			InFluid_pressure.setText(str(round(Pjin/1000.0,1)))
-			InFluid_InsolubleSolids.setText(str(SolIn*100.0))
-			InFluid_Purity.setText(str(Zjin*100.0))
-			InFluid_Brix.setText(str(Bjin*100.0))
-			#output
-			OutFluid_Temp.setText(str(round(Tjout,3)))
-			OutFluid_Brix.setText(str(Bjin*100.0))
-			OutFluid_Flow.setText(str(Mjin))
-			OutFluid_pH.setText(str(pHjin))
-			Out_pressure=Pjin-Delta_drop_pressure
-			OutFluid_pressure.setText(str(round((Out_pressure/1000.0),2)))
-			OutFluid_InsolubleSolids.setText(str(SolIn*100.0))
-			Outpurity=(Zjin*100.0)-Loss_purity
-			OutFluid_Purity.setText(str(Outpurity)[:4])
-
-			if run_time==True:
-				db.insert_data("OUTPUTS_HEATER","Heaters_id,Out_fluid_temperature,Out_fluid_brix,Out_fluid_flow,Out_fluid_pH,Out_fluid_pressure"
-				",Out_fluid_insoluble_solids,Out_fluid_purity,Condensed_vapor_flow,Condensed_vapor_temperature,Condensed_vapor_pressure,Time_exec_id",
-				[id_Heater,Tjout,Bjin*100.0,Mjin,pHjin,Out_pressure/1000.0,SolIn*100.0,Outpurity,Mvin,Tvin,"",id_time])
-				# print(id_time)
-
-			db.update_data("Flow_inputs",field,value,condition1,condition2)
-
-			db.update_data("Physical_properties_heater",["Heat_area","Scalling_resistance","Juice_velocity","Inside_U","Outside_U","Overall_U"]
-			,[Aosc,Scall_R,Juice_vel,InU,ExtU,OvU],"Heaters_id",id_Heater)
-
-
+	#Physical properties
+	Juice_Velocity.setText(str(round(ht_model.htc.vj,3)))
+	Heat_Area.setText(str(round(ht_model.Aosc,3)))
+	Scalling_Resist.setText(str("{:.3E}".format(Decimal(ht_model.htc.Ri))))
+	Overall_U.setText(str("{:.3E}".format(Decimal(ht_model.U))))
+	Inside_U.setText(str("{:.3E}".format(Decimal(ht_model.htc.Ui))))
+	Outside_U.setText(str("{:.3E}".format(Decimal(ht_model.htc.Uo))))
+	
+	#Vapor input
+	InStm_Press.setText(str(round(vapor_in.Pv/1000.0,3)))
+	InStm_Flow.setText(str(round(vapor_in.Mv*3.6,3)))
+	InStm_Temp.setText(str(round(vapor_in.Tv,2)))
+	#Vapor output
+	CondStm_Flow.setText(str(round(float(vapor_out.Mv*3.6),3)))
+	CondStm_Temp.setText(str(round(vapor_out.Tv,2)))
+	#CondStm_Press.setText(str(round(Pvin/1000.0,1)))
+	
+	#Juice input
+	InFluid_Temp.setText(str(fluid_in.Tj))
+	InFluid_Flow.setText(str(float(fluid_in.Mj)*3.6))
+	InFluid_pH.setText(str(fluid_in.pHj))
+	InFluid_pressure.setText(str(round(fluid_in.Pj/1000.0,1)))
+	InFluid_InsolubleSolids.setText(str(fluid_in.Ij*100.0))
+	InFluid_Purity.setText(str(fluid_in.Zj*100.0))
+	InFluid_Brix.setText(str(fluid_in.Bj*100.0))
+	#Juice output
+	OutFluid_Temp.setText(str(round(fluid_out.Tj,3)))
+	OutFluid_Brix.setText(str(fluid_out.Bj*100.0))
+	OutFluid_Flow.setText(str(float(fluid_out.Mj)*3.6))
+	OutFluid_pH.setText(str(fluid_out.pHj))
+	OutFluid_pressure.setText(str(round( (fluid_out.Pj/1000.0),3) ))
+	OutFluid_InsolubleSolids.setText(str(fluid_out.Ij*100.0))
+	OutFluid_Purity.setText(str(round(fluid_out.Zj*100.0,3)))
 			
 ##Function for update window when closing
 def Update_window():
@@ -322,10 +176,7 @@ def Update_window():
 
 	# id_Heater=""
 	num_window=re.sub('([a-zA-Z]+)', "", nameDialog)
-	input_heat = open('Blocks_data.txt', 'r+')
-	data=input_heat.readlines()
-	heater_data=[]
-
+	
 	heater_data2=[]
 	
 	type_heater=""
@@ -340,7 +191,7 @@ def Update_window():
 					type_heater=str(data[2])
 					Tjout_ini=str(data[3])
 
-	fields="Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_lenght,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
+	fields="Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_length,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
 	result=db.read_data("Physical_properties_heater",fields,"Heaters_id",id_Heater)
 	if len(result)>0:
 		for data in result:
@@ -353,7 +204,7 @@ def Update_window():
 		Pipe_x_Step.setText(str(heater_data2[0]))
 		N_steps.setText(str(heater_data2[1]))
 		Ext_Pipe_Diameter.setText(str(heater_data2[2]))
-		Lenght_Pipe.setText(str(heater_data2[3]))
+		Length_Pipe.setText(str(heater_data2[3]))
 		Pipe_Thickness.setText(str(heater_data2[4]))					
 		Pipe_Rough.setText(str(heater_data2[5]))
 		Scalling_Coeff.setText(str(heater_data2[6]))
@@ -365,74 +216,22 @@ def Update_window():
 	elif len(heater_data2)>0 and type_heater=="Placas":
 		Selector_Heater_type.setCurrentIndex(2)
 
-	# if len(data)>0:
-	# 	for i in data:
-	# 		info=(i.strip()).split("\t")
-	# 		if len(info)>1:
-	# 			flag=info[0]
-	# 			#print ("Flag "+flag)
-				
-	# 			if flag==("Ht"+str(num_window)):
-	# 				update=1
-	# 				for k in range(1,len(info)):
-	# 					heater_data.append(float(info[k]))
-	# 				if heater_data[9]==1.0: ##Shell and tubes
-	# 					Pipe_x_Step.setText(str(heater_data[0]))
-	# 					N_steps.setText(str(heater_data[1]))
-	# 					Ext_Pipe_Diameter.setText(str(heater_data[2]))
-	# 					Lenght_Pipe.setText(str(heater_data[3]))
-	# 					Pipe_Thickness.setText(str(heater_data[4]))					
-	# 					Pipe_Rough.setText(str(heater_data[5]))
-	# 					Scalling_Coeff.setText(str(heater_data[6]))
-	# 					Time_Op.setText(str(heater_data[7]))
-	# 					Initial_Out_Temp.setText(str(heater_data[8]))
-	# 					##
-	# 					Selector_Heater_type.setCurrentIndex(1)
-	# 				else:	##Plates
-	# 					Selector_Heater_type.setCurrentIndex(2)
 	else:
 		update=0
 		print "no datos"
 
-	time_exec=db.read_data("TIME_EXEC","TIME",None,None)
-	time=0
-	if len(time_exec)>0:
-		time=str(list(time_exec[-1])[0])
-		Update_data(False)
-		if time!="stop":
-			Enable_cursor=True
-		else:
+	if hasattr(Db_data, 'time'):
+		write_process_values()
+		if Db_data.time!="stop":
 			Enable_cursor=False
+		else:
+			Enable_cursor=True
 
-	# infile = open('time_exec.txt', 'r+')
-	# data=infile.readlines()
-	# if len(data)>1:
-	# 	for values in data:
-	# 		info=(values.strip()).split("\t")
-	# 		if values!="stop":
-	# 			Enable_cursor=True
-	# 		else:
-	# 			Enable_cursor=False
-	# infile.close()
-	one_time=1
-	one_reload=0
-	# if len(data)>1:
-	# 	Update_data(False)
-	# input_heat.close()
+		one_time=1
+		one_reload=0
 
-##Function for replace a line in a text file
-def replace(path, pattern, subst):
-	flags=0
-	with open(path, "r+" ) as filex:
-		fileContents = filex.read()
-		textPattern = re.compile( re.escape( pattern ), flags )
-		fileContents = textPattern.sub( subst, fileContents )
-		filex.seek( 0 )
-		filex.truncate()
-		filex.write(fileContents) 
-
-##Function for update Blocks_data.txt for new parameters confirmation 
-def update_DB(data):
+##Function for confirm if exist initialization of heater
+def exist_initialization(data):
 	flg=0
 	dats=[]
 
@@ -441,17 +240,40 @@ def update_DB(data):
 		for data in result:
 			id_heater=data[0]
 		flg=1
-		fields="Heaters_id,Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_lenght,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
-		result=db.read_data("Physical_properties_heater",fields,"Heaters_id",id_heater)
-		for data in result:
-			for values in data:
-				dats.append(float(values))
 
-	return flg, dats	
+	return flg
 
-
-def update_figure():
+##Evaluate devices connected in the heater inputs
+def flag_inputs(device_connected,port_input,port_heater):
+	flag=""
 	
+	flags={
+	("Flujo","Fluido de entrada"):"Fj",
+	("Flujo","Vapor de entrada"):"Fv",
+
+	("Valvula","Fluido de entrada"):"Vlv",
+	("Valvula","Vapor de entrada"):"Vlv",
+
+	("Calentador","Fluido de entrada"):"Ht",
+	("Evaporador","Vapor de entrada"):"Evp"
+	}
+
+	flags = defaultdict(lambda: -1, flags)
+
+	flag=flags[device_connected[:-1],port_input]
+
+	if flag!=-1 and port_input==port_heater:
+		flag=flag+device_connected[len(device_connected)-1:]
+	else:
+		flag=""
+
+	return flag
+
+## Timer for solve heater model and plot heater data
+def update_figure():
+	global Graph
+	global create_stream
+
 	global timer
 	global time_exec
 	global model_value
@@ -464,57 +286,54 @@ def update_figure():
 	global tt
 	global u
 	global ht_model
-	global g_Juice_in
-	global g_Vapor_in
+	global flag_juice_in
+	global flag_vapor_in
 	global id_time
-	global id_time_2
-	vapor_data=[]
-	juice_data=[]
 
-	# ax=Graph.figure.get_axes()
+	global vapor_data
+	global juice_data
 
-	# ax[0].plot([0.5,1.0,1.5,2.0,2.5],[78.0,78.5,79.0,79.5,80.0],'r-',label="Tjout")
-	# Graph.draw()
-	# for x,line in enumerate(ax[0].lines): 
-	# 	del ax[0].lines[x]
-	# 	print(len(ax[0].lines))
-	# del ax[0].lines[0]
+	global Vapor_input
 
+	global fluid_in
+	global fluid_out
+	global vapor_in
+	global vapor_out
 
-	# print("VVGG: "+str(id_Heater))
-	
-			
-		# time_exec=db.read_data("TIME_EXEC","id,TIME",None,None)
 
 	if hasattr(Devices, 'array_connections'):
 
-		g_Juice_in=""
-		g_Vapor_in=""
+		flag_juice_in=""
+		flag_vapor_in=""
 		
 		if len(Devices.array_connections)>0:
 			for k, par_data in enumerate(Devices.array_connections):
 				if par_data[1]==nameDialog:
-					if par_data[0][:-1]=="Flujo":
-						if par_data[3]=="Fluido de entrada":
-							g_Juice_in="Fj"+par_data[0][len(par_data[0])-1:]
-						elif par_data[3]=="Vapor de entrada":
-							g_Vapor_in="Fv"+par_data[0][len(par_data[0])-1:]
-						else:
-							if g_Vapor_in!="":
-								g_Vapor_in=""
-							elif g_Juice_in!="":
-								g_Juice_in=""
+					device_connected=par_data[0]
+					this_device=par_data[1]
+					port_connected=par_data[2]
+					port_this_device=par_data[3]
+
+					for items in  Devices.panel_items:
+						for outputs in items.outputs:
+							if outputs.name_port==port_connected and outputs.name_block==device_connected :
+								port=outputs
+								if port_this_device=="Fluido de entrada":
+									if hasattr(port,"port_color"):
+										item_heater.outputs[0].typ=port.typ
+										item_heater.outputs[0].port_color=port.port_color
+										item_heater.outputs[0].setBrush(QBrush(port.port_color))
+									break
+					
+					if flag_vapor_in=="":
+						flag_vapor_in=flag_inputs(device_connected,"Vapor de entrada",port_this_device)
+					if flag_juice_in=="":
+						flag_juice_in=flag_inputs(device_connected,"Fluido de entrada",port_this_device)
 
 		else:
-			g_Juice_in=""
-			g_Vapor_in=""
+			flag_juice_in=""
+			flag_vapor_in=""
 
-
-	infile = open('time_exec.txt', 'r+')
-	data=infile.readlines()
-	infile.close()
-	
-	# time_exec=db.read_data("TIME_EXEC","id,TIME",None,None)
 	
 	if hasattr(Db_data, 'time_id'):
 
@@ -524,17 +343,13 @@ def update_figure():
 		
 		id_time=Db_data.time_id
 		time=Db_data.time
-		# print (str(id_time)+" *---* "+time)
-	# if len(time_exec)>0 and g_Juice_in!="" and g_Vapor_in!="" :
-		# new_id=False
-		# if int(list(time_exec[-1])[0])>int(id_time):
-		# 	new_id=True
-		# id_time=int(list(time_exec[-1])[0])
-		# time=str(list(time_exec[-1])[1])
-		
 
 		if time!="stop" and new_id==True:
-			print (str(id_time)+" *---* "+time)
+
+			vapor_data=[]
+			juice_data=[]
+
+			# print (str(id_time)+" *---* "+time)
 
 			if one_reload==1:
 				Graph.reload_toolbar(False)
@@ -545,227 +360,141 @@ def update_figure():
 			if len(result)>0:	
 				for data in result:
 					for i,values in enumerate(data):
-						if  str(data[0])==g_Juice_in and str(data[1])=="Juice":
+						if  str(data[0])==flag_juice_in and str(data[1])=="Juice":
 							if i>1:
 								juice_data.append(str(values))
-						elif str(data[0])==g_Vapor_in and str(data[1])=="Vapor":
+						elif str(data[0])==flag_vapor_in and str(data[1])=="Vapor":
 							if i>1:
 								vapor_data.append(str(values))
-			Mjin=float(juice_data[0])	
-			Tjin=float(juice_data[1])
-			Bjin=float(juice_data[2])
-			Zjin=float(juice_data[3])
-			SolIn=float(juice_data[4])
-			pHjin=float(juice_data[5])
-			Pjin=float(juice_data[6])
-			juice.update(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
 
-			Mvin=float(vapor_data[0])
-			Tvin=float(vapor_data[1])
-			Pvin=float(vapor_data[6])
-			sat=float(vapor_data[7])
-			if sat==1.0:
-				vapor.update(Mvin,Pvin,None)
+			id_valve=0
+			result=db.read_data("Valves","id","Name",flag_vapor_in)
+			if len(result)>0:
+				for data in result:
+					id_valve=data[0]
+				fields="Valves_id,Out_flow,Out_temperature,Out_brix,Out_purity,Out_insoluble_solids,Out_pH,Out_pressure,Out_saturated_vapor"
+				result=db.read_data("Outputs_valve",fields,"LAST","Valves_id")
+				if len(result)>0:	
+					for data in result:
+						for i,values in enumerate(data):
+							if  str(data[0])==str(id_valve):
+								if i>0:
+									vapor_data.append(str(values))
 
-			u_mod[8]=juice.Fj
-			u_mod[9]=juice.Tj
-			u_mod[10]=juice.Bj
-			u_mod[11]=juice.Zj
-			u_mod[12]=vapor.Pv
+			if len(juice_data)>0 and len(vapor_data)>0:
+				Mjin=float(juice_data[0])	
+				Tjin=float(juice_data[1])
+				Bjin=float(juice_data[2])
+				Zjin=float(juice_data[3])
+				SolIn=float(juice_data[4])
+				pHjin=float(juice_data[5])
+				Pjin=float(juice_data[6])
 
-	# 		# print(u_mod[9])
-			tt.append(float(time))
-			
-			ht_model.update_model([tt[-2],tt[-1]],u_mod)
-
-			model_value.append(ht_model.Tjout)
-			
-			split_model_data_n1=[tt[-1],model_value[-1]]
-
-			Update_data(True)
-
-			ax=Graph.figure.get_axes()
-			ax[0].plot(tt,model_value,'r-',label="Tjout")
-			Graph.set_legends()
-			Graph.draw()
-
-			# ax[0].legend_.remove()
-			for x,line in enumerate(ax[0].lines): 
-				del ax[0].lines[x]
 				
-				################
-			# Graph.axes.cla()
-			
-			# ax=Graph.figure.get_axes()
-			# ax[0].plot.cla()
-			# ax[0].plot([0.5,1.0,1.5,2.0,2.5],[78.0,78.5,79.0,79.5,80.0],'r-',label="Tjout")
-			# print(str(len(ax)))
-			# ax[0].grid(True)
-			# gridlines = ax[0].get_xgridlines() + ax[0].get_ygridlines()
-			# for line in gridlines:
-			# 	line.set_linestyle('-.')
-			# ax[0].set_xlabel('Time (min)',fontsize=11)
-			# ax[0].set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+				Mvin=float(vapor_data[0])
+				Tvin=float(vapor_data[1])
+				Pvin=float(vapor_data[6])
+				sat=float(vapor_data[7])
 
-	# 		for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-	# 			if ax_i==0:
-	# 				ax.grid(True)
-	# 				gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-	# 				for line in gridlines:
-	# 					line.set_linestyle('-.')
-	# 				ax.set_xlabel('Time (min)',fontsize=11)
-	# 				ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
+				if create_stream==1:
+					#Fluid					
+					fluid_change=fluid_in.comparation(juice_data)
+					if fluid_change==True:
+						# print("cambio jugo")
+						fluid_out.update(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
+						fluid_in.update(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
+
+					#Vapor
+					vapor_change=vapor_in.comparation(vapor_data)
+					if vapor_change==True:
+						# print("cambio vapor"+str(Mvin))
+						if sat==1.0:
+							vapor_in.update(Mvin,Pvin,None)
+							vapor_out.update(Mvin,Pvin,None)
+
+				else:
+					#Fluid
+					fluid_in=juice(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
+					fluid_out=juice(Mjin,Pjin,Tjin,Bjin,Zjin,SolIn,pHjin)
+					#Vapor
+					if sat==1.0:
+						vapor_in=vapor(Mvin,Pvin,None)
+						vapor_out=vapor(Mvin,Pvin,None)
+					create_stream=1
+				
+				tt.append(float(time))
+				
+				ht_model.in_out(fluid_in, fluid_out, vapor_in, vapor_out)
+				fluid_in, fluid_out, vapor_in, vapor_out = ht_model.solve([tt[-2],tt[-1]])
+				model_value.append(fluid_out.Tj)
+				
+				split_model_data_n1=[tt[-1],model_value[-1]]
+
+				write_process_values()
+				write_outputs_heater()
+				# print("len: "+str(len(tt))+" "+str(len(model_value)))
+				if len(tt)==len(model_value):
+					Graph.draw()
+					ax=Graph.figure.get_axes()
+
+					for x,line in enumerate(ax[0].lines): 
+						del ax[0].lines[x]
+
 					
-	# 				ax.plot(tt,model_value,'r-',label="Tjout")
-	# 				Graph.set_legends()
-	# 				Graph.draw()
+					ax[0].plot(tt,model_value,'r-',label="Tjout")
+					Graph.set_legends()
+					Graph.draw()
+					
+				one_time=1
 
-	# 				break
-
-
-
-	# # if len(data)>1 and g_Juice_in!="":
-	# # 	if data[-1]!="stop" and data[-2]!="stop":
-	# 		# if one_reload==1:
-	# 		# 	Graph.reload_toolbar(False)
-	# 		# 	print"Ajam"
-	# 		# 	one_reload=0
-				
-	# 		# # model_data_n0=data[-2].strip()
-	# 		# # split_model_data_n0=model_data_n0.split("\t")
-	# 		# # time_exec.append(float(split_model_data_n0[0]))
-	# 		# # model_value.append(round(float(split_model_data_n0[1]),3))
-
-	# 		# ##Opcion1 de lectura de tiempo
-	# 		# model_data_n1=data[-1].strip()
-	# 		# split_model_data_n1=model_data_n1.split("\t")
-	# 		# time_exec.append(float(time))
-
-	# 		# output_time=tt[len(tt)-1]
-	# 		# output_model_value=yt[len(tt)-1]
-	# 		# db.insert_data(cursor_model,"OUTPUTS_HEATER",["Out_fluid_temperature","id_Time_exec"],[output_model_value,id_time])
-
-	# 		# # model_value.append(round(float(split_model_data_n1[1]),3))
-	# 		# model_value=yt
-
-	# 		# ##Opcion2 de lectura de tiempo
-	# 		# # time_exec=[]
-	# 		# # model_value=[]
-
-
-	# 		# plot_time=time_exec[len(time_exec)-2:len(time_exec)]
-	# 		# plot_model=model_value[len(model_value)-2:len(model_value)]
-			
-	# 		# if InFluid_Flow.text()!='':
-			
-	# 		# Graph.plot_select_signal()
-	# 		#print(str(plot_time)+" -*- "+str(plot_model))
-
-	# 		# Graph.axes.cla()
-	# 		# for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-	# 		# 	if ax_i==0:
-	# 		# 		ax.grid(True)
-	# 		# 		gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-	# 		# 		for line in gridlines:
-	# 		# 			line.set_linestyle('-.')
-	# 		# 		ax.set_xlabel('Time (min)',fontsize=11)
-	# 		# 		ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-	# 		# 		ax.plot(time_exec,model_value,'r-',label="Tjout")
-	# 		# 		Graph.set_legends()
-	# 		# 		Graph.draw()
-	# 		# 		Update_data(True)
-
-	# 		# input_heat = open('Blocks_data.txt', 'r+')
-	# 		# dts=input_heat.readlines()
-	# 		# input_heat.close()
-	# 		# for i in dts:
-	# 		# 	info=(i.strip()).split("\t")
-	# 		# 	if len(info)>1:
-	# 		# 		flag=info[0]
-	# 		# 		if flag[:3]==g_Juice_in:
-	# 		# 			Flow_in_array.append(float(info[1]))
-
-	# 		# extra_signals=[]
-	# 		# extra_signals.append(Flow_in_array)
-
-	# 		# Graph.update_table_signals(time_exec,extra_signals)
 
 		elif one_time==1 and time=="stop":
-			print("AQQQQQQQQQQQQQUUIIII")
 			# time_exec=[]
 			tt=[0.0]
 			model_value=[Tjout_ini]
-			# Flow_in_array=[]
-			# Graph.axes.cla()
 			
-			# infile = open('time_exec.txt', 'r+')
-			# data=infile.readlines()
-			# if len(data)>1:
-			# 	for values in data:
-			# 		info=(values.strip()).split("\t")
-			# 		if values!="stop":
-			# 			time_exec.append(float(info[0]))
-			# 			model_value.append(float(info[1]))
-			time_exec=db.read_data("TIME_EXEC","TIME",None,None)
-			time=list(time_exec)
-			for data in time:
-				if data[0]!="stop":
-					tt.append(float(data[0]))
-			output=db.read_data("OUTPUTS_HEATER","Out_fluid_temperature","Heaters_id",id_Heater)
+			ids_in_device=[]
+			output=db.read_data("OUTPUTS_HEATER","Out_fluid_temperature,Time_exec_id","Heaters_id",id_Heater)
 			Tout=list(output)
 			for data in Tout:
 				model_value.append(float(data[0]))
+				ids_in_device.append(data[1])
 
+			result=db.read_data("TIME_EXEC","id,TIME",None,None)
+			result=list(result)
+			ids_result=[]
+			for k in range(0,len(result)):
+				ids_result.append(result[k][0])
+				result[k]=str(result[k][1])
 
-			print (str(len(tt)))
-			print (str(len(model_value)))
+			for ids in ids_in_device:
+				for dato,id_result in zip(result,ids_result):
+					if ids==id_result and dato!="stop":
+						tt.append(float(dato))
+
 
 			ax=Graph.figure.get_axes()
-			ax[0].plot(tt,model_value,'r-',label="Tjout")
-			
-			# for ax_i,ax in enumerate(Graph.figure.get_axes()): 
-			# 	if ax_i==0:
-			# 		ax.grid(True)
-			# 		gridlines = ax.get_xgridlines() + ax.get_ygridlines()
-			# 		for line in gridlines:
-			# 			line.set_linestyle('-.')
-			# 		ax.set_xlabel('Time (min)',fontsize=11)
-			# 		ax.set_ylabel(_translate("Dialog", "Tjout [°C]", None),fontsize=11)
-			# 		ax.plot(tt,model_value,'r-',label="Tjout")
+			if len(tt)==len(model_value):						
+				for x,line in enumerate(ax[0].lines): 
+						del ax[0].lines[x]
 
-			
-
-
-			# input_heat = open('Blocks_data.txt', 'r+')
-			# dts=input_heat.readlines()
-			# input_heat.close()
-			# for i in dts:
-			# 	info=(i.strip()).split("\t")
-			# 	if len(info)>1:
-			# 		flag=info[0]
-			# 		if flag[:3]==g_Juice_in:
-			# 			for k in time_exec:
-			# 				Flow_in_array.append(float(info[1]))
-			# extra_signals=[]
-			# extra_signals.append(Flow_in_array)
-			# Graph.update_table_signals_stop_mode(time_exec,extra_signals)
+				ax[0].plot(tt,model_value,'r-',label="Tjout")
+				Graph.set_legends()
+				Graph.draw()
 
 			Enable_cursor=True
 			Graph.reload_toolbar(Enable_cursor)
-			Update_data(False)
+			write_process_values()
 			
 			time_exec=[]
-			model_value=[]
-			tt=[]
+			model_value=[float(Tjout_ini)]
+			tt=[0.0]
+			ht_model.Tjout=float(Tjout_ini)
+
 			Flow_in_array=[]
 			one_time=0
 			one_reload=1
-
-			Graph.set_legends()
-			Graph.draw()
-				
-
-
+			create_stream=0
 
 ##-- Class for confirm parameters --## 
 class window_confirm_param(QDialog):
@@ -784,8 +513,14 @@ class window_confirm_param(QDialog):
 			self.button.clicked.connect(self.OK)
 			self.button2.clicked.connect(self.NO)
 		def OK(self):
-			global juice
-			global vapor
+			global create_stream
+
+			global fluid_in
+			global fluid_out
+			global vapor_in
+			global vapor_out
+
+
 			global yb_l
 			global yt
 			global tt
@@ -797,7 +532,7 @@ class window_confirm_param(QDialog):
 
 			Np=Pipe_x_Step.text()
 			Nst=N_steps.text()
-			Lp=Lenght_Pipe.text()
+			Lp=Length_Pipe.text()
 			Ip=Pipe_Thickness.text()
 			Dosp=Ext_Pipe_Diameter.text()
 			Ep=Pipe_Rough.text()
@@ -807,16 +542,15 @@ class window_confirm_param(QDialog):
 
 			flag=re.sub('([a-zA-Z]+)', "", nameDialog)
 
-			upd, change_values=update_DB("Ht"+flag)
-			fields="Heaters_id,Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_lenght,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
+			upd =exist_initialization("Ht"+flag)
+			fields="Heaters_id,Pipe_x_Step,N_steps,Ext_pipe_diameter,Pipe_length,Pipe_thickness,Pipe_rough,Scalling_coeff,Operation_time"
+			
 			if upd==0:
 				outfile = open('Blocks_data.txt', 'a')
 				outfile.write("\n"+"Ht"+flag+"\t"+Np+"\t"+Nst+"\t"+Dosp+"\t"+Lp+"\t"+Ip+"\t"+Ep+"\t"+Gf+"\t"+Op+"\t"+Tjout_ini+"\t"+str(SnT))
-				outfile.close()
+				outfile.close()			
 				
-
-				
-				db.insert_data("Heaters","Name,_Type,Tjout_init",["Ht"+flag,Heater_type,float(Tjout_ini)])
+				db.insert_data("Heaters","Name,_Type,Tjout_init",["Ht"+flag,str(Heater_type),float(Tjout_ini)])
 				result=db.read_data("Heaters","id","Name","Ht"+flag)
 				if len(result)>0:
 					for data in result:
@@ -824,32 +558,28 @@ class window_confirm_param(QDialog):
 				values=[float(id_Heater),float(Np),float(Nst),float(Dosp),float(Lp),float(Ip),float(Ep),float(Gf),float(Op)]
 				db.insert_data("Physical_properties_heater",fields,values)
 			else:
+
 				result=db.read_data("Heaters","id","Name","Ht"+flag)
 				if len(result)>0:
 					for data in result:
 						id_Heater=data[0]
+
+				db.update_data("Heaters",["_Type","Tjout_init"],[str(Heater_type),float(Tjout_ini)],["id"],[float(id_Heater)])
+
 				values=[float(id_Heater),float(Np),float(Nst),float(Dosp),float(Lp),float(Ip),float(Ep),float(Gf),float(Op)]
-				fields=["Heaters_id","Pipe_x_Step","N_steps","Ext_pipe_diameter","Pipe_lenght","Pipe_thickness","Pipe_rough","Scalling_coeff","Operation_time"]
-				db.update_data("Physical_properties_heater",fields,values,"Heaters_id",float(id_Heater))
+				fields=["Heaters_id","Pipe_x_Step","N_steps","Ext_pipe_diameter","Pipe_length","Pipe_thickness","Pipe_rough","Scalling_coeff","Operation_time"]
+				db.update_data("Physical_properties_heater",fields,values,["Heaters_id"],[float(id_Heater)])
 
-			print "OK PARAMETERS"
-			if hasattr(juice,'Mj'):
-				juice.update(103,410*(10**3),77, 0.15,0.87,0.01,8)
-			else:
-				juice=juice(103,410*(10**3),77, 0.15,0.87,0.01,8)
-			if hasattr(vapor,'Mv'):
-				vapor.update(105,134.02*(10**3),None)
-			else:
-				vapor=vapor(105,134.02*(10**3),None)
-
+			
 			yb_l=[float(Tjout_ini)]
 			yt=[0.0,float(Tjout_ini)]
 			tt=[0.0]
 			end_tt=[0.0,Ts]
-			u_mod=[float(Np), float(Nst), float(Dosp), float(Lp), float(Ip), float(Ep), float(Gf), float(Op), juice.Fj, juice.Tj, juice.Bj, juice.Zj,vapor.Pv]
-			ht_model=heater_shell_tube(end_tt,u_mod,float(Tjout_ini))
+
+			ht_model=heater_shell_tube(float(Np), float(Nst), float(Dosp), float(Lp), float(Ip), float(Ep), float(Gf), float(Op),float(Tjout_ini))
 			model_value.append(float(Tjout_ini))
 
+			create_stream=0
 			self.close()
 			Resultado=QtGui.QDialog()
 			QtGui.QMessageBox.information(Resultado, 
@@ -859,14 +589,16 @@ class window_confirm_param(QDialog):
 		def NO(self):
 			self.close()
 
+## Dialog box class
 class Ui_Dialog(object):
 
+	#Evaluate all data for correct heater initialization
 	def confirm_param(self):
 		global confirm
 		global Resultado
 		global pd
 
-		confirm=((len(Pipe_x_Step.text())>0)and(len(N_steps.text())>0)and(len(Lenght_Pipe.text())>0)and(len(Pipe_Thickness.text())>0)
+		confirm=((len(Pipe_x_Step.text())>0)and(len(N_steps.text())>0)and(len(Length_Pipe.text())>0)and(len(Pipe_Thickness.text())>0)
 		and(len(Ext_Pipe_Diameter.text())>0)and(len(Pipe_Rough.text())>0)and(len(Scalling_Coeff.text())>0)and(len(Time_Op.text())>0)and(len(Initial_Out_Temp.text())>0))
 
 		if Heater_type!="" and confirm==True:
@@ -879,12 +611,13 @@ class Ui_Dialog(object):
 			'Advertencia',
 			"Falta por ingresar algun dato.",QtGui.QMessageBox.Ok)
 
+	#Objects in dialog box
 	def setupUi(self,name,ts,item,Data_Base,Dialog):
 		##Heater properties
 		#Physical properties
 		global Pipe_x_Step
 		global N_steps
-		global Lenght_Pipe
+		global Length_Pipe
 		global Pipe_Thickness
 		global Ext_Pipe_Diameter
 		global Pipe_Rough
@@ -934,6 +667,7 @@ class Ui_Dialog(object):
 		global Heat_tab_3
 		global verticalLayoutWidget
 		global db
+		global item_heater
 		global title_name
 
 
@@ -941,6 +675,7 @@ class Ui_Dialog(object):
 		Ts=ts
 		Dialog_window=Dialog
 		db=Data_Base
+		item_heater=item
 		title_name=str(item.label.toPlainText())
 
 
@@ -1163,18 +898,18 @@ class Ui_Dialog(object):
 		sizePolicy.setHeightForWidth(Ext_Pipe_Diameter.sizePolicy().hasHeightForWidth())
 		Ext_Pipe_Diameter.setSizePolicy(sizePolicy)
 		#Lenght of pipes
-		self.label_Lenght_Pipe = QtGui.QLabel(self.Physical_properties_GrBx)
-		self.label_Lenght_Pipe.setGeometry(QtCore.QRect(7, 41, 121, 16))
-		self.label_Lenght_Pipe.setObjectName(_fromUtf8("label_Lenght_Pipe"))
-		sizePolicy_label.setHeightForWidth(self.label_Lenght_Pipe.sizePolicy().hasHeightForWidth())
-		self.label_Lenght_Pipe.setSizePolicy(sizePolicy_label)
-		Lenght_Pipe = QtGui.QLineEdit(self.Physical_properties_GrBx)
-		Lenght_Pipe.setGeometry(QtCore.QRect(143, 40, 41, 20))
-		Lenght_Pipe.setObjectName(_fromUtf8("Lenght_Pipe"))
-		Lenght_Pipe.setText("6.57")
-		Validation_text_field.NumValidator(Lenght_Pipe)
-		sizePolicy.setHeightForWidth(Lenght_Pipe.sizePolicy().hasHeightForWidth())
-		Lenght_Pipe.setSizePolicy(sizePolicy)
+		self.label_Length_Pipe = QtGui.QLabel(self.Physical_properties_GrBx)
+		self.label_Length_Pipe.setGeometry(QtCore.QRect(7, 41, 121, 16))
+		self.label_Length_Pipe.setObjectName(_fromUtf8("label_Length_Pipe"))
+		sizePolicy_label.setHeightForWidth(self.label_Length_Pipe.sizePolicy().hasHeightForWidth())
+		self.label_Length_Pipe.setSizePolicy(sizePolicy_label)
+		Length_Pipe = QtGui.QLineEdit(self.Physical_properties_GrBx)
+		Length_Pipe.setGeometry(QtCore.QRect(143, 40, 41, 20))
+		Length_Pipe.setObjectName(_fromUtf8("Length_Pipe"))
+		Length_Pipe.setText("6.57")
+		Validation_text_field.NumValidator(Length_Pipe)
+		sizePolicy.setHeightForWidth(Length_Pipe.sizePolicy().hasHeightForWidth())
+		Length_Pipe.setSizePolicy(sizePolicy)
 		#Pipes for steps
 		self.label_Pipe_x_Step = QtGui.QLabel(self.Physical_properties_GrBx)
 		self.label_Pipe_x_Step.setGeometry(QtCore.QRect(7, 108, 121, 16))
@@ -1261,8 +996,8 @@ class Ui_Dialog(object):
 
 		self.gridLayout_Physical_properties.addWidget(self.label_Ext_Pipe_Diameter, 0, 0, 1, 1)
 		self.gridLayout_Physical_properties.addWidget(Ext_Pipe_Diameter, 0, 1, 1, 1)
-		self.gridLayout_Physical_properties.addWidget(self.label_Lenght_Pipe, 1, 0, 1, 1)
-		self.gridLayout_Physical_properties.addWidget(Lenght_Pipe, 1, 1, 1, 1)
+		self.gridLayout_Physical_properties.addWidget(self.label_Length_Pipe, 1, 0, 1, 1)
+		self.gridLayout_Physical_properties.addWidget(Length_Pipe, 1, 1, 1, 1)
 		self.gridLayout_Physical_properties.addWidget(self.label_Pipe_Thickness, 2, 0, 1, 1)
 		self.gridLayout_Physical_properties.addWidget(Pipe_Thickness, 2, 1, 1, 1)
 		self.gridLayout_Physical_properties.addWidget(self.label_Pipe_Rough, 3, 0, 1, 1)
@@ -1668,10 +1403,10 @@ class Ui_Dialog(object):
 		self.V_layout_Heat_tab_3.addWidget(self.Widget_layout_Output_variable)
 		self.V_layout_Heat_tab_3.addWidget(verticalLayoutWidget)
 
-
+		self.tabWidget_Heater.addTab(Heat_tab_3, _fromUtf8(""))
+	
 	##----Selector of Heat type----##
 		#Selectable list
-		self.tabWidget_Heater.addTab(Heat_tab_3, _fromUtf8(""))
 		Selector_Heater_type = QtGui.QComboBox(Dialog)
 		Selector_Heater_type.setGeometry(QtCore.QRect(7, 6, 411, 22))
 		Selector_Heater_type.setObjectName(_fromUtf8("Selector_Heater_type"))
@@ -1691,6 +1426,7 @@ class Ui_Dialog(object):
 
 		Update_window()
 
+	# Evaluate change in heater type
 	def selection_HeaterType(self):
 		global SnT
 		global Heater_type
@@ -1702,26 +1438,33 @@ class Ui_Dialog(object):
 		else:
 			SnT=0.0
 
+	# Timer initialization
+	def Timer_graph(self):
+		# global timer
+		self.timer = QtCore.QTimer(Dialog_window)
+		self.timer.timeout.connect(update_figure)
+		self.timer.start(Ts*100)#Ts*1000-300)
 
+	## Labels set text
 	def retranslateUi(self, Dialog):
 		Dialog.setWindowTitle(_translate("Dialog", "Parametros "+title_name, None))
 		self.Initial_conditions_GrBx.setTitle(_translate("Dialog", "Condiciones iniciales", None))
 		self.label_Initial_Out_Temp.setText(_translate("Dialog", "Temperatura del jugo \n"
-"de salida [°C]", None))
+		"de salida [°C]", None))
 		self.label_Type_Material.setText(_translate("Dialog", "Tipo de material", None))
 		self.OKButton_Heat.setText(_translate("Dialog", "Aceptar", None))
 		self.Calculated_properties_GrBx.setTitle(_translate("Dialog", "Parametros calculados", None))
 		self.label_Juice_Velocity.setText(_translate("Dialog", "Velocidad del jugo [m/s]", None))
 		self.label_Scalling_Resist.setText(_translate("Dialog", "Resistencia incrustaciones \n"
-"[m2.°K/W]", None))
+		"[m2.°K/W]", None))
 		self.label_Outside_U.setText(_translate("Dialog", "U interno  [W/(m2.°K)]", None))
 		self.label_Inside_U.setText(_translate("Dialog", "U externo    [W/(m2.°K)]", None))
 		self.label_Overall_U.setText(_translate("Dialog", "U global  [W/(m2.°K)]", None))
 		self.label_Heat_Area.setText(_translate("Dialog", "Área de intercambio de \n"
-"calor [m2]", None))
+		"calor [m2]", None))
 		self.Physical_properties_GrBx.setTitle(_translate("Dialog", "Propiedades físicas", None))
 		self.label_Ext_Pipe_Diameter.setText(_translate("Dialog", "Diámetro externo tubo[in]", None))
-		self.label_Lenght_Pipe.setText(_translate("Dialog", "Longitud tubo [m]", None))
+		self.label_Length_Pipe.setText(_translate("Dialog", "Longitud tubo [m]", None))
 		self.label_Pipe_x_Step.setText(_translate("Dialog", "N° tubos por paso", None))
 		self.label_N_steps.setText(_translate("Dialog", "N° pasos", None))
 		self.label_Time_Op.setText(_translate("Dialog", "Tiempo operación [h]", None))
@@ -1758,44 +1501,7 @@ class Ui_Dialog(object):
 		self.label_Temp_Output_variable.setText(_translate("Dialog", "Temperatura de jugo de salida:", None))
 		self.tabWidget_Heater.setTabText(self.tabWidget_Heater.indexOf(Heat_tab_3), _translate("Dialog", "Gráfica", None))
 
-	def Timer_graph(self):
-		# global timer
-		self.timer = QtCore.QTimer(Dialog_window)
-		self.timer.timeout.connect(update_figure)
-		self.timer.start(Ts*100)#Ts*1000-300)
 
-	def closeEvent(self, event):
-		box = QtGui.QMessageBox()
-		box.setIcon(QtGui.QMessageBox.Question)
-		box.setWindowTitle('Cerrar')
-		box.setText(_translate("MessBox","¿ Esta seguro que desea cerrar el simulador ?", None))
-		box.setStandardButtons(QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
-		buttonY = box.button(QtGui.QMessageBox.Yes)
-		buttonY.setText('Si')
-		buttonN = box.button(QtGui.QMessageBox.No)
-		buttonN.setText('No')
-		box.exec_()
-		if  box.clickedButton()==buttonY:
-			print("UAJA")
-			event.accept()
 
-# class MyDynamicMplCanvas(Graph):
-# 	"""A canvas that updates itself every second with a new plot."""
-# 	def __init__(self, *args, **kwargs):
-# 		Graph.__init__(self, *args, **kwargs)
-# 		#self.axes.yaxis.set_label_coords(0.0, 1.03)
-# 		#self.axes.xaxis.set_label_coords(1.03, 0.0)
-		
-# 		timer = QtCore.QTimer(self)
-# 		timer.timeout.connect(self.update_figure)
-# 		timer.start(Ts*1000)
 
-if __name__ == "__main__":
-	import sys
-	app = QtGui.QApplication(sys.argv)
-	Dialog = QtGui.QWidget()
-	ui = Ui_Dialog()
-	ui.setupUi("Calentador",0.5,"Fj1","Fv2",Dialog)
-	Dialog.show()
-	sys.exit(app.exec_())
 

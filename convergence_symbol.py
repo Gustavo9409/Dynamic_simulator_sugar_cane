@@ -36,7 +36,7 @@ class BlockItem_Convergence(QGraphicsRectItem):
 		# Label:
 		self.name_block=name_block
 		self.label = QGraphicsTextItem("", self)
-		# self.label.setDefaultTextColor(QtGui.QColor('red'))
+		self.label.setDefaultTextColor(QtGui.QColor('red'))
 
 		# Inputs and outputs of the block:
 		from Dynamic_simulator import PortItem
@@ -72,11 +72,11 @@ class BlockItem_Convergence(QGraphicsRectItem):
 		 w = 40
 		self.setRect(0.0, 0.0, w, h)
 		# center label:
-		# rect = self.label.boundingRect()
-		# lw, lh = rect.width(), rect.height()
-		# lx = (w - lw) / 2
-		# ly = (h - lh) / 2
-		# self.label.setPos(lx, ly)
+		rect = self.label.boundingRect()
+		lw, lh = rect.width(), rect.height()
+		lx = (w - lw) / 2
+		ly = (h)
+		self.label.setPos(lx+2, ly)
 		# Update port positions:
 		self.inputs[0].setPos(-4, (h / 4)+3)
 		self.inputs[0].block_pos=[w,-4,h,(h / 4)+3]

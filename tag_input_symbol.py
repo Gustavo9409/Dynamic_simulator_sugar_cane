@@ -8,6 +8,7 @@ from PyQt4.QtCore import *
 #
 import sys
 import os
+import re
 dir_script=str(os.getcwd())
 
 class BlockItem_tag_input(QGraphicsRectItem):
@@ -34,7 +35,11 @@ class BlockItem_tag_input(QGraphicsRectItem):
 		self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
 		# Label:
 		self.name_block=name_block
-		self.label = QGraphicsTextItem("  TAG  ", self)
+		
+		aux=re.sub('([a-zA-Z]+)', "", self.name_block)
+		aux=re.sub('[(){}<>]', "", aux)
+
+		self.label = QGraphicsTextItem(" TAG"+aux, self)
 		self.label.setDefaultTextColor(QtGui.QColor('red'))
 		self.label.setTextInteractionFlags((QtCore.Qt.TextEditable))
 		# Inputs and outputs of the block:

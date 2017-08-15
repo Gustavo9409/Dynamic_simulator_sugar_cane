@@ -24,8 +24,8 @@ class BlockItem_Donnelly(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Donnelly, self).__init__(parent)
 		self.editor=edit
-		w = 151.0
-		h = 120.0
+		w = 185.0
+		h = 146.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\Donnelly.png"); 
@@ -79,16 +79,16 @@ class BlockItem_Donnelly(QGraphicsRectItem):
 		self.label.setPos(lx+2, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(0, h-11)
-		self.inputs[0].block_pos=[w,0,h,h-11]
+		self.inputs[0].setPos(0, h-12)
+		self.inputs[0].block_pos=[w,0,h,h-12]
 
-		self.inputs[1].setPos((w/2)-26, (h/2)+3)
-		self.inputs[1].block_pos=[w,(w/2)-26,h, (h/2)+3]
+		self.inputs[1].setPos((w/2)-30,0)# (h/2)+3)
+		self.inputs[1].block_pos=[w,(w/2)-30,h,0]# (h/2)+3]
 
-		self.inputs[2].setPos(w-39, 0)
-		self.inputs[2].block_pos=[w,w-39,h, 0]
+		self.inputs[2].setPos(w-46, 0)
+		self.inputs[2].block_pos=[w,w-46,h, 0]
 
-		self.outputs[0].setPos(w, 36)
-		self.outputs[0].block_pos=[w,w,h, 36]
+		self.outputs[0].setPos(w+2, 43)
+		self.outputs[0].block_pos=[w,w+2,h, 43]
 
 		return w, h

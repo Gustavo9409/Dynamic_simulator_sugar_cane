@@ -24,8 +24,8 @@ class BlockItem_Centrifuge(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Centrifuge, self).__init__(parent)
 		self.editor=edit
-		w = 165.0
-		h = 152.0
+		w = 125.0
+		h = 114.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\Centrifuge.png"); 
@@ -80,19 +80,19 @@ class BlockItem_Centrifuge(QGraphicsRectItem):
 		self.label.setPos(lx, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos((w/2)+29, 0)
-		self.inputs[0].block_pos=[w,(w/2)+29,h, 0]
+		self.inputs[0].setPos((w/2)+23, 0)
+		self.inputs[0].block_pos=[w,(w/2)+23,h, 0]
 
-		self.inputs[1].setPos(w/2, 0)
-		self.inputs[1].block_pos=[w,w/2,h,0]
+		self.inputs[1].setPos((w/2)+1, 0)
+		self.inputs[1].block_pos=[w,(w/2)+1,h,0]
 
-		self.inputs[2].setPos(0, 40)
-		self.inputs[2].block_pos=[w,0,h,40]
+		self.inputs[2].setPos(0, 30)
+		self.inputs[2].block_pos=[w,0,h,30]
 
-		self.outputs[0].setPos(w,41)
-		self.outputs[0].block_pos=[w,w,h,41]
+		self.outputs[0].setPos(w+2,31)
+		self.outputs[0].block_pos=[w,w+2,h,31]
 
-		self.outputs[1].setPos(w/2, h)
-		self.outputs[1].block_pos=[w,w/2,h,h]
+		self.outputs[1].setPos((w/2)+1, h+2)
+		self.outputs[1].block_pos=[w,(w/2)+1,h,h+2]
 
 		return w, h

@@ -24,8 +24,8 @@ class BlockItem_Flash_Tank(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Flash_Tank, self).__init__(parent)
 		self.editor=edit
-		w = 64.0
-		h = 150.0
+		w = 72.0
+		h = 95.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
 		Img= QtGui.QImage(dir_script+"\Images\Flash.png"); 
@@ -41,9 +41,9 @@ class BlockItem_Flash_Tank(QGraphicsRectItem):
 		from Dynamic_simulator import PortItem
 		
 		self.inputs = []
-		self.inputs.append(PortItem('fluido de entrada','in','none',str(name_block),self.editor,None, self) )
+		self.inputs.append(PortItem('Fluido de entrada','in','none',str(name_block),self.editor,None, self) )
 		self.outputs = []
-		self.outputs.append(PortItem('fluido de salida','out','none',str(name_block),self.editor, None,self) )
+		self.outputs.append(PortItem('Fluido de salida','out','none',str(name_block),self.editor, None,self) )
 		self.outputs.append(PortItem('Vapor de salida','out','vapor',str(name_block),self.editor,None, self) )
 		# Update size:
 		self.changeSize(w, h)
@@ -78,11 +78,11 @@ class BlockItem_Flash_Tank(QGraphicsRectItem):
 		self.label.setPos(lx+2, ly)
 		# Update port positions:
 		
-		self.inputs[0].setPos(0, 37)
-		self.inputs[0].block_pos=[w,0,h,37]
+		self.inputs[0].setPos(0, 28)
+		self.inputs[0].block_pos=[w,0,h,28]
 
-		self.outputs[0].setPos((w/2)+8, h)
-		self.outputs[0].block_pos=[w,(w/2)+8,h, h]
+		self.outputs[0].setPos((w/2)+10, h+2)
+		self.outputs[0].block_pos=[w,(w/2)+10,h, h+2]
 
 		self.outputs[1].setPos((w/2)+8, 0)
 		self.outputs[1].block_pos=[w,(w/2)+8,h, 0]

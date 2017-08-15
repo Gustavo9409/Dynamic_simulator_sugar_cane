@@ -11,7 +11,7 @@ import sys
 import os
 dir_script=str(os.getcwd())
 
-class BlockItem_Cristalizer(QGraphicsRectItem):
+class BlockItem_Generator(QGraphicsRectItem):
 	""" 
 	Represents a block in the diagram
 	Has an x and y and width and height
@@ -22,13 +22,13 @@ class BlockItem_Cristalizer(QGraphicsRectItem):
 	- description
 	"""
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
-		super(BlockItem_Cristalizer, self).__init__(parent)
+		super(BlockItem_Generator, self).__init__(parent)
 		self.editor=edit
-		w = 157.0
-		h = 180.0
+		w = 125.0
+		h = 78.0
 		# Properties of the rectangle:
 		self.setPen(QtGui.QPen(Qt.NoPen)) 
-		Img= QtGui.QImage(dir_script+"\Images\Cristallizer.png"); 
+		Img= QtGui.QImage(dir_script+"\Images\Generator.png"); 
 		self.setBrush(QtGui.QBrush(Img))
 		self.setFlags(self.ItemIsSelectable | self.ItemIsMovable)
 		self.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
@@ -41,13 +41,9 @@ class BlockItem_Cristalizer(QGraphicsRectItem):
 		from Dynamic_simulator import PortItem
 		
 		self.inputs = []
-		self.inputs.append(PortItem('Semilla de entrada','in','seed',str(name_block),self.editor,None, self) )
-		self.inputs.append(PortItem('Vapor de entrada','in','vapor',str(name_block),self.editor,None, self) )
-		self.inputs.append(PortItem('Alimentacion de entrada','in','juice',str(name_block),self.editor,None, self) )
+		self.inputs.append(PortItem('Energia mecanica','in','mecanic',str(name_block),self.editor,None, self) )
 		self.outputs = []
-		self.outputs.append(PortItem("Vapor de salida",'out','vapor',str(name_block),self.editor,None, self) )
-		self.outputs.append(PortItem('Descarga','out','juice',str(name_block),self.editor,None, self) )
-		self.outputs.append(PortItem("Vapor condensado",'out','condensed',str(name_block),self.editor,None, self) )
+		self.outputs.append(PortItem('Energia electrica','out','electric',str(name_block),self.editor,None, self) )
 		# Update size:
 		self.changeSize(w, h)
 	# def editParameters(self):
@@ -77,26 +73,14 @@ class BlockItem_Cristalizer(QGraphicsRectItem):
 		rect = self.label.boundingRect()
 		lw, lh = rect.width(), rect.height()
 		lx = (w - lw) / 2
-		ly = (h-20)
-		self.label.setPos(lx+50, ly)
+		ly = (h)
+		self.label.setPos(lx+2, ly)
 		# Update port positions:
 		
 		self.inputs[0].setPos(0, (h/2)+2)
-		self.inputs[0].block_pos=[w,0,h,(h/2)+2]
-		
-		self.inputs[1].setPos(0, (h/2)+34)
-		self.inputs[1].block_pos=[w,0,h,(h/2)+34]
+		self.inputs[0].block_pos=[w,0,h, (h/2)+2]
 
-		self.inputs[2].setPos(23, h-10)
-		self.inputs[2].block_pos=[w,23,h, h-10]
-
-		self.outputs[0].setPos(w-8, 12)
-		self.outputs[0].block_pos=[w,w-8,h, 12]
-
-		self.outputs[1].setPos(w/2, h+2)
-		self.outputs[1].block_pos=[w,w/2,h,h+2]
-
-		self.outputs[2].setPos(w, h-42)
-		self.outputs[2].block_pos=[w,w,h,h-42]		
+		self.outputs[0].setPos(w+3, (h/2)+2)
+		self.outputs[0].block_pos=[w,w+3,h,(h/2)+2]
 
 		return w, h

@@ -66,13 +66,13 @@ class BlockItem_Controller(QGraphicsRectItem):
 		from Dynamic_simulator import PortItem
 		
 		self.inputs = []
-		self.inputs.append(PortItem('Entrada realimentada','in','none',str(name_block),self.editor, self) )
+		self.inputs.append(PortItem('Entrada realimentada','in','none',str(name_block),self.editor,None,self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Salida controlada','out','electric',str(name_block),self.editor, self) )
+		self.outputs.append(PortItem('Salida controlada','out','electric',str(name_block),self.editor,None, self) )
 		# Update size:
 		self.changeSize(w, h)
 	def editParameters(self):
-		pd = ParameterDialog_Controller(self.name_block,self.editor.Sim_time,self,self.window())
+		pd = ParameterDialog_Controller(self.name_block,self.editor.Sim_time,self.editor.db,self,self.window())
 		#pd.exec_()
 	def DeleteBlock(self):
 		from Dynamic_simulator import DeleteDialog
@@ -117,9 +117,9 @@ class BlockItem_Controller(QGraphicsRectItem):
 		return w, h
 
 class ParameterDialog_Controller(QDialog):
-	def __init__(self,dat,time,item,parent=None):
+	def __init__(self,dat,time,db,item,parent=None):
 		self.Resultado=QtGui.QDialog()
 		self.Resultado.setWindowModality(QtCore.Qt.WindowModal)
 		self.ui = controller_dialogbox()
-		self.ui.setupUi(dat,time,item,self.Resultado)
+		self.ui.setupUi(dat,time,db,item,self.Resultado)
 		self.Resultado.exec_()

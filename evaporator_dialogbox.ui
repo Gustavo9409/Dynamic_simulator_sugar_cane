@@ -6,988 +6,942 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>465</width>
-    <height>398</height>
+    <width>641</width>
+    <height>468</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QTabWidget" name="tabWidget_Evap">
-   <property name="geometry">
-    <rect>
-     <x>3</x>
-     <y>31</y>
-     <width>461</width>
-     <height>361</height>
-    </rect>
-   </property>
-   <property name="currentIndex">
-    <number>0</number>
-   </property>
-   <widget class="QWidget" name="Evap_tab_1">
-    <attribute name="title">
-     <string>Propiedades físicas</string>
-    </attribute>
-    <widget class="QGroupBox" name="Evapor_propert_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>211</width>
-       <height>231</height>
-      </rect>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QComboBox" name="comBox_Selector_Type_Evap"/>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget_Evap">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <property name="title">
-      <string>Propiedades físicas</string>
-     </property>
-     <widget class="QLineEdit" name="Cross_Sectional_Area">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>41</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Heat_Area">
-      <property name="geometry">
-       <rect>
-        <x>9</x>
-        <y>95</y>
-        <width>141</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Área de calentamiento [m2]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Heat_Area">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>95</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comBox_Area_or_Pipes">
-      <property name="geometry">
-       <rect>
-        <x>9</x>
-        <y>64</y>
-        <width>191</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Cross_Sectional_Area">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>42</y>
-        <width>141</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Área transversal [m2]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Volumen">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>18</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Volumen">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>20</y>
-        <width>141</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Volumen [m3]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Pipe_Lenght">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>175</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Pipe_Lenght">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>170</y>
-        <width>141</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Longitud tubo de calandria 
-[m]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="N_pipes">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>147</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_N_pipes">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>148</y>
-        <width>141</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>N° tubos de calandria</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Pipe_Diameter">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>121</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Pipe_Diameter">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>117</y>
-        <width>141</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Diámetro tubo de calandria 
+     <widget class="QWidget" name="Evap_tab_1">
+      <attribute name="title">
+       <string>Propiedades físicas</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="Evapor_propert_GrBx">
+         <property name="title">
+          <string>Propiedades físicas</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_Volumen">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Volumen [m3]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="Volumen">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_Cross_Sectional_Area">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Área transversal [m2]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="Cross_Sectional_Area">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <widget class="QComboBox" name="comBox_Area_or_Pipes"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_Heat_Area">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Área de calentamiento [m2]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="Heat_Area">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_Pipe_Diameter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Diámetro tubo de calandria 
 [in]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Downtake_Diameter">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>200</y>
-        <width>141</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Diámetro downtake [in]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Downtake_Diameter">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>205</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="Initial_Conditions_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>229</x>
-       <y>10</y>
-       <width>221</width>
-       <height>101</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Condiciones iniciales</string>
-     </property>
-     <widget class="QLineEdit" name="Output_Juice_Brix">
-      <property name="geometry">
-       <rect>
-        <x>167</x>
-        <y>18</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_7">
-      <property name="geometry">
-       <rect>
-        <x>243</x>
-        <y>13</y>
-        <width>181</width>
-        <height>80</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Steam input</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Output_Juice_Brix">
-      <property name="geometry">
-       <rect>
-        <x>9</x>
-        <y>20</y>
-        <width>141</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Brix de jugo de salida [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="Output_Juice_Flow">
-      <property name="geometry">
-       <rect>
-        <x>167</x>
-        <y>47</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_Output_Juice_Flow">
-      <property name="geometry">
-       <rect>
-        <x>9</x>
-        <y>42</y>
-        <width>141</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico de jugo de salida
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="Pipe_Diameter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_N_pipes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>N° tubos de calandria</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLineEdit" name="N_pipes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_Pipe_Lenght">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Longitud tubo de calandria 
+[m]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QLineEdit" name="Pipe_Lenght">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_Downtake_Diameter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Diámetro downtake [in]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QLineEdit" name="Downtake_Diameter">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="label_efectt">
+              <property name="text">
+               <string>Efecto</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="Selector_effect"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QGroupBox" name="Initial_Conditions_GrBx">
+         <property name="title">
+          <string>Condiciones iniciales</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_Output_Juice_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Brix de jugo de salida [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="Output_Juice_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_Output_Juice_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico de jugo de salida
 [t/h]</string>
-      </property>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="Output_Juice_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_Evaporator_Level">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Nivel en evaporador [m/m]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="Evaporator_Level">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="OKButton_Evap">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Aceptar</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
-     <widget class="QLineEdit" name="Evaporator_Level">
-      <property name="geometry">
-       <rect>
-        <x>167</x>
-        <y>74</y>
-        <width>51</width>
-        <height>20</height>
-       </rect>
-      </property>
+     <widget class="QWidget" name="Evap_tab_2">
+      <attribute name="title">
+       <string>Variables de proceso</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="Input_fluid_GrBx">
+         <property name="title">
+          <string>Fluido de entrada</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_5">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_InFluid_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico [t/h]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="InFluid_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_InFluid_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Temperatura [°C]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="InFluid_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_InFluid_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Brix [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="InFluid_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_InFluid_InsolubleSolids">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Sólidos insolubles [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="InFluid_InsolubleSolids_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_InFluid_Purity">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Pureza [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="InFluid_Purity">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_InFluid_pH">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>pH </string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLineEdit" name="InFluid_pH">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QGroupBox" name="Output_fluid_GrBx">
+         <property name="title">
+          <string>Fluido de salida</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_6">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_OutFluid_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico [t/h]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="OutFluid_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_OutFluid_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Temperatura [°C]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="OutFluid_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_OutFluid_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Brix [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="OutFluid_Brix">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_OutFluid_InsolubleSolids">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Sólidos insolubles [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QLineEdit" name="OutFluid_InsolubleSolids">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_OutFluid_Purity">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Pureza [kg/kg]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QLineEdit" name="OutFluid_Purity">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_OutFluid_pH">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>pH </string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QLineEdit" name="OutFluid_pH">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QGroupBox" name="Input_Steam_GrBx">
+         <property name="title">
+          <string>Vapor vivo</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_InStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico [t/h]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="InStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_InStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Presión [Pa]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="InStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_InStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Temperatura [°C]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="InStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QGroupBox" name="Condensed_steam_GrBx">
+         <property name="title">
+          <string>Vapor condensado </string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_8">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_CondStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico [t/h]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="CondStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_CondStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Presión [Pa]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="CondStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_CondStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Temperatura [°C]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="CondStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="QGroupBox" name="Output_Steam_GrBx">
+         <property name="title">
+          <string>Vapor vegetal</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_OutStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Flujo másico [t/h]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="OutStm_Flow">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_OutStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Temperatura [°C]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="OutStm_Temp">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_OutStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Presión [Pa]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="OutStm_Press">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
-     <widget class="QLabel" name="label_Evaporator_Level">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>76</y>
-        <width>161</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Nivel en evaporador [m/m]</string>
-      </property>
+     <widget class="QWidget" name="Evap_tab_3">
+      <attribute name="title">
+       <string>Gráfica</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QComboBox" name="comBox_InterestVariable"/>
+       </item>
+      </layout>
      </widget>
     </widget>
-    <widget class="QPushButton" name="OKButton_Evap">
-     <property name="geometry">
-      <rect>
-       <x>312</x>
-       <y>307</y>
-       <width>131</width>
-       <height>23</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Aceptar</string>
-     </property>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="Evap_tab_2">
-    <attribute name="title">
-     <string>Variables de proceso</string>
-    </attribute>
-    <widget class="QGroupBox" name="Input_fluid_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>8</y>
-       <width>191</width>
-       <height>161</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Fluido de entrada</string>
-     </property>
-     <widget class="QLabel" name="label_InFluid_Flow">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>21</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico [t/h]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InFluid_Temp">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>43</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Temperatura [°C]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InFluid_Brix">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>66</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Brix [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InFluid_Purity">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>110</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pureza [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_Temp">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>42</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_Flow">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>20</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_Purity">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>108</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_Brix">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>64</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InFluid_InsolubleSolids">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>88</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Sólidos insolubles [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_InsolubleSolids_2">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>86</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InFluid_pH">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>132</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>pH </string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InFluid_pH">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>130</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="Output_fluid_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>233</x>
-       <y>8</y>
-       <width>191</width>
-       <height>161</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Fluido de salida</string>
-     </property>
-     <widget class="QLabel" name="label_OutFluid_Flow">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>21</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico [t/h]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutFluid_Temp">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>43</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Temperatura [°C]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutFluid_Brix">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>66</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Brix [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_Temp">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>42</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_Flow">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>20</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_Brix">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>64</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutFluid_Purity">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>109</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Pureza [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_pH">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>129</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_InsolubleSolids">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>85</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutFluid_Purity">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>107</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutFluid_InsolubleSolids">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>87</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Sólidos insolubles [kg/kg]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutFluid_pH">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>131</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>pH </string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="Condensed_steam_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>234</x>
-       <y>170</y>
-       <width>191</width>
-       <height>81</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Vapor condensado </string>
-     </property>
-     <widget class="QLineEdit" name="CondStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>15</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_CondStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>16</x>
-        <y>18</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico [t/h]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="CondStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>59</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="CondStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>37</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_CondStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>16</x>
-        <y>40</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Presión [Pa]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_CondStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>16</x>
-        <y>61</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Temperatura [°C]</string>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="Input_Steam_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>18</x>
-       <y>170</y>
-       <width>191</width>
-       <height>81</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Vapor vivo</string>
-     </property>
-     <widget class="QLabel" name="label_InStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>18</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico [t/h]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>38</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Presión [Pa]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>139</x>
-        <y>36</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>139</x>
-        <y>14</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_InStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>60</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Temperatura [°C]</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="InStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>139</x>
-        <y>58</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QGroupBox" name="Output_Steam_GrBx">
-     <property name="geometry">
-      <rect>
-       <x>18</x>
-       <y>258</y>
-       <width>411</width>
-       <height>71</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>Vapor vegetal</string>
-     </property>
-     <widget class="QLineEdit" name="OutStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>139</x>
-        <y>19</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>139</x>
-        <y>46</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="OutStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>356</x>
-        <y>18</y>
-        <width>41</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutStm_Flow">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>21</y>
-        <width>131</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Flujo másico [t/h]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutStm_Press">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>47</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Presión [Pa]</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_OutStm_Temp">
-      <property name="geometry">
-       <rect>
-        <x>230</x>
-        <y>21</y>
-        <width>121</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Temperatura [°C]</string>
-      </property>
-     </widget>
-    </widget>
-   </widget>
-   <widget class="QWidget" name="Evap_tab_3">
-    <attribute name="title">
-     <string>Gráfica</string>
-    </attribute>
-    <widget class="QComboBox" name="comBox_InterestVariable">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>10</y>
-       <width>151</width>
-       <height>22</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
-  </widget>
-  <widget class="QComboBox" name="comBox_Selector_Type_Evap">
-   <property name="geometry">
-    <rect>
-     <x>9</x>
-     <y>6</y>
-     <width>451</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
+   </item>
+  </layout>
  </widget>
  <resources/>
  <connections/>

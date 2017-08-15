@@ -3,6 +3,7 @@
 
 # Installed Libs
 import math
+import numpy as np
 
 class water_properties:
 
@@ -42,6 +43,13 @@ class water_properties:
 
 		hw = 2323.3 + 4106.7*self.Tmp;
 		return hw
+
+	def boiling_point(self, Pressure):
+		# Pressure in Pa absolute, Saska 2002
+		#tbw = 3.3374*Pressure/3386.3886403409992 + 40.76
+		P = Pressure
+		tbw = (-3.22129*10**-21)*P**4 + (4.81707*10**-15)*P**3 - (2.64776*10**-9)*P**2 + (7.32609*10**-4)*P + 47.6081
+		return tbw
 
 
 
@@ -162,9 +170,9 @@ class liquor_properties:
 		tcl = (self.Brx*((5.466*(10**-6)*(self.Tmp**2)) - (1.176*(10**-3)*self.Tmp) - 0.3024)) - (7.847*(10**-6)*(self.Tmp**2))+(1.976*(10**-3)*self.Tmp)+0.563
 		return tcl
 
-	def loss_saccharose(self, time, Temperature, Brix, SolIn, Purity, pH):
+	def sucrose_losses(self, time, Temperature, Brix, SolIn, Purity, pH):
 		'''
-		Loss of saccharose in liquor
+		Succrose losses in liquor, Vukov (1965)
 		Based on Rein 2012, Ingenieria de la caña de ázucar
 
 		Parameters:
@@ -186,7 +194,24 @@ class liquor_properties:
 	
 		return lss_sac
 
+	def boiling_point_elevation(self, Brix):
+		#Boiling point elevation, Rein 2007
+		Delta_Tb = 2*Brix/(1-Brix)
+		return Delta_Tb
+
+	def boiling_point(self, Pressure, Brix):
+		#Pr = Pressure - 101325.0
+		water_prpty = water_properties()
+		Tbw = water_prpty.boiling_point(Pressure)
+		Delta_Tb = self.boiling_point_elevation(Brix)
+		Tb = Delta_Tb + Tbw
+		return Tb
+
 class vapor_properties:
+	R = 8.3144598 #Universal gas constant J/(mol*K)
+	m = 18.01528/1000 #molar mass of water kg/mole
+	Pc = 22058452.0 #Critical Pressure Point
+	Tc = 373.946 #Critical Temeperature Point
 
 	def temperature(self, Pressure):
 		'''
@@ -218,15 +243,13 @@ class vapor_properties:
 		Result:
 		Vapor density  [kg/m3]
 		'''
-		self.Prs = Pressure
-		self.Tv = self.temperature(self.Prs) + 273.15; #vapor temperature in Kelvin
+		self.Pv = Pressure
+		self.Tv = self.temperature(self.Pv) + 273.15; #vapor temperature in Kelvin
 
-		#Rg = 8.31447; % universal gas constant kg m2 s?2 K?1 mol?1
-		#m = 18.01528/1000; % molar mass of water kg/mole
-		#pv = (Pv*m)/(Rg*Tv) % Ideal gas formula
+		#pv = (Pv*m)/(R*Tv) % Ideal gas formula
 		
-		Pv = (0.0022*self.Prs)/self.Tv
-		return Pv
+		pv = (self.Pv*self.m)/(self.R*self.Tv)
+		return pv
 
 	def enthalpy(self, Temperature, Pressure):
 		'''
@@ -276,3 +299,55 @@ class vapor_properties:
 
 		vv = ((0.0000138297*self.Tmp**4) - (0.004990139*self.Tmp**3) + (0.6914895681*self.Tmp**2) - (47.4893894146*self.Tmp) + 1722.8465450434)*10**-6
 		return vv
+
+	def compressibility(self, Temperature, Pressure):
+		'''
+		Compressibility factor Z, Edelman
+		https://mychemengmusings.wordpress.com/2013/06/08/compressibility-factor-z-for-sub-critical-pressures-in-a-one-cell-formula-for-excel-spreadsheets/
+		
+		Param:
+		Temperature in Celsius
+		Pressure in Pascal
+		'''
+		Pr = Pressure/self.Pc #Pressure divided by the critical point
+		Tr = Temperature/self.Tc #Tempereture divided by the critical point
+		A = 2347.4
+		B = -8.3904
+		C = 2.9322
+		D = 2.1577
+
+		Z = 1 - A*math.exp(B*Pr**0.4 + (C*Pr**0.4 + D)*math.log(Pr/Tr))
+		return Z
+
+	def density_sat_low(self, Pressure):
+		'''
+		Regression from steam tables, Range from 600000 to 14000 Pa abs (158.863 to 52.5597 Celsius)
+		'''
+		Pv = Pressure
+		pv = (1.22954*10**-18)*Pv**3 - (1.75481*10**-12)*Pv**2 + (5.86901*10**-6)*Pv + 0.016404
+		return pv
+
+	def pressure_sat_low(self, Density):
+		'''
+		Regression from steam tables, Range from 600000 to 14000 Pa abs (158.863 to 52.5597 Celsius)
+		'''
+		y = Density
+		coeff = [1.22954*10**-18, -1.75481*10**-12, 5.86901*10**-6, 0.016404 - y]
+		rt = np.roots(coeff)
+		Pv = rt[2].real
+		return Pv
+
+	def enthalpy2(self, Temperature, Pressure):
+		'''
+		Superheated Enthalpy, Edelman
+		https://mychemengmusings.wordpress.com/2013/07/19/superheated-steam-enthalpy-estimated-by-calculation-from-huo-4-5-z-r-t/
+		
+		Param:
+		Temperature in Celsius
+		Pressure in Pascal
+		'''
+
+		Z = self.compressibility(Temperature, Pressure)
+		Tv = Temperature + 273.15 #Temperature in Kelvin
+		hv = 1000*(1883 + 4.534*Z*self.R*Tv/18)
+		return hv

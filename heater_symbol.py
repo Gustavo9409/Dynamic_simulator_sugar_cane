@@ -26,8 +26,8 @@ class BlockItem_Heat(QGraphicsRectItem):
 	def __init__(self, name_block='Untitled',edit=None, parent=None):
 		super(BlockItem_Heat, self).__init__(parent)
 		self.editor=edit
-		w = 165.0
-		h = 161.0
+		w = 145.0
+		h = 141.0
 		# Properties of the rectangle:
 		#self.setPen(QtGui.QPen(QtCore.Qt.blue, 2))
 		Img= QtGui.QImage(dir_script+"\Images\Heater_SnT.png");
@@ -44,10 +44,10 @@ class BlockItem_Heat(QGraphicsRectItem):
 		from Dynamic_simulator import PortItem
 		
 		self.inputs = []
-		self.inputs.append(PortItem('Fluido de entrada','in','juice',str(name_block),self.editor,None, self) )
+		self.inputs.append(PortItem('Fluido de entrada','in','none',str(name_block),self.editor,None, self) )
 		self.inputs.append(PortItem('Vapor de entrada','in','vapor',str(name_block),self.editor,None, self) )
 		self.outputs = []
-		self.outputs.append(PortItem('Fluido de salida','out','juice',str(name_block),self.editor,None, self) )
+		self.outputs.append(PortItem('Fluido de salida','out','none',str(name_block),self.editor,None, self) )
 		self.outputs.append(PortItem('Vapor condensado','out','condensed',str(name_block),self.editor,None, self) )
 		# Update size:
 		self.changeSize(w, h)
@@ -84,14 +84,14 @@ class BlockItem_Heat(QGraphicsRectItem):
 		self.inputs[0].setPos(0, h/2 )
 		self.inputs[0].block_pos=[w,0,h,h/2]
 
-		self.inputs[1].setPos((w/2), 0)
-		self.inputs[1].block_pos=[w,(w/2),h,0]
+		self.inputs[1].setPos((w/2)-1, 0)
+		self.inputs[1].block_pos=[w,(w/2)-1,h,0]
 
 		self.outputs[0].setPos(w+2, h/2)
 		self.outputs[0].block_pos=[w,w+2,h,h/2]
 
-		self.outputs[1].setPos((w/2)+1, h+2)
-		self.outputs[1].block_pos=[w,(w/2)+1,h,h+2]
+		self.outputs[1].setPos((w/2)-1, h+2)
+		self.outputs[1].block_pos=[w,(w/2)-1,h,h+2]
 
 		return w, h
 

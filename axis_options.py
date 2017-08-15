@@ -4,11 +4,15 @@
 #
 # Created: Thu May 18 16:15:32 2017
 #      by: PyQt4 UI code generator 4.10.2
-#
-# WARNING! All changes made in this file will be lost!
 
+# Installed Libs
 from PyQt4 import QtCore, QtGui
 
+#global values
+global figure
+figure=None
+
+## Translate to utf format
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
@@ -22,8 +26,8 @@ try:
 except AttributeError:
 	def _translate(context, text, disambig):
 		return QtGui.QApplication.translate(context, text, disambig)
-global figure
-figure=None
+
+## Dialog box class
 class Ui_Dialog(object):
 	def setupUi(self,axes,Window,ts, Dialog):
 		global checkBox_x_stat
@@ -298,11 +302,11 @@ class Ui_Dialog(object):
 		x_label.setText(xlabel)
 		y_label.setText(ylabel)
 
-		
-
+	## Cancel change axis options
 	def cancel_options(self):
 		Dialog_window.close()
 
+	## Apply change axis options
 	def apply_options(self):
 		global figure
 		global Widht_window
@@ -344,8 +348,7 @@ class Ui_Dialog(object):
 			figure.canvas.current_timer.start(Ts*1000)
 			Dialog_window.close()
 
-
-
+	## Selection of type of change x-axis
 	def selection_check(self):
 		if checkBox_x_stat.isChecked():
 			print "Stat"
@@ -372,14 +375,6 @@ class Ui_Dialog(object):
 			ymin, ymax = axis.get_ylim()
 			xlabel=axis.get_xlabel()
 			ylabel=axis.get_ylabel()
-
-			# tittle.setText(str(title))
-			# x_min.setText(str(xmin))
-			# x_max.setText(str(xmax))
-			# y_min.setText(str(ymin))
-			# y_max.setText(str(ymax))
-			# x_label.setText(xlabel)
-			# y_label.setText(ylabel)
 
 		elif checkBox_x_din.isChecked():
 			print "Dinam"
@@ -414,8 +409,7 @@ class Ui_Dialog(object):
 			label_window_range.show()
 			window_range.show()
 
-
-
+	## Labels set text
 	def retranslateUi(self, Dialog):
 		Dialog.setWindowTitle(_translate("Dialog", "Opciones de eje", None))
 		self.label_tittle.setText(_translate("Dialog", "Titulo", None))
@@ -435,6 +429,7 @@ class Ui_Dialog(object):
 		self.Apply_btn.setText(_translate("Dialog", "Aplicar", None))
 		self.Cancel_btn.setText(_translate("Dialog", "Cancelar", None))
 
+## If type of change x-axis is dynamic
 def update_time_dynamic():
 	# figure = axis.get_figure()
 	xmin_init=Ts
@@ -456,6 +451,7 @@ def update_time_dynamic():
 	axis.set_xlim(xmin_init,float(x_updt_max))
 	figure.canvas.draw()
 
+## If type of change x-axis is for windows
 def update_time_windows():
 	# figure = axis.get_figure()
 	xmin, xmax = axis.get_xlim()
@@ -489,14 +485,3 @@ def update_time_windows():
 	else :
 		axis.set_xlim(xmin,float(x_updt_max))
 		figure.canvas.draw()
-
-if __name__ == "__main__":
-	import sys
-	app = QtGui.QApplication(sys.argv)
-	Dialog = QtGui.QDialog()
-	ui = Ui_Dialog()
-	ui.setupUi(Dialog)
-	Dialog.show()
-	sys.exit(app.exec_())
-
-

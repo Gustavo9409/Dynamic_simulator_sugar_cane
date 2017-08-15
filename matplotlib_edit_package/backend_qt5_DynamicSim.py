@@ -609,10 +609,10 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 				V_cursor_args=arguments
 				if V_cursor_args==False and callback in ['V_cursor']:
 					a.setDisabled(True)
-					print(a.isEnabled())
+					# print(a.isEnabled())
 				elif V_cursor_args==True and callback in ['V_cursor']:
 					a.setEnabled(True)
-					print(a.isEnabled())
+					# print(a.isEnabled())
 				
 		self.buttons = {}
 
@@ -820,7 +820,7 @@ class NavigationToolbar2QT(NavigationToolbar2, QtWidgets.QToolBar):
 		filters = ';;'.join(filters)
 
 		fname, filter = _getSaveFileName(self.parent,
-										 "Choose a filename to save to",
+										 "Guardar imagen",
 								 start, filters, selectedFilter)
 		if fname:
 			if startpath == '':
