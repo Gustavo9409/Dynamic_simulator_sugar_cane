@@ -105,8 +105,7 @@ def Update_window():
 	global Type_flow_selec
 
 	num_window=re.sub('([a-zA-Z]+)', "", nameDialog)
-	input_heat = open('Blocks_data.txt', 'r+')
-	data=input_heat.readlines()
+
 	comBox_VariableInput.clear()
 	VariableInput=_translate("Dialog", "Flujo másico [t/h]", None)
 	vapor_data=[]
