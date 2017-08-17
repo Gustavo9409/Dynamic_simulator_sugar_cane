@@ -1,14 +1,15 @@
+# Installed Libs
 import sip
-sip.setapi('QVariant',2)
-sip.setapi('QString', 2)
+import sys
+import os
 
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-#
-import sys
-import os
+sip.setapi('QVariant',2)
+sip.setapi('QString', 2)
+
 dir_script=str(os.getcwd())
 
 class BlockItem_Centrifuge(QGraphicsRectItem):
