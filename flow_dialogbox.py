@@ -419,7 +419,7 @@ class window_confirm_inputs(QDialog):
 				fields=["Flow","Temperature","Brix","Purity","Insoluble_solids","pH","Pressure","Saturated_vapor"]
 				values_change=values[3:]
 
-				db.update_data("Flow_inputs",fields,values_change,"Name",values[1])
+				db.update_data("Flow_inputs",fields,values_change,["Name"],[values[1]])
 
 
 			##Information message and close window
